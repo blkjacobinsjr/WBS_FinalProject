@@ -1,5 +1,5 @@
 export function checkUserId(req, res, next) {
-  const { userId } = req.auth;
+  const userId = req.auth?.userId;
   const { body } = req;
 
   if (!userId) {
