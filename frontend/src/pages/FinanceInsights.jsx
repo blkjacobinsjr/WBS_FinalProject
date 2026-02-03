@@ -70,7 +70,7 @@ export default function FinanceInsights() {
   const flowData = [
     {
       step: 1,
-      y: 3,
+      y: 1,
       short: "Rich Life",
       label: flowSteps[0].title,
       body: flowSteps[0].body,
@@ -78,7 +78,7 @@ export default function FinanceInsights() {
     },
     {
       step: 2,
-      y: 2.8,
+      y: 1,
       short: "Autopilot",
       label: flowSteps[1].title,
       body: flowSteps[1].body,
@@ -86,7 +86,7 @@ export default function FinanceInsights() {
     },
     {
       step: 3,
-      y: 2.2,
+      y: 1,
       short: "Big Wins",
       label: flowSteps[2].title,
       body: flowSteps[2].body,
@@ -94,7 +94,7 @@ export default function FinanceInsights() {
     },
     {
       step: 4,
-      y: 1.8,
+      y: 1,
       short: "Guardrails",
       label: flowSteps[3].title,
       body: flowSteps[3].body,
@@ -102,7 +102,7 @@ export default function FinanceInsights() {
     },
     {
       step: 5,
-      y: 2.1,
+      y: 1,
       short: "Invest",
       label: flowSteps[4].title,
       body: flowSteps[4].body,
@@ -110,19 +110,12 @@ export default function FinanceInsights() {
     },
     {
       step: 6,
-      y: 2.9,
+      y: 1,
       short: "Checklist",
       label: flowSteps[5].title,
       body: flowSteps[5].body,
       metric: flowSteps[5].metric,
     },
-  ];
-
-  const branchData = [
-    { step: 5, y: 2.1 },
-    { step: 5.4, y: 1.4 },
-    { step: 5.8, y: 1.0 },
-    { step: 6, y: 2.2 },
   ];
 
   return (
@@ -147,7 +140,7 @@ export default function FinanceInsights() {
 
         <div className="mt-4">
           {subscriptions?.length ? (
-            <FlowChartVisual data={flowData} branch={branchData} />
+            <FlowChartVisual data={flowData} />
           ) : (
             <div className="flex h-[260px] items-center justify-center rounded-2xl border border-black/10 bg-white/80">
               <div className="flex flex-col items-center gap-2 text-xs text-gray-600">

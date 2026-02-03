@@ -5,26 +5,25 @@ import {
   XAxis,
   YAxis,
   Tooltip,
-  Scatter,
+  CartesianGrid,
+  ReferenceLine,
+  LabelList,
 } from "recharts";
 
 function CustomDot(props) {
-  const { cx, cy, payload, index } = props;
+  const { cx, cy, payload } = props;
   if (!cx || !cy) return null;
-  const dy = index % 2 === 0 ? -14 : 18;
   return (
     <g>
-      <circle cx={cx} cy={cy} r={6} fill="#ffffff" opacity={0.9} />
-      <circle cx={cx} cy={cy} r={10} fill="rgba(255,255,255,0.15)" />
+      <circle cx={cx} cy={cy} r={7} fill="#0b1020" stroke="#ffffff" />
       <text
         x={cx}
-        y={cy + dy}
+        y={cy + 3}
         textAnchor="middle"
-        fontSize="10"
-        fill="rgba(255,255,255,0.85)"
-        style={{ letterSpacing: "0.12em", textTransform: "uppercase" }}
+        fontSize="9"
+        fill="#ffffff"
       >
-        {payload.short}
+        {payload.step}
       </text>
     </g>
   );
@@ -44,13 +43,21 @@ function CustomTooltip({ active, payload }) {
   );
 }
 
-export default function FlowChartVisual({ data, branch }) {
+export default function FlowChartVisual({ data }) {
   return (
     <div className="h-[260px] w-full rounded-2xl border border-white/10 bg-[#0b1020]/90 p-4 shadow-lg shadow-black/30 sm:h-[300px]">
       <ResponsiveContainer width="100%" height="100%">
         <LineChart data={data}>
-          <XAxis dataKey="step" type="number" hide />
-          <YAxis type="number" hide domain={[0.6, 3.4]} />
+          <CartesianGrid
+            stroke="rgba(255,255,255,0.08)"
+            vertical={false}
+          />
+          <XAxis
+            dataKey="short"
+            tick={{ fontSize: 10, fill: "rgba(255,255,255,0.6)" }}
+            interval={0}
+          />
+          <YAxis type="number" hide domain={[0.8, 1.2]} />
           <Tooltip content={<CustomTooltip />} />
           <defs>
             <linearGradient id="flowStroke" x1="0" y1="0" x2="1" y2="0">
@@ -60,26 +67,30 @@ export default function FlowChartVisual({ data, branch }) {
             </linearGradient>
           </defs>
           <Line
-            type="monotone"
+            type="linear"
             dataKey="y"
             stroke="url(#flowStroke)"
             strokeWidth={3}
-            dot={false}
-            activeDot={false}
+            dot={<CustomDot />}
+            activeDot={{ r: 8 }}
           />
-          {branch?.length > 0 && (
-            <Line
-              data={branch}
-              type="monotone"
-              dataKey="y"
-              stroke="rgba(255,255,255,0.35)"
-              strokeWidth={2}
-              strokeDasharray="4 6"
-              dot={false}
-              activeDot={false}
-            />
-          )}
-          <Scatter data={data} shape={<CustomDot />} />
+          <LabelList
+            dataKey="label"
+            position="top"
+            fill="rgba(255,255,255,0.8)"
+            fontSize={10}
+          />
+          <ReferenceLine
+            x="Invest"
+            stroke="rgba(255,255,255,0.2)"
+            strokeDasharray="4 6"
+            label={{
+              value: "Edge bet? Skip or Kelly",
+              fill: "rgba(255,255,255,0.5)",
+              fontSize: 9,
+              position: "insideTopRight",
+            }}
+          />
         </LineChart>
       </ResponsiveContainer>
     </div>

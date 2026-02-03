@@ -5,14 +5,11 @@ import {
   XAxis,
   YAxis,
   Tooltip,
-  PieChart,
-  Pie,
-  Cell,
   ScatterChart,
   Scatter,
+  CartesianGrid,
+  ReferenceLine,
 } from "recharts";
-
-const PIE_COLORS = ["#7dd3fc", "#f472b6"];
 
 function SkeletonBlock({ className }) {
   return <div className={`skeleton ${className}`} />;
@@ -69,7 +66,8 @@ export default function FinanceMiniVisuals({
 
   const activeCount = subscriptions?.filter((sub) => sub.active).length || 0;
   const inactiveCount =
-    (subscriptions?.length || 0) - (subscriptions?.filter((s) => s.active).length || 0);
+    (subscriptions?.length || 0) -
+    (subscriptions?.filter((s) => s.active).length || 0);
 
   const activeData = [
     { name: "Active", value: activeCount },
@@ -85,6 +83,13 @@ export default function FinanceMiniVisuals({
     .filter((item) => item.monthly > 0)
     .slice(0, 25);
 
+  const medianCost = scatterData.length
+    ? [...scatterData]
+        .map((item) => item.monthly)
+        .sort((a, b) => a - b)[Math.floor(scatterData.length / 2)]
+    : 0;
+  const lowUsageThreshold = 2;
+
   const barelyUsed = dashboardData?.barelyUsedMostExpensive;
   const mostUsed = dashboardData?.mostUsed;
 
@@ -98,8 +103,18 @@ export default function FinanceMiniVisuals({
           {hasCategories ? (
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={categoryData}>
-                <XAxis dataKey="name" hide />
-                <YAxis hide />
+                <CartesianGrid stroke="rgba(255,255,255,0.08)" />
+                <XAxis
+                  dataKey="name"
+                  tick={{ fontSize: 10, fill: "rgba(255,255,255,0.6)" }}
+                  interval={0}
+                  angle={-20}
+                  height={40}
+                />
+                <YAxis
+                  tick={{ fontSize: 10, fill: "rgba(255,255,255,0.6)" }}
+                  tickFormatter={(value) => `€${value}`}
+                />
                 <Tooltip content={<CategoryTooltip />} />
                 <defs>
                   <linearGradient id="barFlow" x1="0" y1="0" x2="0" y2="1">
@@ -137,9 +152,30 @@ export default function FinanceMiniVisuals({
           {hasSubscriptions ? (
             <ResponsiveContainer width="100%" height="100%">
               <ScatterChart>
-                <XAxis dataKey="monthly" type="number" hide />
-                <YAxis dataKey="score" type="number" hide domain={[0, 5]} />
+                <CartesianGrid stroke="rgba(255,255,255,0.08)" />
+                <XAxis
+                  dataKey="monthly"
+                  type="number"
+                  tick={{ fontSize: 10, fill: "rgba(255,255,255,0.6)" }}
+                  tickFormatter={(value) => `€${value}`}
+                />
+                <YAxis
+                  dataKey="score"
+                  type="number"
+                  domain={[0, 5]}
+                  tick={{ fontSize: 10, fill: "rgba(255,255,255,0.6)" }}
+                />
                 <Tooltip content={<ScatterTooltip />} />
+                <ReferenceLine
+                  y={lowUsageThreshold}
+                  stroke="rgba(255,255,255,0.3)"
+                  strokeDasharray="4 6"
+                />
+                <ReferenceLine
+                  x={medianCost}
+                  stroke="rgba(255,255,255,0.2)"
+                  strokeDasharray="4 6"
+                />
                 <Scatter data={scatterData} fill="#7dd3fc" />
               </ScatterChart>
             </ResponsiveContainer>
@@ -167,20 +203,20 @@ export default function FinanceMiniVisuals({
         <div className="mt-3 h-[220px]">
           {hasSubscriptions ? (
             <ResponsiveContainer width="100%" height="100%">
-              <PieChart>
-                <Pie
-                  data={activeData}
-                  dataKey="value"
-                  nameKey="name"
-                  innerRadius={55}
-                  outerRadius={90}
-                  paddingAngle={2}
-                >
-                  {activeData.map((entry, index) => (
-                    <Cell key={entry.name} fill={PIE_COLORS[index]} />
-                  ))}
-                </Pie>
-              </PieChart>
+              <BarChart data={activeData} layout="vertical">
+                <CartesianGrid stroke="rgba(255,255,255,0.08)" />
+                <XAxis
+                  type="number"
+                  tick={{ fontSize: 10, fill: "rgba(255,255,255,0.6)" }}
+                />
+                <YAxis
+                  type="category"
+                  dataKey="name"
+                  tick={{ fontSize: 10, fill: "rgba(255,255,255,0.6)" }}
+                />
+                <Tooltip content={<CategoryTooltip />} />
+                <Bar dataKey="value" fill="#7dd3fc" radius={[8, 8, 8, 8]} />
+              </BarChart>
             </ResponsiveContainer>
           ) : (
             <div className="flex h-full items-center justify-center">
