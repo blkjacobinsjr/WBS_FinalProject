@@ -146,19 +146,35 @@ export default function FinanceInsights() {
         </div>
 
         <div className="mt-4">
-          <FlowChartVisual data={flowData} branch={branchData} />
+          {subscriptions?.length ? (
+            <FlowChartVisual data={flowData} branch={branchData} />
+          ) : (
+            <div className="flex h-[260px] items-center justify-center rounded-2xl border border-black/10 bg-white/80">
+              <div className="flex flex-col items-center gap-2 text-xs text-gray-600">
+                <div className="skeleton h-4 w-40 rounded-full" />
+                <div className="skeleton h-3 w-28 rounded-full" />
+                <div>Add subscriptions to unlock the flow</div>
+              </div>
+            </div>
+          )}
         </div>
       </div>
 
       <div className="grid gap-2 sm:grid-cols-2 xl:grid-cols-3">
         <StatsCard title="Total Subscriptions">
-          {subscriptions?.length || 0}
+          {subscriptions?.length ? subscriptions?.length : "—"}
         </StatsCard>
         <StatsCard title="Total Cost Per Month">
-          EUR {dashboardData?.totalCostPerMonth?.toFixed(2) || "0.00"}
+          {subscriptions?.length
+            ? `EUR ${dashboardData?.totalCostPerMonth?.toFixed(2) || "0.00"}`
+            : "—"}
         </StatsCard>
         <StatsCard title="Potential Savings">
-          EUR {dashboardData?.potentialMonthlySavings?.toFixed(2) || "0.00"}
+          {subscriptions?.length
+            ? `EUR ${
+                dashboardData?.potentialMonthlySavings?.toFixed(2) || "0.00"
+              }`
+            : "—"}
         </StatsCard>
       </div>
 
@@ -172,24 +188,30 @@ export default function FinanceInsights() {
         <div className="text-sm font-semibold uppercase tracking-[0.2em] text-gray-600">
           Hidden Insights
         </div>
-        <ul className="mt-3 space-y-2 text-sm text-gray-700">
-          <li>
-            Highest cost: {highestCost?.name || "Insufficient Data"}{" "}
-            {highestCost ? `EUR ${highestCost.price?.toFixed(2)}` : ""}
-          </li>
-          <li>
-            Top category: {topCategory?.name || "Insufficient Data"}{" "}
-            {topCategory ? `EUR ${topCategory.totalCost?.toFixed(2)}` : ""}
-          </li>
-          <li>
-            Least used: {lowestUsage?.name || "Insufficient Data"}
-          </li>
-          <li>
-            Barely used most expensive:{" "}
-            {dashboardData?.barelyUsedMostExpensive?.name ||
-              "Insufficient Data"}
-          </li>
-        </ul>
+        {subscriptions?.length ? (
+          <ul className="mt-3 space-y-2 text-sm text-gray-700">
+            <li>
+              Highest cost: {highestCost?.name || "Insufficient Data"}{" "}
+              {highestCost ? `EUR ${highestCost.price?.toFixed(2)}` : ""}
+            </li>
+            <li>
+              Top category: {topCategory?.name || "Insufficient Data"}{" "}
+              {topCategory ? `EUR ${topCategory.totalCost?.toFixed(2)}` : ""}
+            </li>
+            <li>
+              Least used: {lowestUsage?.name || "Insufficient Data"}
+            </li>
+            <li>
+              Barely used most expensive:{" "}
+              {dashboardData?.barelyUsedMostExpensive?.name ||
+                "Insufficient Data"}
+            </li>
+          </ul>
+        ) : (
+          <div className="mt-3 text-sm text-gray-600">
+            Add subscriptions to reveal insights.
+          </div>
+        )}
       </div>
 
       <FinanceInsightsFlow open={flowOpen} onClose={() => setFlowOpen(false)} />

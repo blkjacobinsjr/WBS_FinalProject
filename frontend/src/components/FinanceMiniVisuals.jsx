@@ -14,6 +14,10 @@ import {
 
 const PIE_COLORS = ["#7dd3fc", "#f472b6"];
 
+function SkeletonBlock({ className }) {
+  return <div className={`skeleton ${className}`} />;
+}
+
 function CategoryTooltip({ active, payload }) {
   if (!active || !payload?.length) return null;
   const item = payload[0].payload;
@@ -51,6 +55,9 @@ export default function FinanceMiniVisuals({
   subscriptions,
   dashboardData,
 }) {
+  const hasCategories = (categories || []).length > 0;
+  const hasSubscriptions = (subscriptions || []).length > 0;
+
   const categoryData = (categories || [])
     .slice()
     .sort((a, b) => b.totalCost - a.totalCost)
@@ -88,23 +95,37 @@ export default function FinanceMiniVisuals({
           Spend By Category
         </div>
         <div className="mt-3 h-[220px]">
-          <ResponsiveContainer width="100%" height="100%">
-            <BarChart data={categoryData}>
-              <XAxis dataKey="name" hide />
-              <YAxis hide />
-              <Tooltip content={<CategoryTooltip />} />
-              <defs>
-                <linearGradient id="barFlow" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%" stopColor="#a78bfa" />
-                  <stop offset="100%" stopColor="#7dd3fc" />
-                </linearGradient>
-              </defs>
-              <Bar dataKey="value" fill="url(#barFlow)" radius={[12, 12, 6, 6]} />
-            </BarChart>
-          </ResponsiveContainer>
+          {hasCategories ? (
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart data={categoryData}>
+                <XAxis dataKey="name" hide />
+                <YAxis hide />
+                <Tooltip content={<CategoryTooltip />} />
+                <defs>
+                  <linearGradient id="barFlow" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stopColor="#a78bfa" />
+                    <stop offset="100%" stopColor="#7dd3fc" />
+                  </linearGradient>
+                </defs>
+                <Bar
+                  dataKey="value"
+                  fill="url(#barFlow)"
+                  radius={[12, 12, 6, 6]}
+                />
+              </BarChart>
+            </ResponsiveContainer>
+          ) : (
+            <div className="flex h-full flex-col justify-between">
+              <SkeletonBlock className="h-4 w-40 rounded-full" />
+              <SkeletonBlock className="h-4 w-32 rounded-full" />
+              <SkeletonBlock className="h-4 w-24 rounded-full" />
+              <SkeletonBlock className="h-4 w-28 rounded-full" />
+              <SkeletonBlock className="h-4 w-20 rounded-full" />
+            </div>
+          )}
         </div>
         <div className="mt-2 text-xs text-white/60">
-          Focus on the top bar first.
+          {hasCategories ? "Focus on the top bar first." : "Upload data to unlock."}
         </div>
       </div>
 
@@ -113,18 +134,29 @@ export default function FinanceMiniVisuals({
           Cost vs Usage Score
         </div>
         <div className="mt-3 h-[220px]">
-          <ResponsiveContainer width="100%" height="100%">
-            <ScatterChart>
-              <XAxis dataKey="monthly" type="number" hide />
-              <YAxis dataKey="score" type="number" hide domain={[0, 5]} />
-              <Tooltip content={<ScatterTooltip />} />
-              <Scatter data={scatterData} fill="#7dd3fc" />
-            </ScatterChart>
-          </ResponsiveContainer>
+          {hasSubscriptions ? (
+            <ResponsiveContainer width="100%" height="100%">
+              <ScatterChart>
+                <XAxis dataKey="monthly" type="number" hide />
+                <YAxis dataKey="score" type="number" hide domain={[0, 5]} />
+                <Tooltip content={<ScatterTooltip />} />
+                <Scatter data={scatterData} fill="#7dd3fc" />
+              </ScatterChart>
+            </ResponsiveContainer>
+          ) : (
+            <div className="grid h-full grid-cols-3 gap-3">
+              <SkeletonBlock className="h-full rounded-2xl" />
+              <SkeletonBlock className="h-full rounded-2xl" />
+              <SkeletonBlock className="h-full rounded-2xl" />
+            </div>
+          )}
         </div>
         <div className="mt-2 text-xs text-white/60">
-          Barely used: {barelyUsed?.name || "Insufficient Data"} | Most used:{" "}
-          {mostUsed?.name || "Insufficient Data"}
+          {hasSubscriptions
+            ? `Barely used: ${barelyUsed?.name || "Insufficient Data"} | Most used: ${
+                mostUsed?.name || "Insufficient Data"
+              }`
+            : "Add subscriptions to reveal usage."}
         </div>
       </div>
 
@@ -133,25 +165,33 @@ export default function FinanceMiniVisuals({
           Active vs Inactive
         </div>
         <div className="mt-3 h-[220px]">
-          <ResponsiveContainer width="100%" height="100%">
-            <PieChart>
-              <Pie
-                data={activeData}
-                dataKey="value"
-                nameKey="name"
-                innerRadius={55}
-                outerRadius={90}
-                paddingAngle={2}
-              >
-                {activeData.map((entry, index) => (
-                  <Cell key={entry.name} fill={PIE_COLORS[index]} />
-                ))}
-              </Pie>
-            </PieChart>
-          </ResponsiveContainer>
+          {hasSubscriptions ? (
+            <ResponsiveContainer width="100%" height="100%">
+              <PieChart>
+                <Pie
+                  data={activeData}
+                  dataKey="value"
+                  nameKey="name"
+                  innerRadius={55}
+                  outerRadius={90}
+                  paddingAngle={2}
+                >
+                  {activeData.map((entry, index) => (
+                    <Cell key={entry.name} fill={PIE_COLORS[index]} />
+                  ))}
+                </Pie>
+              </PieChart>
+            </ResponsiveContainer>
+          ) : (
+            <div className="flex h-full items-center justify-center">
+              <SkeletonBlock className="h-32 w-32 rounded-full" />
+            </div>
+          )}
         </div>
         <div className="mt-2 text-xs text-white/60">
-          Active {activeCount} | Inactive {inactiveCount}
+          {hasSubscriptions
+            ? `Active ${activeCount} | Inactive ${inactiveCount}`
+            : "No subscriptions yet."}
         </div>
       </div>
     </div>
