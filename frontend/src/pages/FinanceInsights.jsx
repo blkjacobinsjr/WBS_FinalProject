@@ -3,6 +3,7 @@ import { useDataContext } from "../contexts/dataContext";
 import StatsCard from "../components/StatsCard";
 import FinanceInsightsFlow from "../components/FinanceInsightsFlow";
 import FlowChartVisual from "../components/FlowChartVisual";
+import FinanceMiniVisuals from "../components/FinanceMiniVisuals";
 import LoadingButton from "../components/LoadingButton";
 
 export default function FinanceInsights() {
@@ -133,7 +134,7 @@ export default function FinanceInsights() {
               Personal Finance Flow
             </div>
             <div className="mt-2 text-xs text-gray-600">
-              Spotify wrapped style recap. Full screen.
+              Visual walkthrough with annotated metrics.
             </div>
           </div>
           <LoadingButton
@@ -160,6 +161,12 @@ export default function FinanceInsights() {
           EUR {dashboardData?.potentialMonthlySavings?.toFixed(2) || "0.00"}
         </StatsCard>
       </div>
+
+      <FinanceMiniVisuals
+        categories={usedCategories}
+        subscriptions={subscriptions}
+        dashboardData={dashboardData}
+      />
 
       <div className="rounded-lg border border-black/10 bg-white/70 p-4">
         <div className="text-sm font-semibold uppercase tracking-[0.2em] text-gray-600">
