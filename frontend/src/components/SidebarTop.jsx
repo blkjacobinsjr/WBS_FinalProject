@@ -39,6 +39,15 @@ export default function SidebarTop({ className = "w-full" }) {
       ],
       to: "/dashboard/usage",
     },
+    {
+      name: "Bulk Import",
+      icon: {
+        path: "M12 3v9m0 0l-3-3m3 3l3-3m-6 9h12a2.25 2.25 0 002.25-2.25V9.75a2.25 2.25 0 00-2.25-2.25H6a2.25 2.25 0 00-2.25 2.25v6.75A2.25 2.25 0 006 18z",
+        strokeLinecap: "round",
+        strokeLinejoin: "round",
+      },
+      to: "/dashboard/bulk",
+    },
   ];
 
   return (

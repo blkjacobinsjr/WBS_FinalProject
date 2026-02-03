@@ -15,6 +15,7 @@ import SubscriptionForm from "../components/SubscriptionForm"; // Import AddSubs
 import SubscriptionList from "../components/SubscriptionList"; // Import SubscriptionList component
 import UsageModal from "../components/UsageModal";
 import CategoryPage from "./CategoryPage";
+import BulkImport from "./BulkImport";
 
 import { useDataContext } from "../contexts/dataContext";
 import useCategory from "../hooks/useCategory";
@@ -344,15 +345,19 @@ function Dashboard() {
                   {/* Recommendations / Cancel */}
                   {pageId === "recommendations" && <Recommendations />}
 
-                  {/* Usage Page */}
-                  {pageId === "usage" && <UsagePage />}
+                    {/* Usage Page */}
+                    {pageId === "usage" && <UsagePage />}
 
-                  {/* Category Pages */}
-                  {pageId &&
-                    pageId !== "recommendations" &&
-                    pageId !== "usage" && (
-                      <CategoryPage categoryId={pageId} />
-                    )}
+                    {/* Bulk Import Page */}
+                    {pageId === "bulk" && <BulkImport />}
+
+                    {/* Category Pages */}
+                    {pageId &&
+                      pageId !== "recommendations" &&
+                      pageId !== "usage" &&
+                      pageId !== "bulk" && (
+                        <CategoryPage categoryId={pageId} />
+                      )}
                 </div>
               </div>
             </div>
