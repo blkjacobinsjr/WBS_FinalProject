@@ -48,6 +48,15 @@ export default function SidebarTop({ className = "w-full" }) {
       },
       to: "/dashboard/bulk",
     },
+    {
+      name: "Insights",
+      icon: {
+        path: "M12 6v6l4 2m6-2a10 10 0 11-20 0 10 10 0 0120 0z",
+        strokeLinecap: "round",
+        strokeLinejoin: "round",
+      },
+      to: "/dashboard/insights",
+    },
   ];
 
   return (

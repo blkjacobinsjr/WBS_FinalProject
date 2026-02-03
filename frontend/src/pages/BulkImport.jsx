@@ -32,6 +32,36 @@ function normalizeName(value) {
     .trim();
 }
 
+function normalizeKey(name, amount) {
+  const safeAmount = Number.isFinite(amount) ? amount.toFixed(2) : "0.00";
+  return `${normalizeName(name)}|${safeAmount}`;
+}
+
+async function hashBuffer(buffer) {
+  if (!window.crypto?.subtle) return null;
+  const hash = await window.crypto.subtle.digest("SHA-256", buffer);
+  return Array.from(new Uint8Array(hash))
+    .map((b) => b.toString(16).padStart(2, "0"))
+    .join("");
+}
+
+function loadFingerprints() {
+  try {
+    const raw = localStorage.getItem("bulkImport:fingerprints");
+    return raw ? JSON.parse(raw) : [];
+  } catch (error) {
+    return [];
+  }
+}
+
+function storeFingerprint(hash) {
+  if (!hash) return;
+  const existing = loadFingerprints();
+  if (existing.includes(hash)) return;
+  const updated = [hash, ...existing].slice(0, 5);
+  localStorage.setItem("bulkImport:fingerprints", JSON.stringify(updated));
+}
+
 function parseAmount(value) {
   if (!value) return null;
   const cleaned = value
@@ -124,13 +154,25 @@ function collectForcedCandidates(lines) {
   return forced;
 }
 
+function dedupeCandidates(candidates) {
+  const seen = new Set();
+  const deduped = [];
+  for (const candidate of candidates) {
+    const key = normalizeKey(candidate.name, candidate.amount);
+    if (seen.has(key)) continue;
+    seen.add(key);
+    deduped.push(candidate);
+  }
+  return deduped;
+}
+
 function detectFromPdfText(text) {
   const lines = text
     .split(/\r?\n/)
     .map((line) => line.trim())
     .filter(Boolean);
 
-  const forcedCandidates = collectForcedCandidates(lines);
+  const forcedCandidates = dedupeCandidates(collectForcedCandidates(lines));
   if (forcedCandidates.length > 0) {
     return forcedCandidates;
   }
@@ -169,7 +211,7 @@ function detectFromPdfText(text) {
     });
   }
 
-  return candidates;
+  return dedupeCandidates(candidates);
 }
 
 function detectFromCsvText(text) {
@@ -242,8 +284,7 @@ export default function BulkImport() {
     return Math.min(100, Math.round((currentIndex / detected.length) * 100));
   }, [currentIndex, detected.length]);
 
-  async function extractPdfText(targetFile) {
-    const buffer = await targetFile.arrayBuffer();
+  async function extractPdfText(buffer) {
     const pdf = await getDocument({ data: buffer }).promise;
 
     let combinedText = "";
@@ -294,13 +335,35 @@ export default function BulkImport() {
     setCurrentIndex(0);
 
     let candidates = [];
+    let buffer = null;
+    let fingerprint = null;
+    let baseSubscriptions = subscriptions || [];
 
     try {
+      buffer = await file.arrayBuffer();
+      fingerprint = await hashBuffer(buffer);
+      if (fingerprint) {
+        const seen = loadFingerprints();
+        if (seen.includes(fingerprint)) {
+          toast.error("File already processed");
+          setStage("idle");
+          return;
+        }
+      }
+
+      const latestSubscriptions = await getAllSubscriptions(
+        new AbortController(),
+      );
+      if (latestSubscriptions) {
+        setSubscriptions(latestSubscriptions);
+        baseSubscriptions = latestSubscriptions;
+      }
+
       if (file.name.toLowerCase().endsWith(".pdf")) {
-        const text = await extractPdfText(file);
+        const text = await extractPdfText(buffer);
         candidates = detectFromPdfText(text);
       } else if (file.name.toLowerCase().endsWith(".csv")) {
-        const text = await file.text();
+        const text = new TextDecoder("utf-8").decode(buffer);
         candidates = detectFromCsvText(text);
       } else {
         toast.error("Unsupported file type");
@@ -319,19 +382,10 @@ export default function BulkImport() {
       return;
     }
 
-    const deduped = [];
-    const seen = new Set();
-    for (const candidate of candidates) {
-      const key = normalizeName(candidate.name);
-      if (seen.has(key)) continue;
-      seen.add(key);
-      deduped.push(candidate);
-    }
-
-    candidates = deduped;
+    candidates = dedupeCandidates(candidates);
 
     const existingKeys = new Set(
-      (subscriptions || []).map((sub) => normalizeName(sub.name)),
+      baseSubscriptions.map((sub) => normalizeKey(sub.name, sub.price)),
     );
 
     let createdCount = 0;
@@ -341,7 +395,8 @@ export default function BulkImport() {
 
     for (const candidate of candidates) {
       const key = normalizeName(candidate.name);
-      if (existingKeys.has(key)) {
+      const candidateKey = normalizeKey(candidate.name, candidate.amount);
+      if (existingKeys.has(candidateKey)) {
         skippedCount += 1;
         continue;
       }
@@ -385,6 +440,7 @@ export default function BulkImport() {
     setStage("ready");
     setSubscriptions(refreshed);
     eventEmitter.emit("refetchData");
+    storeFingerprint(fingerprint);
 
     if (createdCount > 0) {
       const label =

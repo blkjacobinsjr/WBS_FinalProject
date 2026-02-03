@@ -18,6 +18,7 @@ import UsageModal from "../components/UsageModal";
 import LoadingButton from "../components/LoadingButton";
 import CategoryPage from "./CategoryPage";
 import BulkImport from "./BulkImport";
+import FinanceInsights from "./FinanceInsights";
 
 import { useDataContext } from "../contexts/dataContext";
 import useCategory from "../hooks/useCategory";
@@ -358,11 +359,15 @@ function Dashboard() {
                     {/* Bulk Import Page */}
                     {pageId === "bulk" && <BulkImport />}
 
+                    {/* Finance Insights Page */}
+                    {pageId === "insights" && <FinanceInsights />}
+
                     {/* Category Pages */}
                     {pageId &&
                       pageId !== "recommendations" &&
                       pageId !== "usage" &&
-                      pageId !== "bulk" && (
+                      pageId !== "bulk" &&
+                      pageId !== "insights" && (
                         <CategoryPage categoryId={pageId} />
                       )}
                 </div>

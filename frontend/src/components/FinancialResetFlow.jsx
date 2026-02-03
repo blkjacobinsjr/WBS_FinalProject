@@ -136,12 +136,12 @@ export default function FinancialResetFlow({ open, onClose }) {
   if (!open) return null;
 
   return (
-    <div className="fixed inset-0 z-[60]">
-      <div className="absolute inset-0 bg-gradient-to-br from-slate-950/95 via-slate-900/90 to-slate-950/95" />
+    <div className="fixed inset-0 z-[60] h-screen w-screen overflow-hidden">
+      <div className="absolute inset-0 bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950" />
       <div className="pointer-events-none absolute -top-24 right-0 h-72 w-72 rounded-full bg-pink-300/10 blur-2xl" />
       <div className="pointer-events-none absolute -bottom-32 left-0 h-80 w-80 rounded-full bg-cyan-300/10 blur-2xl" />
 
-      <div className="relative flex min-h-[100svh] min-h-[100dvh] flex-col justify-between px-5 py-6 sm:px-10 sm:py-10">
+      <div className="relative flex min-h-[100svh] min-h-[100dvh] w-full flex-col justify-between px-5 py-6 sm:px-10 sm:py-10">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3 text-xs font-semibold uppercase tracking-[0.2em] text-white/70">
             Reset Sprint
