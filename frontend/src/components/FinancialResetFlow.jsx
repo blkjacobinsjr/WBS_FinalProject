@@ -141,7 +141,19 @@ export default function FinancialResetFlow({ open, onClose }) {
   if (!portalTarget) return null;
 
   return createPortal(
-    <div className="fixed inset-0 z-[9999] h-screen w-screen overflow-hidden">
+    <div
+      className="fixed inset-0 z-[9999] overflow-hidden"
+      style={{
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        width: "100vw",
+        height: "100vh",
+        margin: 0,
+        borderRadius: 0,
+      }}
+    >
       <div className="absolute inset-0 bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950" />
       <div className="pointer-events-none absolute -top-24 right-0 h-72 w-72 rounded-full bg-pink-300/10 blur-2xl" />
       <div className="pointer-events-none absolute -bottom-32 left-0 h-80 w-80 rounded-full bg-cyan-300/10 blur-2xl" />

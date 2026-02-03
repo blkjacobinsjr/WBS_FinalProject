@@ -4,6 +4,8 @@ import { GlobalWorkerOptions, getDocument } from "pdfjs-dist";
 import workerUrl from "pdfjs-dist/build/pdf.worker.min.mjs?url";
 import { useDataContext } from "../contexts/dataContext";
 import useSubscription from "../hooks/useSubscription";
+import useDashboard from "../hooks/useDashboard";
+import useCategory from "../hooks/useCategory";
 import { createSubscriptionBody } from "../utils/schemaBuilder";
 import { resolveCancelLink } from "../utils/cancelProviders";
 import eventEmitter from "../utils/EventEmitter";
@@ -265,9 +267,16 @@ function detectFromCsvText(text) {
 }
 
 export default function BulkImport() {
-  const { subscriptions, setSubscriptions } = useDataContext();
+  const {
+    subscriptions,
+    setSubscriptions,
+    setDashboardData,
+    setUsedCategories,
+  } = useDataContext();
   const { createSubscription, updateSubscription, getAllSubscriptions } =
     useSubscription();
+  const { getDashboardData } = useDashboard();
+  const { getUsedCategories } = useCategory();
 
   const [file, setFile] = useState(null);
   const [stage, setStage] = useState("idle");
@@ -418,6 +427,8 @@ export default function BulkImport() {
     }
 
     const refreshed = await getAllSubscriptions(new AbortController());
+    const refreshedDashboard = await getDashboardData(new AbortController());
+    const refreshedCategories = await getUsedCategories(new AbortController());
     const enriched = candidates.map((candidate) => {
       const key = normalizeName(candidate.name);
       const match = refreshed?.find(
@@ -439,6 +450,8 @@ export default function BulkImport() {
     setCurrentIndex(0);
     setStage("ready");
     setSubscriptions(refreshed);
+    if (refreshedDashboard) setDashboardData(refreshedDashboard);
+    if (refreshedCategories) setUsedCategories(refreshedCategories);
     eventEmitter.emit("refetchData");
     storeFingerprint(fingerprint);
 

@@ -1,6 +1,8 @@
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { useDataContext } from "../contexts/dataContext";
 import StatsCard from "../components/StatsCard";
+import FinanceInsightsFlow from "../components/FinanceInsightsFlow";
+import LoadingButton from "../components/LoadingButton";
 
 const FLOW = `flowchart TD
   A[Start: define Rich Life priorities] --> B[System: 4 pillars banking saving budgeting investing]
@@ -17,6 +19,7 @@ const FLOW = `flowchart TD
 
 export default function FinanceInsights() {
   const { subscriptions, usedCategories, dashboardData } = useDataContext();
+  const [flowOpen, setFlowOpen] = useState(false);
 
   const topCategory = useMemo(() => {
     if (!usedCategories?.length) return null;
@@ -39,13 +42,42 @@ export default function FinanceInsights() {
   return (
     <div className="flex w-full flex-col gap-4">
       <div className="rounded-lg border border-black/10 bg-white/70 p-4">
-        <div className="text-sm font-semibold uppercase tracking-[0.2em] text-gray-600">
-          Personal Finance Flow
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <div className="text-sm font-semibold uppercase tracking-[0.2em] text-gray-600">
+              Personal Finance Flow
+            </div>
+            <div className="mt-2 text-xs text-gray-600">
+              Spotify wrapped style recap. Full screen.
+            </div>
+          </div>
+          <LoadingButton
+            onClick={() => setFlowOpen(true)}
+            className="rounded-full bg-black px-4 py-2 text-xs font-semibold text-white"
+          >
+            Play Money Wrapped
+          </LoadingButton>
         </div>
-        <div className="mt-3 text-xs text-gray-600">
-          Mermaid flow stored in `personal-finance-flow.md`
+
+        <div className="mt-4 flex gap-3 overflow-x-auto pb-2">
+          {[
+            "Define Rich Life",
+            "Autopilot",
+            "Big Wins",
+            "Guardrails",
+            "Invest",
+            "Checklists",
+          ].map((label) => (
+            <div
+              key={label}
+              className="min-w-[140px] rounded-2xl border border-black/10 bg-white/80 px-3 py-3 text-xs font-semibold text-gray-700 shadow-sm"
+            >
+              {label}
+            </div>
+          ))}
         </div>
-        <pre className="mt-3 overflow-x-auto rounded-lg bg-slate-950 px-4 py-3 text-[11px] text-white">
+
+        <pre className="mt-3 hidden rounded-lg bg-slate-950 px-4 py-3 text-[11px] text-white sm:block">
           {FLOW}
         </pre>
       </div>
@@ -85,6 +117,8 @@ export default function FinanceInsights() {
           </li>
         </ul>
       </div>
+
+      <FinanceInsightsFlow open={flowOpen} onClose={() => setFlowOpen(false)} />
     </div>
   );
 }
