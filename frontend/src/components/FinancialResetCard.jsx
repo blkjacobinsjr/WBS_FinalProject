@@ -35,7 +35,7 @@ export default function FinancialResetCard() {
             isLoading={isOpening}
             className="w-full rounded-lg bg-black px-4 py-2 text-sm font-semibold text-white shadow-md"
           >
-            Fix Personal Finance
+            Financial Reset
           </LoadingButton>
         </div>
       </div>

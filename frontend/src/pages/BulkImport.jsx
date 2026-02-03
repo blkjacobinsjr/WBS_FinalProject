@@ -14,13 +14,13 @@ const FORCED_MERCHANTS = [
   { pattern: /rsg group|john reed/i, name: "John Reed" },
 ];
 const BLOCKLIST = [
-  /saldo/i,
-  /kontostand/i,
-  /guthaben/i,
-  /iban/i,
-  /bic/i,
-  /kartennr|kartennummer/i,
-  /buchung|umsatz|valuta/i,
+  /saldo|kontostand|guthaben|gesamt|summe|total|endabrechnung/i,
+  /kontoauszug|kontoumsatz|auszug|buchung|umsatz|valuta/i,
+  /iban|bic|swift|kontonr|kontonummer/i,
+  /kartennr|kartennummer|karte|kartenzahlung/i,
+  /lastschrift|sepa|dauerauftrag|ueberweisung|überweisung/i,
+  /bargeld|atm|cash|withdrawal/i,
+  /gebuhr|gebühr|fee|entgelt|zins|steuer|charge/i,
 ];
 
 GlobalWorkerOptions.workerSrc = workerUrl;
@@ -82,9 +82,46 @@ function hasLetters(line) {
   return /[a-zA-Z]/.test(line || "");
 }
 
+function isLikelyMerchant(name) {
+  if (!hasLetters(name)) return false;
+  if (isBlockedLine(name)) return false;
+  const cleaned = name.trim();
+  if (cleaned.length < 3 || cleaned.length > 60) return false;
+  const wordCount = cleaned.split(/\s+/).length;
+  if (wordCount > 6) return false;
+  return true;
+}
+
 function resolveForcedMerchant(line) {
   const match = FORCED_MERCHANTS.find((item) => item.pattern.test(line));
   return match?.name;
+}
+
+function collectForcedCandidates(lines) {
+  const forced = [];
+
+  for (let i = 0; i < lines.length; i += 1) {
+    const line = lines[i];
+    const forcedName = resolveForcedMerchant(line);
+    if (!forcedName) continue;
+
+    const forcedAmount =
+      extractAmount(line) ||
+      extractAmount(lines[i + 1]) ||
+      extractAmount(lines[i + 2]) ||
+      extractAmount(lines[i - 1]);
+
+    if (!forcedAmount) continue;
+
+    forced.push({
+      name: forcedName,
+      amount: forcedAmount,
+      interval: "month",
+      source: "pdf",
+    });
+  }
+
+  return forced;
 }
 
 function detectFromPdfText(text) {
@@ -93,48 +130,35 @@ function detectFromPdfText(text) {
     .map((line) => line.trim())
     .filter(Boolean);
 
+  const forcedCandidates = collectForcedCandidates(lines);
+  if (forcedCandidates.length > 0) {
+    return forcedCandidates;
+  }
+
   const candidates = [];
 
   for (let i = 0; i < lines.length; i += 1) {
     const line = lines[i];
     if (isBlockedLine(line)) continue;
 
-    const forcedName = resolveForcedMerchant(line);
-    if (forcedName) {
-      const forcedAmount =
-        extractAmount(line) ||
-        extractAmount(lines[i + 1]) ||
-        extractAmount(lines[i + 2]) ||
-        extractAmount(lines[i - 1]);
-      if (forcedAmount) {
-        candidates.push({
-          name: forcedName,
-          amount: forcedAmount,
-          interval: "month",
-          source: "pdf",
-        });
-        continue;
-      }
-    }
-
     const amount = extractAmount(line);
     if (!amount) continue;
 
     let name = cleanMerchant(line);
-    if (!hasLetters(name) || isBlockedLine(name)) {
+    if (!isLikelyMerchant(name)) {
       const prev = lines[i - 1];
       const next = lines[i + 1];
       const prevClean = cleanMerchant(prev);
       const nextClean = cleanMerchant(next);
 
-      if (hasLetters(prevClean) && !isBlockedLine(prevClean)) {
+      if (isLikelyMerchant(prevClean)) {
         name = prevClean;
-      } else if (hasLetters(nextClean) && !isBlockedLine(nextClean)) {
+      } else if (isLikelyMerchant(nextClean)) {
         name = nextClean;
       }
     }
 
-    if (!hasLetters(name)) continue;
+    if (!isLikelyMerchant(name)) continue;
 
     const override = resolveForcedMerchant(name);
     candidates.push({
@@ -199,7 +223,7 @@ function detectFromCsvText(text) {
 }
 
 export default function BulkImport() {
-  const { subscriptions } = useDataContext();
+  const { subscriptions, setSubscriptions } = useDataContext();
   const { createSubscription, updateSubscription, getAllSubscriptions } =
     useSubscription();
 
@@ -359,8 +383,18 @@ export default function BulkImport() {
     setDetected(enriched);
     setCurrentIndex(0);
     setStage("ready");
+    setSubscriptions(refreshed);
     eventEmitter.emit("refetchData");
-    toast.success(`Detected ${enriched.length} subscriptions`);
+
+    if (createdCount > 0) {
+      const label =
+        createdCount === 1
+          ? "1 subscription added"
+          : `${createdCount} subscriptions added`;
+      toast.success(label);
+    } else {
+      toast.success("No new subscriptions added");
+    }
   }
 
   async function handleDecision(action) {
