@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
 import { GlobalWorkerOptions, getDocument } from "pdfjs-dist";
-import workerUrl from "pdfjs-dist/build/pdf.worker.min.js?url";
+import workerUrl from "pdfjs-dist/build/pdf.worker.min.mjs?url";
 import { useDataContext } from "../contexts/dataContext";
 import useSubscription from "../hooks/useSubscription";
 import { createSubscriptionBody } from "../utils/schemaBuilder";
