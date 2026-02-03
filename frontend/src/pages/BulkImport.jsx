@@ -1,13 +1,10 @@
 import { useMemo, useState } from "react";
-import { GlobalWorkerOptions, getDocument } from "pdfjs-dist";
-import pdfjsWorker from "pdfjs-dist/build/pdf.worker.min.mjs?worker";
+import { getDocument } from "pdfjs-dist";
 import { useDataContext } from "../contexts/dataContext";
 import useSubscription from "../hooks/useSubscription";
 import { createSubscriptionBody } from "../utils/schemaBuilder";
 import { resolveCancelLink } from "../utils/cancelProviders";
 import eventEmitter from "../utils/EventEmitter";
-
-GlobalWorkerOptions.workerPort = new pdfjsWorker();
 
 const DEFAULT_CATEGORY_ID = "65085704f18207c1481e6642";
 
@@ -137,7 +134,7 @@ export default function BulkImport() {
 
   async function extractPdfText(targetFile) {
     const buffer = await targetFile.arrayBuffer();
-    const pdf = await getDocument({ data: buffer }).promise;
+    const pdf = await getDocument({ data: buffer, disableWorker: true }).promise;
 
     let combinedText = "";
     for (let pageIndex = 1; pageIndex <= pdf.numPages; pageIndex += 1) {
