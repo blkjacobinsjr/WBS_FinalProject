@@ -13,6 +13,7 @@ import SidebarTop from "../components/SidebarTop";
 import Stats from "../components/Stats"; // Import Stats component
 import SubscriptionForm from "../components/SubscriptionForm"; // Import AddSubscriptionForm component
 import SubscriptionList from "../components/SubscriptionList"; // Import SubscriptionList component
+import FinancialResetCard from "../components/FinancialResetCard";
 import UsageModal from "../components/UsageModal";
 import CategoryPage from "./CategoryPage";
 import BulkImport from "./BulkImport";
@@ -315,11 +316,12 @@ function Dashboard() {
                 {/* Main Content */}
                 <div className="w-full flex-1 rounded-br-lg bg-white/25 p-3 sm:p-4">
                   {/* Main Dashboard View */}
-                  {!pageId && (
-                    <div className="grid h-full grid-rows-[max-content_max-content_1fr] gap-4">
-                      <Stats />
-                      <OverviewStat />
-                      <SubscriptionList />
+                    {!pageId && (
+                      <div className="grid h-full grid-rows-[max-content_max-content_1fr] gap-4">
+                        <FinancialResetCard />
+                        <Stats />
+                        <OverviewStat />
+                        <SubscriptionList />
 
                       {/* No subscriptions added yet */}
                       {subscriptions?.length === 0 && (
