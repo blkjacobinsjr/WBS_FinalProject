@@ -10,6 +10,18 @@ import eventEmitter from "../utils/EventEmitter";
 import LoadingButton from "../components/LoadingButton";
 
 const DEFAULT_CATEGORY_ID = "65085704f18207c1481e6642";
+const FORCED_MERCHANTS = [
+  { pattern: /rsg group|john reed/i, name: "John Reed" },
+];
+const BLOCKLIST = [
+  /saldo/i,
+  /kontostand/i,
+  /guthaben/i,
+  /iban/i,
+  /bic/i,
+  /kartennr|kartennummer/i,
+  /buchung|umsatz|valuta/i,
+];
 
 GlobalWorkerOptions.workerSrc = workerUrl;
 
@@ -32,6 +44,49 @@ function parseAmount(value) {
   return Math.abs(amount);
 }
 
+function extractAmount(line) {
+  if (!line) return null;
+  const withCurrency = line.match(
+    /(-?\d{1,3}(?:[.,]\d{3})*[.,]\d{2})\s*(EUR|€)\b/i,
+  );
+  if (withCurrency) {
+    return parseAmount(withCurrency[1] || withCurrency[0]);
+  }
+
+  const fallback = line.match(/-?\d{1,3}(?:[.,]\d{3})*[.,]\d{2}\b/);
+  if (fallback) {
+    return parseAmount(fallback[0]);
+  }
+
+  return null;
+}
+
+function isBlockedLine(line) {
+  return BLOCKLIST.some((pattern) => pattern.test(line));
+}
+
+function cleanMerchant(line) {
+  if (!line) return "";
+  let cleaned = line;
+  cleaned = cleaned.replace(/\b\d{2}[./-]\d{2}[./-]\d{2,4}\b/g, "");
+  cleaned = cleaned.replace(/\b\d{4}-\d{2}-\d{2}\b/g, "");
+  cleaned = cleaned.replace(/\b[A-Z]{2}\d{2}[A-Z0-9]{11,30}\b/g, "");
+  cleaned = cleaned.replace(/\b(EUR|€)\b/gi, "");
+  cleaned = cleaned.replace(/-?\d{1,3}(?:[.,]\d{3})*[.,]\d{2}/g, "");
+  cleaned = cleaned.replace(/[|•]/g, " ");
+  cleaned = cleaned.replace(/\s+/g, " ").trim();
+  return cleaned;
+}
+
+function hasLetters(line) {
+  return /[a-zA-Z]/.test(line || "");
+}
+
+function resolveForcedMerchant(line) {
+  const match = FORCED_MERCHANTS.find((item) => item.pattern.test(line));
+  return match?.name;
+}
+
 function detectFromPdfText(text) {
   const lines = text
     .split(/\r?\n/)
@@ -41,29 +96,53 @@ function detectFromPdfText(text) {
   const candidates = [];
 
   for (let i = 0; i < lines.length; i += 1) {
-    if (lines[i].toLowerCase() === "beschreibung") {
-      const name = lines[i + 1];
-      if (!name) continue;
+    const line = lines[i];
+    if (isBlockedLine(line)) continue;
 
-      const windowLines = lines.slice(i, i + 20).join(" ");
-      const windowLower = windowLines.toLowerCase();
-      if (!windowLower.includes("lastschriften") && !windowLower.includes("iban")) {
+    const forcedName = resolveForcedMerchant(line);
+    if (forcedName) {
+      const forcedAmount =
+        extractAmount(line) ||
+        extractAmount(lines[i + 1]) ||
+        extractAmount(lines[i + 2]) ||
+        extractAmount(lines[i - 1]);
+      if (forcedAmount) {
+        candidates.push({
+          name: forcedName,
+          amount: forcedAmount,
+          interval: "month",
+          source: "pdf",
+        });
         continue;
       }
-
-      const eurMatch = windowLines.match(/(\d+[.,]\d+)\s*EUR/i);
-      const euroMatch = windowLines.match(/-?\d+[.,]\d+\s*€/i);
-      const amount = parseAmount(eurMatch?.[1] || euroMatch?.[0]);
-
-      if (!amount) continue;
-
-      candidates.push({
-        name,
-        amount,
-        interval: "month",
-        source: "pdf",
-      });
     }
+
+    const amount = extractAmount(line);
+    if (!amount) continue;
+
+    let name = cleanMerchant(line);
+    if (!hasLetters(name) || isBlockedLine(name)) {
+      const prev = lines[i - 1];
+      const next = lines[i + 1];
+      const prevClean = cleanMerchant(prev);
+      const nextClean = cleanMerchant(next);
+
+      if (hasLetters(prevClean) && !isBlockedLine(prevClean)) {
+        name = prevClean;
+      } else if (hasLetters(nextClean) && !isBlockedLine(nextClean)) {
+        name = nextClean;
+      }
+    }
+
+    if (!hasLetters(name)) continue;
+
+    const override = resolveForcedMerchant(name);
+    candidates.push({
+      name: override || name,
+      amount,
+      interval: "month",
+      source: "pdf",
+    });
   }
 
   return candidates;
@@ -147,8 +226,34 @@ export default function BulkImport() {
     for (let pageIndex = 1; pageIndex <= pdf.numPages; pageIndex += 1) {
       const page = await pdf.getPage(pageIndex);
       const content = await page.getTextContent();
-      const pageText = content.items.map((item) => item.str).join(" ");
-      combinedText += `${pageText}\n`;
+      const lines = [];
+      let currentLine = "";
+      let lastY = null;
+
+      for (const item of content.items) {
+        const text = item.str || "";
+        const y = item.transform?.[5] ?? null;
+
+        if (lastY !== null && y !== null && Math.abs(y - lastY) > 6) {
+          if (currentLine.trim()) lines.push(currentLine.trim());
+          currentLine = "";
+        }
+
+        currentLine += `${text} `;
+
+        if (item.hasEOL) {
+          if (currentLine.trim()) lines.push(currentLine.trim());
+          currentLine = "";
+        }
+
+        if (y !== null) {
+          lastY = y;
+        }
+      }
+
+      if (currentLine.trim()) lines.push(currentLine.trim());
+
+      combinedText += `${lines.join("\n")}\n`;
     }
 
     return combinedText;
@@ -185,7 +290,7 @@ export default function BulkImport() {
     }
 
     if (candidates.length === 0) {
-      toast.error("No subscriptions detected");
+      toast.error("No subscriptions found");
       setStage("idle");
       return;
     }
