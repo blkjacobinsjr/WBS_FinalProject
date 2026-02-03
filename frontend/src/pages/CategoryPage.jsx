@@ -12,17 +12,17 @@ export default function CategoryPage({ categoryId }) {
   return (
     <div>
       <CategroyStats category={category} />
-      <div className="grid grid-cols-2 gap-2 pt-2">
+      <div className="grid gap-2 pt-2 lg:grid-cols-2">
         <SubscriptionList categoryId={categoryId} itemsPerPage={10} />
-        <div className="h-full min-h-[25vh] w-full p-10">
+        <div className="h-full min-h-[25vh] w-full p-4 sm:p-6">
           {category?.subscriptionCount > 3 && (
-            <div className="h-1/2">
+            <div className="min-h-[220px] sm:min-h-[260px]">
               <CategoryRadarChart categoryId={categoryId} />
             </div>
           )}
 
           {category?.subscriptionCount > 1 && (
-            <div className="flex h-1/2 min-h-[25vh] w-full items-center justify-center">
+            <div className="flex min-h-[220px] w-full items-center justify-center sm:min-h-[260px]">
               <CategoryPieChart categoryId={categoryId} />
             </div>
           )}

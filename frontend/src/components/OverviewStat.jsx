@@ -19,7 +19,7 @@ export default function OverviewStat() {
       : [];
 
   return (
-    <div className="grid grid-cols-2 gap-4 rounded-lg border-2 border-white/50 bg-white/25 p-4">
+    <div className="grid gap-4 rounded-lg border-2 border-white/50 bg-white/25 p-4 lg:grid-cols-2">
       <div className="flex flex-col items-center justify-start">
         <h4 className="text-sm font-bold text-gray-800">
           Highest Spend Categories

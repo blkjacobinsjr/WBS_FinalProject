@@ -20,7 +20,7 @@ export default function CategroyStats({ category }) {
     : { name: "Insufficient Data" };
 
   return (
-    <div className="grid h-[10vh] grid-cols-4 gap-2">
+    <div className="grid gap-2 sm:grid-cols-2 xl:grid-cols-4">
       <StatsCard title="Total Cost" width="w-full">
         {category?.totalCost.toFixed(2)}
       </StatsCard>

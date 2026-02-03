@@ -59,7 +59,7 @@ export default function Notifications() {
         )}
       </Popover.Button>
 
-      <Popover.Panel className="absolute z-10 min-w-[15vw] -translate-x-1/2 translate-y-2 rounded-xl border border-black/25 bg-white p-2 shadow-xl">
+      <Popover.Panel className="absolute right-0 z-10 mt-2 w-[90vw] max-w-sm rounded-xl border border-black/25 bg-white p-2 shadow-xl sm:left-1/2 sm:right-auto sm:-translate-x-1/2">
         <div className="grid gap-2">
           {/* Notifications to show */}
           {notifications?.length > 0 &&
@@ -73,8 +73,7 @@ export default function Notifications() {
           {/* Nothing to show */}
           {notifications?.length === 0 && (
             <div className="p-2 text-center text-sm text-gray-500">
-              You currently have no notifications. Awesome job staying on top of
-              things! 👏
+              You currently have no notifications.
             </div>
           )}
         </div>

@@ -65,7 +65,7 @@ export default function UsagePage() {
   return (
     <>
       {/* Stats Cards */}
-      <div className="grid h-[20vh] grid-cols-4 gap-2">
+      <div className="grid gap-2 sm:grid-cols-2 xl:grid-cols-4">
         {/* Row 1 */}
         <StatsCard title="Total Subscriptions">{totalSubscriptions}</StatsCard>
         <StatsCard title="Total Cost Per Month">
@@ -120,13 +120,13 @@ export default function UsagePage() {
       </div>
 
       {/* Fancy Schmancy Charts */}
-      <div className="grid grid-cols-2 gap-2">
+      <div className="grid gap-2 xl:grid-cols-2">
         {/* Category Radar Chart */}
-        <div className="min-h-[20vh] w-full p-4">
+        <div className="min-h-[220px] w-full p-4 sm:min-h-[260px]">
           <h4 className="text-center text-sm font-bold text-gray-800">
             Category Price vs. Usage
           </h4>
-          <div className="flex h-[20vh] w-full items-center justify-center">
+          <div className="flex min-h-[160px] w-full items-center justify-center sm:min-h-[200px]">
             {/* Enough categories to show graph */}
             {usedCategories?.length > 0 && <UsageRadarChart />}
             {/* Not enough categories to show graph */}
@@ -137,11 +137,11 @@ export default function UsagePage() {
         </div>
 
         {/* Category Pie Chart */}
-        <div className="min-h-[20vh] w-full p-4">
+        <div className="min-h-[220px] w-full p-4 sm:min-h-[260px]">
           <h4 className="text-center text-sm font-bold text-gray-800">
             Category Spend
           </h4>
-          <div className="flex h-[20vh] w-full items-center justify-center">
+          <div className="flex min-h-[160px] w-full items-center justify-center sm:min-h-[200px]">
             {/* Enough categories to show graph */}
             {usedCategories?.length > 0 && (
               <UsedCategoriesPieChart pieData={pieData} />
@@ -154,11 +154,11 @@ export default function UsagePage() {
         </div>
 
         {/* All subscriptions pie chart */}
-        <div className="min-h-[20vh] w-full p-4">
+        <div className="min-h-[220px] w-full p-4 sm:min-h-[260px]">
           <h4 className="text-center text-sm font-bold text-gray-800">
             All Subscriptions
           </h4>
-          <div className="flex h-[20vh] w-full items-center justify-center">
+          <div className="flex min-h-[160px] w-full items-center justify-center sm:min-h-[200px]">
             {/* Enough categories to show graph */}
             {subscriptions?.length > 0 && <CategoryPieChart />}
             {/* Not enough categories to show graph */}
@@ -169,14 +169,14 @@ export default function UsagePage() {
         </div>
 
         {/* Spend-o-Meter */}
-        <div className="min-h-[20vh] w-full p-4">
+        <div className="min-h-[220px] w-full p-4 sm:min-h-[260px]">
           <h4 className="text-center text-sm font-bold text-gray-800">
             Subzero Spend-O-Meter
             <div className="text-xs font-normal">
               Track Subscription Spend Above Average
             </div>
           </h4>
-          <div className="flex h-[20vh] w-full items-center justify-center">
+          <div className="flex min-h-[160px] w-full items-center justify-center sm:min-h-[200px]">
             <Piechartwithneedle
               maxFirstSegment={219}
               needleValue={dashboardData?.totalCostPerMonth}

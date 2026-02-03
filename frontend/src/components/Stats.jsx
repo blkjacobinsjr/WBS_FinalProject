@@ -1,15 +1,14 @@
 import StatsCard from "./StatsCard";
 import { useDataContext } from "../contexts/dataContext";
 
-export default function Stats({ columns = 4, height = "h-[10vh]" }) {
+export default function Stats() {
   const { subscriptions, dashboardData } = useDataContext();
 
   if (!Object.keys(dashboardData).length > 0) return;
   const totalSubscriptions = subscriptions?.length ?? 0;
 
   return (
-    // <div className="grid grid-cols-4 gap-2">
-    <div className={`${height} grid grid-cols-${columns} gap-2`}>
+    <div className="grid gap-2 sm:grid-cols-2 xl:grid-cols-4">
       <StatsCard className="text-sm" title="Total Subscriptions">
         {totalSubscriptions}
       </StatsCard>

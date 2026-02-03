@@ -147,7 +147,7 @@ export default function UsageModal({ opened, onClose, notificationId }) {
           leaveFrom="flex w-full scale-100 justify-center opacity-100"
           leaveTo="flex w-full scale-95 justify-center opacity-0"
         >
-          <Dialog.Panel className="z-20 w-1/4 rounded-lg bg-white p-12 opacity-90">
+          <Dialog.Panel className="z-20 w-[92vw] max-w-lg rounded-lg bg-white p-6 opacity-90 sm:p-10">
             <Dialog.Title
               as="h3"
               className="text-lg font-medium leading-6 text-gray-900"

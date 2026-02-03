@@ -168,14 +168,14 @@ export default function SubscriptionForm({
           leaveFrom="flex w-full scale-100 justify-center opacity-100"
           leaveTo="flex w-full scale-95 justify-center opacity-0"
         >
-          <Dialog.Panel className="z-20 rounded-lg bg-white p-12 opacity-90">
+          <Dialog.Panel className="z-20 w-[92vw] max-w-lg rounded-lg bg-white p-6 opacity-90 sm:p-10">
             {/* Title Bar */}
             <Dialog.Title className="mb-8 text-center text-xl font-semibold uppercase">
               {mode} Subscription
             </Dialog.Title>
 
             {/* Subscription Form */}
-            <div className="grid grid-cols-[max-content_1fr] items-center gap-x-8 gap-y-4">
+            <div className="grid grid-cols-1 items-start gap-x-8 gap-y-4 sm:grid-cols-[max-content_1fr]">
               {/* Subscription Name */}
               <label htmlFor="name">Name</label>
               {(mode === "add" || mode === "edit") && (
@@ -320,7 +320,7 @@ export default function SubscriptionForm({
             </div>
 
             {/* Buttons */}
-            <div className="grid auto-cols-fr grid-flow-col justify-center gap-2 pt-12">
+            <div className="grid grid-cols-1 gap-2 pt-8 sm:auto-cols-fr sm:grid-flow-col">
               {mode === "edit" && (
                 <button
                   className="inline-flex justify-center rounded-md bg-red-500 px-3 py-2 text-sm font-medium text-white shadow-sm hover:bg-red-700 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-red-600"

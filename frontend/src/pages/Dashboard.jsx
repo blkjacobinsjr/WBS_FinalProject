@@ -244,115 +244,115 @@ function Dashboard() {
 
   // Main return block for the Dashboard component
   return (
-    <div className="apple-bg h-screen w-screen">
+    <div className="apple-bg min-h-screen w-full">
       {loading && <Loading />}
 
       {!loading && error && <ErrorDisplay message={errorMessage} />}
 
       {!loading && !error && checkDataLoadingSuccessful() && (
-        <div className="flex w-full flex-grow flex-col items-center p-4">
+        <div className="mx-auto flex w-full max-w-6xl flex-col gap-4 px-4 py-4 sm:px-6 lg:px-8">
           {/* Top bar with logo and search */}
-          <div className="flex w-3/5 flex-grow flex-row items-center justify-between gap-4">
+          <div className="flex w-full flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             {/* Logo */}
-            <Link to="/dashboard">
+            <Link to="/dashboard" className="flex items-center gap-2">
               <img
                 src="/subzero_logo_icon.png"
                 className="h-7 w-7"
                 alt="Logo"
               />
+              <span className="text-sm font-semibold text-gray-800 sm:hidden">
+                Subzero
+              </span>
             </Link>
 
             {/* Search Bar */}
-            <div className="flex w-full justify-center">
+            <div className="flex w-full sm:flex-1 sm:justify-center">
               <SearchModal />
             </div>
           </div>
 
           {/* App content */}
-          <div className="flex w-3/5 flex-grow flex-row items-center justify-between gap-4">
-            <div className="w-full pt-8">
-              <div className="flex max-h-[86vh] min-h-[86vh] w-full flex-grow flex-col divide-y divide-black/25 rounded-lg border border-black/25 bg-gray-300/25 shadow-xl backdrop-blur">
-                {/* Title Bar */}
-                <div className="flex items-center gap-4 p-4">
-                  {/* Title */}
-                  <div className="w-full text-lg font-bold uppercase">
-                    {getGreeting(firstName)}
-                  </div>
+          <div className="w-full">
+            <div className="flex w-full flex-col rounded-lg border border-black/25 bg-gray-300/25 shadow-xl backdrop-blur">
+              {/* Title Bar */}
+              <div className="flex flex-col gap-3 p-4 sm:flex-row sm:items-center sm:justify-between">
+                {/* Title */}
+                <div className="text-lg font-bold uppercase">
+                  {getGreeting(firstName)}
+                </div>
 
+                <div className="flex items-center gap-3">
                   {/* Notification */}
                   <Notifications />
 
                   {/* User Icon */}
                   <UserButton />
                 </div>
+              </div>
 
-                {/* Content Area */}
-                <div className="flex w-full flex-grow flex-row divide-x divide-black/25">
-                  {/* Sidebar Content */}
-                  <div className="flex flex-grow flex-col divide-y divide-black/25">
-                    {/* Add Subscription Button */}
-                    <div className="flex justify-center p-1">
-                      <button
-                        onClick={handleAddSubscriptionClick}
-                        className="mx-2 w-full transform-gpu cursor-pointer rounded-lg border-none bg-gradient-to-r from-black to-gray-500 px-5 py-3 text-base text-white outline-none transition-all duration-300 ease-in-out hover:scale-105 hover:from-gray-500 hover:to-black hover:shadow-lg"
-                      >
-                        Add Subscription
-                      </button>
-                    </div>
-
-                    {/* Overview, Recommendations, Cancel */}
-                    <SidebarTop className="w-full p-2" />
-
-                    {/* Categories */}
-                    <Sidebar className="p-2" />
+              {/* Content Area */}
+              <div className="flex w-full flex-1 flex-col divide-y divide-black/25 lg:flex-row lg:divide-y-0 lg:divide-x">
+                {/* Sidebar Content */}
+                <div className="flex w-full flex-none flex-col divide-y divide-black/25 lg:w-72">
+                  {/* Add Subscription Button */}
+                  <div className="flex justify-center p-2">
+                    <button
+                      onClick={handleAddSubscriptionClick}
+                      className="w-full transform-gpu cursor-pointer rounded-lg border-none bg-gradient-to-r from-black to-gray-500 px-5 py-3 text-base text-white outline-none transition-all duration-300 ease-in-out hover:scale-[1.02] hover:from-gray-500 hover:to-black hover:shadow-lg"
+                    >
+                      Add Subscription
+                    </button>
                   </div>
 
-                  {/* Main Content */}
-                  <div className="w-full rounded-br-lg bg-white/25 p-2">
-                    {/* Main Dashboard View */}
-                    {!pageId && (
-                      <div className="grid h-full grid-rows-[max-content_max-content_1fr] gap-4">
-                        <Stats />
-                        <OverviewStat />
-                        <SubscriptionList />
+                  {/* Overview, Recommendations, Cancel */}
+                  <SidebarTop className="w-full p-2" />
 
-                        {/* No subscriptions added yet */}
-                        {subscriptions?.length === 0 && (
-                          <div className="flex items-center justify-center pb-8 text-gray-700">
-                            <span className="mr-2">
-                              Welcome! Why not get started by{" "}
-                            </span>
-                            <button
-                              className="underline"
-                              onClick={() =>
-                                eventEmitter.emit(
-                                  "openSubscriptionForm",
-                                  {},
-                                  "add",
-                                )
-                              }
-                            >
-                              adding your first subscription
-                            </button>
-                            ? 👍
-                          </div>
-                        )}
-                      </div>
-                    )}
+                  {/* Categories */}
+                  <Sidebar className="p-2" />
+                </div>
 
-                    {/* Recommendations / Cancel */}
-                    {pageId === "recommendations" && <Recommendations />}
+                {/* Main Content */}
+                <div className="w-full flex-1 rounded-br-lg bg-white/25 p-3 sm:p-4">
+                  {/* Main Dashboard View */}
+                  {!pageId && (
+                    <div className="grid h-full grid-rows-[max-content_max-content_1fr] gap-4">
+                      <Stats />
+                      <OverviewStat />
+                      <SubscriptionList />
 
-                    {/* Usage Page */}
-                    {pageId === "usage" && <UsagePage />}
-
-                    {/* Category Pages */}
-                    {pageId &&
-                      pageId !== "recommendations" &&
-                      pageId !== "usage" && (
-                        <CategoryPage categoryId={pageId} />
+                      {/* No subscriptions added yet */}
+                      {subscriptions?.length === 0 && (
+                        <div className="flex flex-col items-center justify-center gap-2 pb-6 text-center text-gray-700 sm:flex-row">
+                          <span>Welcome. Get started by</span>
+                          <button
+                            className="underline"
+                            onClick={() =>
+                              eventEmitter.emit(
+                                "openSubscriptionForm",
+                                {},
+                                "add",
+                              )
+                            }
+                          >
+                            adding your first subscription
+                          </button>
+                        </div>
                       )}
-                  </div>
+                    </div>
+                  )}
+
+                  {/* Recommendations / Cancel */}
+                  {pageId === "recommendations" && <Recommendations />}
+
+                  {/* Usage Page */}
+                  {pageId === "usage" && <UsagePage />}
+
+                  {/* Category Pages */}
+                  {pageId &&
+                    pageId !== "recommendations" &&
+                    pageId !== "usage" && (
+                      <CategoryPage categoryId={pageId} />
+                    )}
                 </div>
               </div>
             </div>

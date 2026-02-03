@@ -36,7 +36,7 @@ export default function SubscriptionListCard({
             {subscription.interval === "month" ? "Monthly " : "Yearly"}
           </p>
           {subscription?.validScore && (
-            <div className="absolute inset-0 flex min-w-[3rem] -translate-x-16 flex-col items-center justify-center rounded border border-black/25 p-1 text-sm text-gray-500 shadow-inner">
+            <div className="mt-1 flex items-center gap-2 text-xs text-gray-500 sm:absolute sm:inset-0 sm:mt-0 sm:min-w-[3rem] sm:-translate-x-16 sm:flex-col sm:items-center sm:justify-center sm:rounded sm:border sm:border-black/25 sm:p-1 sm:text-sm sm:shadow-inner">
               <div className="text-xs">Score</div>
               <div>{subscription?.score.toFixed(2)}</div>
             </div>

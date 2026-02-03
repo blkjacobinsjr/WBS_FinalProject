@@ -68,7 +68,7 @@ export default function SearchModal() {
     <>
       <button
         onClick={() => setIsOpen(true)}
-        className="flex w-1/2 items-center space-x-2 rounded-lg border border-black/25 bg-white/50 px-3 py-1.5 shadow hover:border-black/50 focus:outline-none"
+        className="flex w-full max-w-lg items-center space-x-2 rounded-lg border border-black/25 bg-white/50 px-3 py-1.5 shadow hover:border-black/50 focus:outline-none"
       >
         <svg
           className="-ml-1 flex-none text-gray-500"
@@ -97,7 +97,7 @@ export default function SearchModal() {
         <span className="flex-1 text-left text-sm text-gray-500">
           Search...
         </span>
-        <span className="flex-none text-xs font-semibold text-gray-500">
+        <span className="hidden flex-none text-xs font-semibold text-gray-500 sm:flex">
           <span className="rounded border border-black/20 bg-gray-300/25 px-2 py-1 text-xs font-semibold shadow-inner">
             {correctModifierKey}
           </span>
@@ -111,7 +111,7 @@ export default function SearchModal() {
       <Transition show={isOpen} as={Fragment} className="w-full">
         <Dialog
           as="div"
-          className="fixed inset-0 z-50 flex h-full w-full items-start justify-center pt-32" // Changed items-start to items-center to center the modal vertically
+          className="fixed inset-0 z-50 flex h-full w-full items-start justify-center pt-20 sm:pt-32"
           onClose={() => setIsOpen(false)}
         >
           <Transition.Child
@@ -130,11 +130,11 @@ export default function SearchModal() {
             enter="duration-200 ease-out"
             enterFrom="scale-95 opacity-0"
             enterTo="flex w-full scale-100 justify-center opacity-100"
-            leave="duration-200 ease-in"
-            leaveFrom="flex w-full scale-100 justify-center opacity-100"
-            leaveTo="flex w-full scale-95 justify-center opacity-0"
-          >
-            <div className="w-1/3 rounded-xl border-black/25 bg-white px-4 py-2 shadow-xl">
+          leave="duration-200 ease-in"
+          leaveFrom="flex w-full scale-100 justify-center opacity-100"
+          leaveTo="flex w-full scale-95 justify-center opacity-0"
+        >
+            <div className="w-[92vw] max-w-lg rounded-xl border-black/25 bg-white px-4 py-2 shadow-xl">
               <form className="flex items-center">
                 <svg
                   className="h-5 w-5 text-gray-700"
@@ -184,7 +184,7 @@ export default function SearchModal() {
               {/* Show 'no results' if input but no results... */}
               {searchInput && searchResults?.length === 0 && (
                 <div className="mb-2 grid gap-2 rounded-lg bg-gray-300/25 p-2 text-center text-gray-500 shadow-inner">
-                  No results found that match your search 🤷
+                  No results found that match your search
                 </div>
               )}
             </div>
