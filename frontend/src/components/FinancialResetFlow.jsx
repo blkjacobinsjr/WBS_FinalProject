@@ -22,6 +22,15 @@ export default function FinancialResetFlow({ open, onClose }) {
     }
   }, [open]);
 
+  useEffect(() => {
+    if (!open) return;
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.body.style.overflow = previousOverflow;
+    };
+  }, [open]);
+
   const candidate = useMemo(() => {
     const targetName = dashboardData?.barelyUsedMostExpensive?.name;
     if (targetName && subscriptions?.length) {
@@ -127,12 +136,12 @@ export default function FinancialResetFlow({ open, onClose }) {
   if (!open) return null;
 
   return (
-    <div className="fixed inset-0 z-50">
-      <div className="absolute inset-0 bg-slate-950/30 backdrop-blur-sm" />
-      <div className="absolute -top-24 right-0 h-72 w-72 rounded-full bg-pink-300/30 blur-3xl" />
-      <div className="absolute -bottom-32 left-0 h-80 w-80 rounded-full bg-cyan-300/30 blur-3xl" />
+    <div className="fixed inset-0 z-[60]">
+      <div className="absolute inset-0 bg-gradient-to-br from-slate-950/95 via-slate-900/90 to-slate-950/95" />
+      <div className="pointer-events-none absolute -top-24 right-0 h-72 w-72 rounded-full bg-pink-300/10 blur-2xl" />
+      <div className="pointer-events-none absolute -bottom-32 left-0 h-80 w-80 rounded-full bg-cyan-300/10 blur-2xl" />
 
-      <div className="relative flex min-h-[100dvh] flex-col justify-between px-5 py-6 sm:px-10 sm:py-10">
+      <div className="relative flex min-h-[100svh] min-h-[100dvh] flex-col justify-between px-5 py-6 sm:px-10 sm:py-10">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3 text-xs font-semibold uppercase tracking-[0.2em] text-white/70">
             Reset Sprint
@@ -155,8 +164,8 @@ export default function FinancialResetFlow({ open, onClose }) {
           />
         </div>
 
-        <div className="flex flex-1 flex-col items-center justify-center gap-6 text-center text-white animate-in fade-in zoom-in-95 duration-200">
-          <div className="w-full max-w-xl space-y-3">
+        <div className="flex flex-1 flex-col items-center justify-center gap-6 text-center text-white motion-safe:animate-in motion-safe:fade-in motion-safe:zoom-in-95 motion-safe:duration-200">
+          <div className="w-full max-w-[560px] space-y-3">
             <div className="text-3xl font-semibold leading-tight sm:text-5xl">
               {current.title}
             </div>
@@ -172,7 +181,7 @@ export default function FinancialResetFlow({ open, onClose }) {
             onClick={current.action}
             isLoading={isWorking}
             loadingText="Working..."
-            className="mt-4 w-full max-w-sm rounded-full bg-white px-6 py-3 text-sm font-semibold text-slate-900 shadow-xl shadow-black/20"
+            className="mt-4 w-full max-w-sm rounded-full bg-white px-6 py-3 text-sm font-semibold text-slate-900 shadow-xl shadow-black/30"
           >
             {current.cta}
           </LoadingButton>
