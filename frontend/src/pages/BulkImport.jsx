@@ -1,5 +1,6 @@
 import { useMemo, useState } from "react";
-import { getDocument } from "pdfjs-dist";
+import { GlobalWorkerOptions, getDocument } from "pdfjs-dist";
+import workerUrl from "pdfjs-dist/build/pdf.worker.min.js?url";
 import { useDataContext } from "../contexts/dataContext";
 import useSubscription from "../hooks/useSubscription";
 import { createSubscriptionBody } from "../utils/schemaBuilder";
@@ -7,6 +8,8 @@ import { resolveCancelLink } from "../utils/cancelProviders";
 import eventEmitter from "../utils/EventEmitter";
 
 const DEFAULT_CATEGORY_ID = "65085704f18207c1481e6642";
+
+GlobalWorkerOptions.workerSrc = workerUrl;
 
 function normalizeName(value) {
   return value
@@ -134,7 +137,7 @@ export default function BulkImport() {
 
   async function extractPdfText(targetFile) {
     const buffer = await targetFile.arrayBuffer();
-    const pdf = await getDocument({ data: buffer, disableWorker: true }).promise;
+    const pdf = await getDocument({ data: buffer }).promise;
 
     let combinedText = "";
     for (let pageIndex = 1; pageIndex <= pdf.numPages; pageIndex += 1) {
