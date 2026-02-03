@@ -2,6 +2,7 @@ import { useMemo, useState } from "react";
 import { useDataContext } from "../contexts/dataContext";
 import StatsCard from "../components/StatsCard";
 import FinanceInsightsFlow from "../components/FinanceInsightsFlow";
+import FlowChartVisual from "../components/FlowChartVisual";
 import LoadingButton from "../components/LoadingButton";
 
 export default function FinanceInsights() {
@@ -65,6 +66,64 @@ export default function FinanceInsights() {
     },
   ];
 
+  const flowData = [
+    {
+      step: 1,
+      y: 3,
+      short: "Rich Life",
+      label: flowSteps[0].title,
+      body: flowSteps[0].body,
+      metric: flowSteps[0].metric,
+    },
+    {
+      step: 2,
+      y: 2.8,
+      short: "Autopilot",
+      label: flowSteps[1].title,
+      body: flowSteps[1].body,
+      metric: flowSteps[1].metric,
+    },
+    {
+      step: 3,
+      y: 2.2,
+      short: "Big Wins",
+      label: flowSteps[2].title,
+      body: flowSteps[2].body,
+      metric: flowSteps[2].metric,
+    },
+    {
+      step: 4,
+      y: 1.8,
+      short: "Guardrails",
+      label: flowSteps[3].title,
+      body: flowSteps[3].body,
+      metric: flowSteps[3].metric,
+    },
+    {
+      step: 5,
+      y: 2.1,
+      short: "Invest",
+      label: flowSteps[4].title,
+      body: flowSteps[4].body,
+      metric: flowSteps[4].metric,
+    },
+    {
+      step: 6,
+      y: 2.9,
+      short: "Checklist",
+      label: flowSteps[5].title,
+      body: flowSteps[5].body,
+      metric: flowSteps[5].metric,
+    },
+  ];
+
+  const branchData = [
+    { step: 5, y: 2.1 },
+    { step: 5.4, y: 1.4 },
+    { step: 5.8, y: 1.0 },
+    { step: 6, y: 2.2 },
+  ];
+
   return (
     <div className="flex w-full flex-col gap-4">
       <div className="rounded-lg border border-black/10 bg-white/70 p-4">
@@ -85,24 +144,8 @@ export default function FinanceInsights() {
           </LoadingButton>
         </div>
 
-        <div className="mt-4 grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
-          {flowSteps.map((step, index) => (
-            <div
-              key={step.title}
-              className="rounded-2xl border border-black/10 bg-white/80 p-4 shadow-sm"
-            >
-              <div className="text-[10px] font-semibold uppercase tracking-[0.2em] text-gray-500">
-                Step {index + 1}
-              </div>
-              <div className="mt-2 text-sm font-semibold text-gray-900">
-                {step.title}
-              </div>
-              <div className="mt-1 text-xs text-gray-600">{step.body}</div>
-              <div className="mt-3 rounded-xl bg-slate-950/90 px-3 py-2 text-xs font-semibold text-white">
-                {step.metric}
-              </div>
-            </div>
-          ))}
+        <div className="mt-4">
+          <FlowChartVisual data={flowData} branch={branchData} />
         </div>
       </div>
 
