@@ -15,6 +15,7 @@ import SubscriptionForm from "../components/SubscriptionForm"; // Import AddSubs
 import SubscriptionList from "../components/SubscriptionList"; // Import SubscriptionList component
 import FinancialResetCard from "../components/FinancialResetCard";
 import UsageModal from "../components/UsageModal";
+import LoadingButton from "../components/LoadingButton";
 import CategoryPage from "./CategoryPage";
 import BulkImport from "./BulkImport";
 
@@ -55,6 +56,7 @@ function Dashboard() {
     subscription: {},
     showForm: false,
   });
+  const [isOpeningSubscription, setIsOpeningSubscription] = useState(false);
   const [usageModalState, setUsageModalState] = useState({
     showForm: false,
     notificationId: null,
@@ -226,6 +228,8 @@ function Dashboard() {
   // ---- MORE FUNCTIONS ----
   // open subscription form with an empty subscription
   function handleAddSubscriptionClick() {
+    setIsOpeningSubscription(true);
+    setTimeout(() => setIsOpeningSubscription(false), 200);
     setSubscriptionFormState({
       mode: "add",
       subscription: {},
@@ -298,12 +302,13 @@ function Dashboard() {
                 <div className="flex w-full flex-none flex-col divide-y divide-black/25 lg:w-72">
                   {/* Add Subscription Button */}
                   <div className="flex justify-center p-2">
-                    <button
+                    <LoadingButton
                       onClick={handleAddSubscriptionClick}
+                      isLoading={isOpeningSubscription}
                       className="w-full transform-gpu cursor-pointer rounded-lg border-none bg-gradient-to-r from-black to-gray-500 px-5 py-3 text-base text-white outline-none transition-all duration-300 ease-in-out hover:scale-[1.02] hover:from-gray-500 hover:to-black hover:shadow-lg"
                     >
                       Add Subscription
-                    </button>
+                    </LoadingButton>
                   </div>
 
                   {/* Overview, Recommendations, Cancel */}

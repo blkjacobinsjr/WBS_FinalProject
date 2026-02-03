@@ -1,10 +1,12 @@
 import { Dialog, Listbox, Transition } from "@headlessui/react";
 import { Fragment, useEffect, useRef, useState } from "react";
+import { toast } from "sonner";
 import { useDataContext } from "../contexts/dataContext";
 import useSubscription from "../hooks/useSubscription";
 import eventEmitter from "../utils/EventEmitter";
 import CategoryIcon from "./CategoryIcon";
 import { createSubscriptionBody } from "../utils/schemaBuilder";
+import LoadingButton from "./LoadingButton";
 
 export default function SubscriptionForm({
   mode,
@@ -22,6 +24,7 @@ export default function SubscriptionForm({
   // ---- State ----
   const [selectedCategory, setSelectedCategory] = useState();
   const [selectedBillingCycle, setSelectedBillingCycle] = useState();
+  const [pendingAction, setPendingAction] = useState(null);
 
   // ---- HOOKS ----
   const { createSubscription, updateSubscription, deleteSubscription } =
@@ -52,7 +55,7 @@ export default function SubscriptionForm({
     const cleanPrice = parseFloat(priceRef.current.value.replace(",", "."));
 
     if (isNaN(cleanPrice)) {
-      alert("Price must be a valid number!");
+      toast.error("Price must be a valid number");
       return;
     }
 
@@ -70,11 +73,14 @@ export default function SubscriptionForm({
   async function handleAddSubscription() {
     // TODO: Better validation, i.e. show user which fields are missing
     if (!nameRef.current?.value || !priceRef.current?.value) {
-      alert("Please enter a name and price");
+      toast.error("Enter a name and price");
       return;
     }
 
     const newSubscription = createSubscriptionDataFromForm();
+    if (!newSubscription) return;
+
+    setPendingAction("add");
 
     try {
       const abortController = new AbortController();
@@ -86,11 +92,12 @@ export default function SubscriptionForm({
       if (!successful) {
         throw new Error("Unable to save subscription");
       }
+      toast.success("Subscription added");
     } catch (error) {
-      // TODO: Make this nicer
-      alert(error.message);
+      toast.error(error.message);
     } finally {
       eventEmitter.emit("refetchData");
+      setPendingAction(null);
     }
 
     onClose();
@@ -101,15 +108,20 @@ export default function SubscriptionForm({
     if (!subscription._id) return;
 
     const updatedSubscription = createSubscriptionDataFromForm();
+    if (!updatedSubscription) return;
     updatedSubscription._id = subscription._id;
+
+    setPendingAction("save");
 
     try {
       const abortController = new AbortController();
       await updateSubscription(updatedSubscription, abortController);
+      toast.success("Subscription saved");
     } catch (error) {
-      alert(error.message);
+      toast.error(error.message);
     } finally {
       eventEmitter.emit("refetchData");
+      setPendingAction(null);
     }
 
     onClose();
@@ -118,6 +130,8 @@ export default function SubscriptionForm({
   // Sub should be deleted
   async function handleDeleteSubscription() {
     if (!subscription._id) return;
+
+    setPendingAction("delete");
 
     try {
       const abortController = new AbortController();
@@ -130,10 +144,12 @@ export default function SubscriptionForm({
       if (!successful) {
         throw new Error("Unable to delete subscription");
       }
+      toast.success("Subscription deleted");
     } catch (error) {
-      alert(error.message);
+      toast.error(error.message);
     } finally {
       eventEmitter.emit("refetchData");
+      setPendingAction(null);
     }
 
     onClose();
@@ -322,49 +338,52 @@ export default function SubscriptionForm({
             {/* Buttons */}
             <div className="grid grid-cols-1 gap-2 pt-8 sm:auto-cols-fr sm:grid-flow-col">
               {mode === "edit" && (
-                <button
+                <LoadingButton
+                  isLoading={pendingAction === "delete"}
                   className="inline-flex justify-center rounded-md bg-red-500 px-3 py-2 text-sm font-medium text-white shadow-sm hover:bg-red-700 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-red-600"
                   onClick={handleDeleteSubscription}
                 >
                   Delete
-                </button>
+                </LoadingButton>
               )}
 
               {mode !== "edit" && mode !== "add" && (
-                <button
-                  className="inline-flex justify-center rounded-md bg-gray-300/50  px-3 py-2 text-sm font-medium text-gray-900 shadow-sm hover:bg-gray-500/50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
+                <LoadingButton
+                  className="inline-flex justify-center rounded-md bg-gray-300/50 px-3 py-2 text-sm font-medium text-gray-900 shadow-sm hover:bg-gray-500/50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
                   onClick={() => switchMode("edit")}
                 >
                   Edit
-                </button>
+                </LoadingButton>
               )}
 
               {mode === "edit" && (
                 <>
-                  <button
+                  <LoadingButton
+                    isLoading={pendingAction === "save"}
                     className="inline-flex justify-center rounded-md border border-transparent bg-indigo-600 px-3 py-2 text-sm font-medium text-white shadow-sm hover:bg-indigo-800 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
                     onClick={handleSaveEditSubscription}
                   >
                     Save
-                  </button>
+                  </LoadingButton>
                 </>
               )}
 
               {mode !== "edit" && mode !== "show" && (
-                <button
-                  className="inline-flex transform justify-center rounded-md bg-indigo-600 px-4 py-2 text-sm font-medium text-white shadow-none outline-none transition-transform hover:bg-indigo-800 focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 active:scale-75"
+                <LoadingButton
+                  isLoading={pendingAction === "add"}
+                  className="inline-flex justify-center rounded-md bg-indigo-600 px-4 py-2 text-sm font-medium text-white shadow-none outline-none transition-transform hover:bg-indigo-800 focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
                   onClick={handleAddSubscription}
                 >
                   Add
-                </button>
+                </LoadingButton>
               )}
 
-              <button
+              <LoadingButton
                 className="inline-flex justify-center rounded-md border border-transparent bg-gray-500 px-3 py-2 text-sm font-medium text-white shadow-sm hover:bg-gray-700 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gray-600"
                 onClick={() => onClose()}
               >
                 {mode === "show" ? "Close" : "Cancel"}
-              </button>
+              </LoadingButton>
             </div>
           </Dialog.Panel>
         </Transition.Child>

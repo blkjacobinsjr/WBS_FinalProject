@@ -73,5 +73,19 @@
   body {
     @apply bg-background text-foreground;
   }
+
+  button {
+    transition: transform 150ms ease, box-shadow 150ms ease,
+      background-color 150ms ease, color 150ms ease, opacity 150ms ease;
+  }
+
+  button:active {
+    transform: scale(0.98);
+  }
 }
 
+@layer components {
+  .btn-press {
+    @apply transition-all duration-150 ease-out active:scale-[0.98];
+  }
+}

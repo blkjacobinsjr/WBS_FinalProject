@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { toast } from "sonner";
 import { GlobalWorkerOptions, getDocument } from "pdfjs-dist";
 import workerUrl from "pdfjs-dist/build/pdf.worker.min.mjs?url";
 import { useDataContext } from "../contexts/dataContext";
@@ -6,6 +7,7 @@ import useSubscription from "../hooks/useSubscription";
 import { createSubscriptionBody } from "../utils/schemaBuilder";
 import { resolveCancelLink } from "../utils/cancelProviders";
 import eventEmitter from "../utils/EventEmitter";
+import LoadingButton from "../components/LoadingButton";
 
 const DEFAULT_CATEGORY_ID = "65085704f18207c1481e6642";
 
@@ -127,6 +129,8 @@ export default function BulkImport() {
   const [detected, setDetected] = useState([]);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [summary, setSummary] = useState({ created: 0, skipped: 0 });
+  const [decisionLoading, setDecisionLoading] = useState(null);
+  const [cancelAllLoading, setCancelAllLoading] = useState(false);
 
   const current = detected[currentIndex];
 
@@ -151,7 +155,10 @@ export default function BulkImport() {
   }
 
   async function handleProcessFile() {
-    if (!file) return;
+    if (!file) {
+      toast.error("Select a PDF or CSV");
+      return;
+    }
 
     setStage("parsing");
     setDetected([]);
@@ -159,15 +166,26 @@ export default function BulkImport() {
 
     let candidates = [];
 
-    if (file.name.toLowerCase().endsWith(".pdf")) {
-      const text = await extractPdfText(file);
-      candidates = detectFromPdfText(text);
-    } else if (file.name.toLowerCase().endsWith(".csv")) {
-      const text = await file.text();
-      candidates = detectFromCsvText(text);
+    try {
+      if (file.name.toLowerCase().endsWith(".pdf")) {
+        const text = await extractPdfText(file);
+        candidates = detectFromPdfText(text);
+      } else if (file.name.toLowerCase().endsWith(".csv")) {
+        const text = await file.text();
+        candidates = detectFromCsvText(text);
+      } else {
+        toast.error("Unsupported file type");
+        setStage("idle");
+        return;
+      }
+    } catch (error) {
+      toast.error("Could not read file");
+      setStage("idle");
+      return;
     }
 
     if (candidates.length === 0) {
+      toast.error("No subscriptions detected");
       setStage("idle");
       return;
     }
@@ -237,10 +255,13 @@ export default function BulkImport() {
     setCurrentIndex(0);
     setStage("ready");
     eventEmitter.emit("refetchData");
+    toast.success(`Detected ${enriched.length} subscriptions`);
   }
 
   async function handleDecision(action) {
     if (!current) return;
+
+    setDecisionLoading(action);
 
     if (action === "cancel") {
       if (current.cancel?.url) {
@@ -259,10 +280,13 @@ export default function BulkImport() {
       }
     }
 
+    await new Promise((resolve) => setTimeout(resolve, 150));
+    setDecisionLoading(null);
     setCurrentIndex((prev) => prev + 1);
   }
 
   async function handleCancelAll() {
+    setCancelAllLoading(true);
     for (const item of detected) {
       if (!item.subscriptionId) continue;
       try {
@@ -275,7 +299,9 @@ export default function BulkImport() {
       }
     }
 
+    setCancelAllLoading(false);
     setCurrentIndex(detected.length);
+    toast.success("Canceled all detected subscriptions");
   }
 
   return (
@@ -294,13 +320,15 @@ export default function BulkImport() {
             onChange={(event) => setFile(event.target.files?.[0] || null)}
             className="w-full rounded-lg border border-black/20 bg-white px-3 py-2 text-sm"
           />
-          <button
+          <LoadingButton
             onClick={handleProcessFile}
+            isLoading={stage === "parsing" || stage === "creating"}
             disabled={!file || stage === "parsing" || stage === "creating"}
+            loadingText="Processing"
             className="rounded-lg bg-black px-4 py-2 text-sm font-semibold text-white disabled:opacity-50"
           >
-            {stage === "creating" ? "Creating..." : "Process"}
-          </button>
+            Process
+          </LoadingButton>
         </div>
 
         {summary.created + summary.skipped > 0 && (
@@ -339,18 +367,20 @@ export default function BulkImport() {
               </div>
 
               <div className="mt-4 grid grid-cols-2 gap-3">
-                <button
+                <LoadingButton
                   onClick={() => handleDecision("keep")}
+                  isLoading={decisionLoading === "keep"}
                   className="rounded-lg border border-black/20 px-3 py-2 text-sm font-semibold"
                 >
                   Keep
-                </button>
-                <button
+                </LoadingButton>
+                <LoadingButton
                   onClick={() => handleDecision("cancel")}
+                  isLoading={decisionLoading === "cancel"}
                   className="rounded-lg bg-black px-3 py-2 text-sm font-semibold text-white"
                 >
                   Cancel
-                </button>
+                </LoadingButton>
               </div>
             </div>
           ) : (
@@ -360,12 +390,13 @@ export default function BulkImport() {
           )}
 
           <div className="mt-4 flex flex-wrap gap-2">
-            <button
+            <LoadingButton
               onClick={handleCancelAll}
+              isLoading={cancelAllLoading}
               className="rounded-lg border border-black/20 px-3 py-2 text-xs font-semibold"
             >
               Cancel All
-            </button>
+            </LoadingButton>
           </div>
         </div>
       )}

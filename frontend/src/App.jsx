@@ -6,6 +6,7 @@ import {
   Routes,
   useNavigate,
 } from "react-router-dom";
+import { Toaster } from "sonner";
 import DataProvider from "./contexts/dataContext";
 import ApiTest from "./pages/ApiTest";
 import Dashboard from "./pages/Dashboard";
@@ -89,6 +90,11 @@ function ClerkRouteProvider() {
         {/* Needs to be the last one! */}
         <Route path="*" element={<ErrorPage />} />
       </Routes>
+      <Toaster
+        richColors
+        position="top-center"
+        toastOptions={{ duration: 2400 }}
+      />
     </ClerkProvider>
   );
 }
