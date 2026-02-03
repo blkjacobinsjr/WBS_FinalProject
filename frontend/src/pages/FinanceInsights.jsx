@@ -4,19 +4,6 @@ import StatsCard from "../components/StatsCard";
 import FinanceInsightsFlow from "../components/FinanceInsightsFlow";
 import LoadingButton from "../components/LoadingButton";
 
-const FLOW = `flowchart TD
-  A[Start: define Rich Life priorities] --> B[System: 4 pillars banking saving budgeting investing]
-  B --> C[Autopilot: automatic transfers and bill pay]
-  C --> D[Big wins: bank fees, credit cards, negotiate income]
-  D --> E[Franklin guardrails: industry, frugality, avoid debt, plug leaks]
-  E --> F[Invest long term]
-  F --> G{Edge bet with known odds?}
-  G -- No --> H[Skip]
-  G -- Yes --> I[Kelly fraction bet size]
-  H --> J[Checklists: setup, monthly, quarterly]
-  I --> J
-  J --> C`;
-
 export default function FinanceInsights() {
   const { subscriptions, usedCategories, dashboardData } = useDataContext();
   const [flowOpen, setFlowOpen] = useState(false);
@@ -39,6 +26,45 @@ export default function FinanceInsights() {
     return dashboardData.leastUsed;
   }, [dashboardData]);
 
+  const flowSteps = [
+    {
+      title: "Define Rich Life",
+      body: "Anchor on the number that matters.",
+      metric: `Monthly burn: EUR ${dashboardData?.totalCostPerMonth?.toFixed(2) || "0.00"}`,
+    },
+    {
+      title: "Autopilot",
+      body: "Get every bill captured.",
+      metric: `${subscriptions?.length || 0} subscriptions tracked`,
+    },
+    {
+      title: "Big Wins",
+      body: "Attack the biggest leak first.",
+      metric: highestCost
+        ? `${highestCost.name} EUR ${highestCost.price?.toFixed(2)}`
+        : "Insufficient Data",
+    },
+    {
+      title: "Guardrails",
+      body: "Stop surprise spend.",
+      metric: `Potential savings: EUR ${
+        dashboardData?.potentialMonthlySavings?.toFixed(2) || "0.00"
+      }`,
+    },
+    {
+      title: "Invest Long Term",
+      body: "Keep recurring cost in check.",
+      metric: topCategory
+        ? `Top category: ${topCategory.name}`
+        : "Insufficient Data",
+    },
+    {
+      title: "Checklists",
+      body: "Weekly review beats willpower.",
+      metric: "Run Financial Reset weekly",
+    },
+  ];
+
   return (
     <div className="flex w-full flex-col gap-4">
       <div className="rounded-lg border border-black/10 bg-white/70 p-4">
@@ -59,27 +85,25 @@ export default function FinanceInsights() {
           </LoadingButton>
         </div>
 
-        <div className="mt-4 flex gap-3 overflow-x-auto pb-2">
-          {[
-            "Define Rich Life",
-            "Autopilot",
-            "Big Wins",
-            "Guardrails",
-            "Invest",
-            "Checklists",
-          ].map((label) => (
+        <div className="mt-4 grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+          {flowSteps.map((step, index) => (
             <div
-              key={label}
-              className="min-w-[140px] rounded-2xl border border-black/10 bg-white/80 px-3 py-3 text-xs font-semibold text-gray-700 shadow-sm"
+              key={step.title}
+              className="rounded-2xl border border-black/10 bg-white/80 p-4 shadow-sm"
             >
-              {label}
+              <div className="text-[10px] font-semibold uppercase tracking-[0.2em] text-gray-500">
+                Step {index + 1}
+              </div>
+              <div className="mt-2 text-sm font-semibold text-gray-900">
+                {step.title}
+              </div>
+              <div className="mt-1 text-xs text-gray-600">{step.body}</div>
+              <div className="mt-3 rounded-xl bg-slate-950/90 px-3 py-2 text-xs font-semibold text-white">
+                {step.metric}
+              </div>
             </div>
           ))}
         </div>
-
-        <pre className="mt-3 hidden rounded-lg bg-slate-950 px-4 py-3 text-[11px] text-white sm:block">
-          {FLOW}
-        </pre>
       </div>
 
       <div className="grid gap-2 sm:grid-cols-2 xl:grid-cols-3">
