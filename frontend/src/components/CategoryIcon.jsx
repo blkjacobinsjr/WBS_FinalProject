@@ -1,21 +1,29 @@
 export default function CategoryIcon({ icon, iconSize = 6 }) {
-  if (!Array.isArray(icon)) {
-    icon = [icon];
-  }
+  const normalizedIcons = Array.isArray(icon)
+    ? icon
+    : icon
+    ? [icon]
+    : [];
 
-  const adjustedIcons = icon?.map((icn) => {
-    return {
-      ...icn,
-      d: icn.path,
-      path: undefined,
-    };
-  });
+  const adjustedIcons = normalizedIcons
+    .filter((icn) => icn && (icn.path || icn.d))
+    .map((icn) => {
+      return {
+        ...icn,
+        d: icn.d ?? icn.path,
+        path: undefined,
+      };
+    });
 
   // const adjustedIcon = {
   //   ...icon,
   //   d: icon?.path,
   //   path: undefined,
   // };
+
+  if (adjustedIcons.length === 0) {
+    return null;
+  }
 
   return (
     <svg
