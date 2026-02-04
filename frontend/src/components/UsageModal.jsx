@@ -4,7 +4,12 @@ import { useDataContext } from "../contexts/dataContext"; // Context for data
 import eventEmitter from "../utils/EventEmitter"; // Event emitter for handling events
 
 // UsageTab now expects a subscriptions prop
-export default function UsageModal({ opened, onClose, notificationId }) {
+export default function UsageModal({
+  opened,
+  onClose,
+  notificationId,
+  manualSubscriptions = null,
+}) {
   // ---- CONTEXT ----
   const { notifications } = useDataContext();
 
@@ -21,6 +26,16 @@ export default function UsageModal({ opened, onClose, notificationId }) {
   // ---- USE EFFECT ----
   // we need to rerender based on whether property and notifications are available
   useEffect(() => {
+    if (Array.isArray(manualSubscriptions) && manualSubscriptions.length > 0) {
+      const manualList = manualSubscriptions.map((subscription) => ({
+        _id: subscription?._id,
+        subscriptionId: subscription,
+      }));
+      setCurrentNotification(manualList[0]);
+      setUnratedNotifications(manualList);
+      return;
+    }
+
     const initialNotification = notifications?.find(
       (n) => n._id === notificationId,
     );
@@ -51,7 +66,7 @@ export default function UsageModal({ opened, onClose, notificationId }) {
       setCurrentNotification(notifications?.at(0));
       setUnratedNotifications(notifications);
     }
-  }, [notificationId]);
+  }, [notificationId, notifications, manualSubscriptions]);
 
   // go throug all notifications currently active
   function handleChangeSubscriptionClick(direction) {

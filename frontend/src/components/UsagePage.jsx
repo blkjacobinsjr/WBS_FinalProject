@@ -4,6 +4,7 @@ import CategoryPieChart from "./charts/CategoryPieChart";
 import UsageRadarChart from "./charts/UsageRadarChart";
 import UsedCategoriesPieChart from "./charts/UsedCategoriesPieChart";
 import Piechartwithneedle from "./charts/Piechartwithneedle";
+import eventEmitter from "../utils/EventEmitter";
 
 // TODO: Right now 'Insufficient Data' is a hardcoded value... should be dynamic or in a const
 // somehwere...
@@ -64,6 +65,25 @@ export default function UsagePage() {
 
   return (
     <>
+      <div className="mb-3 rounded-lg border border-white/80 bg-white/40 p-3">
+        <div className="flex flex-col items-start justify-between gap-3 sm:flex-row sm:items-center">
+          <div>
+            <div className="text-sm font-semibold text-gray-800">
+              Usage Quiz
+            </div>
+            <div className="text-xs text-gray-600">
+              Rate subscriptions any time. Updates Most Used and Savings.
+            </div>
+          </div>
+          <button
+            className="rounded-full border border-black/20 bg-white px-4 py-2 text-xs font-semibold text-gray-800"
+            onClick={() => eventEmitter.emit("openUsageQuiz")}
+          >
+            Start Usage Quiz
+          </button>
+        </div>
+      </div>
+
       {/* Stats Cards */}
       <div className="grid gap-2 sm:grid-cols-2 xl:grid-cols-4">
         {/* Row 1 */}

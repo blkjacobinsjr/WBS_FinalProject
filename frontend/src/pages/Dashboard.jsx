@@ -63,6 +63,7 @@ function Dashboard() {
   const [usageModalState, setUsageModalState] = useState({
     showForm: false,
     notificationId: null,
+    manualSubscriptions: null,
   });
 
   // ---- CUSTOM HOOKS ----
@@ -96,7 +97,11 @@ function Dashboard() {
 
   // Notification has been clicked, show usageModal
   function notificationClickedCallback(id) {
-    setUsageModalState({ showForm: true, notificationId: id });
+    setUsageModalState({
+      showForm: true,
+      notificationId: id,
+      manualSubscriptions: null,
+    });
   }
 
   // ---- THE ALMIGHTY USE EFFECT ----
@@ -192,6 +197,23 @@ function Dashboard() {
       updateNotification(id);
     }
 
+    async function openUsageQuizCallback() {
+      try {
+        const latest = await getAllSubscriptions(new AbortController());
+        setUsageModalState({
+          showForm: true,
+          notificationId: null,
+          manualSubscriptions: latest || [],
+        });
+      } catch (error) {
+        setUsageModalState({
+          showForm: true,
+          notificationId: null,
+          manualSubscriptions: subscriptions || [],
+        });
+      }
+    }
+
     // Create new usage Data and mark notification this feedback came from as read
     function usageScoreSelectedCallback(subscriptionId, score) {
       // create usage data
@@ -215,6 +237,7 @@ function Dashboard() {
     eventEmitter.on("markNotificationAsRead", notificationReadCallback);
     eventEmitter.on("notificationClicked", notificationClickedCallback);
     eventEmitter.on("useScoreSelected", usageScoreSelectedCallback);
+    eventEmitter.on("openUsageQuiz", openUsageQuizCallback);
 
     return () => {
       abortController.abort();
@@ -225,6 +248,7 @@ function Dashboard() {
       eventEmitter.off("markNotificationAsRead", notificationReadCallback);
       eventEmitter.off("notificationClicked", notificationClickedCallback);
       eventEmitter.off("useScoreSelected", usageScoreSelectedCallback);
+      eventEmitter.off("openUsageQuiz", openUsageQuizCallback);
     };
   }, []);
 
@@ -436,6 +460,7 @@ function Dashboard() {
       <UsageModal
         opened={usageModalState.showForm}
         notificationId={usageModalState.notificationId}
+        manualSubscriptions={usageModalState.manualSubscriptions}
         onClose={() =>
           setUsageModalState((prev) => {
             return { ...prev, showForm: false };
