@@ -42,6 +42,14 @@ function normalizeName(value) {
     .trim();
 }
 
+function strictMerchantName(value) {
+  if (!value) return "";
+  let cleaned = cleanMerchant(value);
+  cleaned = cleaned.replace(/[^a-zA-Z\s]+/g, " ");
+  cleaned = cleaned.replace(/\s+/g, " ").trim();
+  return cleaned;
+}
+
 function normalizeKey(name, amount) {
   const safeAmount = Number.isFinite(amount) ? amount.toFixed(2) : "0.00";
   return `${normalizeName(name)}|${safeAmount}`;
@@ -182,14 +190,14 @@ function parseStatementLine(line) {
   const merchantRaw = rest
     .slice(0, signedAmountMatch.index ?? 0)
     .trim();
-  const cleaned = cleanMerchant(merchantRaw);
+  const cleaned = strictMerchantName(merchantRaw);
   if (!isLikelyMerchant(cleaned)) return null;
   if (isBlockedLine(cleaned) || isBlockedLine(line)) return null;
 
   const interval = detectInterval(line);
 
   return {
-      name: cleaned,
+    name: cleaned,
       amount,
       interval,
     source: "statement",
@@ -254,7 +262,8 @@ function summarizeCandidates(candidates) {
   const results = [];
 
   for (const [key, group] of groups.entries()) {
-    const bestName = pickMostCommon(group.names) || key;
+    const bestName = strictMerchantName(pickMostCommon(group.names) || key);
+    if (!bestName) continue;
     const bestAmount = pickMostCommon(group.amounts);
     const hasHint = group.rawLines.some((line) => SUBSCRIPTION_HINTS.test(line));
     const cancel = resolveCancelLink(bestName);
@@ -351,12 +360,12 @@ function detectFromPdfText(text) {
     const amount = extractAmount(line);
     if (!amount) continue;
 
-    let name = cleanMerchant(line);
+    let name = strictMerchantName(line);
     if (!isLikelyMerchant(name)) {
       const prev = lines[i - 1];
       const next = lines[i + 1];
-      const prevClean = cleanMerchant(prev);
-      const nextClean = cleanMerchant(next);
+      const prevClean = strictMerchantName(prev);
+      const nextClean = strictMerchantName(next);
 
       if (isLikelyMerchant(prevClean)) {
         name = prevClean;
@@ -411,7 +420,7 @@ function detectFromCsvText(text) {
   const transactions = lines.slice(1).map((line) => {
     const parts = line.split(delimiter).map((part) => part.trim());
     return {
-      name: parts[descIndex],
+      name: strictMerchantName(parts[descIndex]),
       amount: parseAmount(parts[amountIndex]),
     };
   });
@@ -567,10 +576,7 @@ export default function BulkImport() {
 
     try {
       const base64 = bufferToBase64(buffer);
-      const result = await processOcr(
-        { base64 },
-        new AbortController(),
-      );
+      const result = await processOcr({ base64 }, new AbortController());
       return result?.extractedText || result?.text || "";
     } catch (error) {
       return "";
@@ -706,7 +712,7 @@ export default function BulkImport() {
         if (aiItems.length > 0) {
           candidates = aiItems
             .map((item) => ({
-              name: cleanMerchant(item.name || ""),
+              name: strictMerchantName(item.name || ""),
               amount: Number.parseFloat(item.amount),
               interval: item.interval === "year" ? "year" : "month",
               source: "ai",

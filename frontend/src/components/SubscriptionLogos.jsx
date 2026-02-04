@@ -18,6 +18,34 @@ export default function SubscriptionLogo({ subscriptionName }) {
   const [logoError, setLogoError] = useState(false);
   const defaultIcon = <FaMoneyCheckAlt />;
   const logoToken = "pk_fg7nZQ2oQQK-tZnjxKWfPQ";
+  const domainAliases = {
+    openai: "openai.com",
+    anthropic: "anthropic.com",
+    google: "google.com",
+    youtube: "youtube.com",
+    apple: "apple.com",
+    amazon: "amazon.com",
+    netflix: "netflix.com",
+    spotify: "spotify.com",
+    disney: "disneyplus.com",
+    microsoft: "microsoft.com",
+    github: "github.com",
+    notion: "notion.so",
+    slack: "slack.com",
+    zoom: "zoom.us",
+  };
+  const suffixWords = [
+    "workspace",
+    "cloud",
+    "suite",
+    "music",
+    "premium",
+    "plus",
+    "pro",
+    "app",
+    "service",
+    "membership",
+  ];
 
   const icons = [
     {
@@ -106,7 +134,23 @@ export default function SubscriptionLogo({ subscriptionName }) {
     if (safeName.includes(".")) {
       return safeName.replace(/https?:\/\//, "").split("/")[0];
     }
-    return match.domain;
+
+    if (match.domain) return match.domain;
+
+    const tokens = safeName
+      .replace(/[^a-z0-9\s]/g, " ")
+      .split(/\s+/)
+      .filter(Boolean);
+    if (tokens.length === 0) return null;
+
+    const primary =
+      tokens.length > 1 && suffixWords.includes(tokens[tokens.length - 1])
+        ? tokens[0]
+        : tokens.join("");
+
+    if (domainAliases[primary]) return domainAliases[primary];
+
+    return `${primary}.com`;
   }, [match.domain, subscriptionName]);
 
   const logoUrl = derivedDomain
