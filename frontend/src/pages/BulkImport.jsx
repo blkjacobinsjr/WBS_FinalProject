@@ -259,7 +259,8 @@ function extractEuroAmount(line, allowPositive = false) {
     const match = matches[i];
     const token = match[0];
     const parsed = parseEuroAmountToken(token);
-    if (parsed?.negative || allowPositive) {
+    if (!parsed) continue;
+    if (parsed.negative || allowPositive) {
       return {
         amount: parsed.amount,
         index: match.index ?? 0,
