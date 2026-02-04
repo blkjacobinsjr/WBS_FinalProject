@@ -14,25 +14,20 @@ export default function SubscriptionCard({ subscription }) {
   return (
     <>
       <div className="group relative ml-2 mr-2 mt-2">
-        {/* Delete button - shown on hover */}
+        {/* Subtle X button - top right, appears on hover */}
         <button
           onClick={handleDelete}
-          className="absolute -right-1 -top-1 z-10 flex h-6 w-6 items-center justify-center rounded-full bg-red-500 text-white opacity-0 shadow-md transition-opacity hover:bg-red-600 group-hover:opacity-100"
-          title="Delete subscription"
+          className="absolute -right-1 -top-1 z-10 flex h-5 w-5 items-center justify-center rounded-full bg-black/10 text-black/40 opacity-0 backdrop-blur-sm transition-all hover:bg-black/20 hover:text-black/60 group-hover:opacity-100"
         >
           <svg
             xmlns="http://www.w3.org/2000/svg"
             fill="none"
             viewBox="0 0 24 24"
-            strokeWidth={2.5}
+            strokeWidth={2}
             stroke="currentColor"
-            className="h-3.5 w-3.5"
+            className="h-3 w-3"
           >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              d="M6 18L18 6M6 6l12 12"
-            />
+            <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
           </svg>
         </button>
 
