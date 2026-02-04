@@ -8,6 +8,7 @@ import eventEmitter from "../utils/EventEmitter";
 import { resolveCancelLink } from "../utils/cancelProviders";
 import LoadingButton from "./LoadingButton";
 import BulkImport from "../pages/BulkImport";
+import UsageModal from "./UsageModal";
 
 export default function FinancialResetFlow({ open, onClose }) {
   const navigate = useNavigate();
@@ -16,6 +17,12 @@ export default function FinancialResetFlow({ open, onClose }) {
 
   const [step, setStep] = useState(0);
   const [isWorking, setIsWorking] = useState(false);
+  const [showQuiz, setShowQuiz] = useState(false);
+
+  // Count unrated subscriptions
+  const unratedCount = subscriptions?.filter(
+    (s) => s.score === undefined || s.score === null || s.score === 0
+  ).length || 0;
 
   useEffect(() => {
     if (open) {
@@ -76,6 +83,12 @@ export default function FinancialResetFlow({ open, onClose }) {
     }
 
     eventEmitter.emit("refetchData");
+    setStep(4);
+  }
+
+  function handleQuizClose() {
+    setShowQuiz(false);
+    eventEmitter.emit("refetchData");
     setStep(3);
   }
 
@@ -112,11 +125,24 @@ export default function FinancialResetFlow({ open, onClose }) {
       action: () => runQuickAction(handleOpenBulk),
     },
     {
+      title: "Rate your usage",
+      subtitle: unratedCount > 0
+        ? `${unratedCount} subscription${unratedCount > 1 ? "s" : ""} need${unratedCount === 1 ? "s" : ""} rating`
+        : "All subscriptions rated!",
+      insight: "Quick ratings unlock savings insights.",
+      cta: unratedCount > 0 ? "Start Quiz" : "Continue",
+      action: unratedCount > 0
+        ? () => runQuickAction(() => setShowQuiz(true))
+        : () => runQuickAction(() => setStep(3)),
+    },
+    {
       title: candidate ? `Cut ${candidate.name}` : "Add your first subscription",
       subtitle: candidate
         ? `Save ${candidate.price.toFixed(2)} EUR per ${candidate.interval}`
         : "Track one bill to unlock cancel flow.",
-      insight: candidate ? "One click. One win." : "Start with the first bill.",
+      insight: candidate
+        ? `Potential total savings: ${dashboardData?.potentialMonthlySavings?.toFixed(2) || "0.00"} EUR/month`
+        : "Start with the first bill.",
       cta: candidate ? "Cancel in 1 click" : "Add Subscription",
       action: candidate
         ? handleCancelNow
@@ -132,9 +158,10 @@ export default function FinancialResetFlow({ open, onClose }) {
   ];
 
   const current = steps[Math.min(step, steps.length - 1)];
-  const progress = Math.min(100, Math.round((step / 3) * 100));
-  const stepLabel = Math.min(step, 3);
+  const progress = Math.min(100, Math.round((step / 4) * 100));
+  const stepLabel = Math.min(step, 4);
   const isUploadStep = step === 1;
+  const isRateStep = step === 2;
 
   if (!open) return null;
 
@@ -173,7 +200,7 @@ export default function FinancialResetFlow({ open, onClose }) {
           <div className="flex items-center gap-3 text-xs font-semibold uppercase tracking-[0.2em] text-white/70">
             Reset Sprint
             <span className="rounded-full bg-white/15 px-2 py-1 text-[10px]">
-              {stepLabel}/3
+              {stepLabel}/4
             </span>
           </div>
           <button
@@ -216,19 +243,35 @@ export default function FinancialResetFlow({ open, onClose }) {
               </div>
             </div>
           ) : (
-            <LoadingButton
-              onClick={current.action}
-              isLoading={isWorking}
-              loadingText="Working..."
-              className="mt-4 w-full max-w-sm rounded-full bg-white px-6 py-3 text-sm font-semibold text-slate-900 shadow-xl shadow-black/30"
-            >
-              {current.cta}
-            </LoadingButton>
+            <div className="flex flex-col items-center gap-3">
+              <LoadingButton
+                onClick={current.action}
+                isLoading={isWorking}
+                loadingText="Working..."
+                className="mt-4 w-full max-w-sm rounded-full bg-white px-6 py-3 text-sm font-semibold text-slate-900 shadow-xl shadow-black/30"
+              >
+                {current.cta}
+              </LoadingButton>
+              {isRateStep && unratedCount > 0 && (
+                <button
+                  onClick={() => setStep(3)}
+                  className="text-xs text-white/50 underline underline-offset-2 hover:text-white/70"
+                >
+                  Skip ratings for now
+                </button>
+              )}
+            </div>
           )}
 
-          {candidate && step === 2 && (
+          {candidate && step === 3 && (
             <div className="text-xs text-white/60">
               Cancel source: {cancelLink?.label}
+            </div>
+          )}
+
+          {isRateStep && unratedCount > 0 && (
+            <div className="text-xs text-white/60">
+              Rate each subscription: Often, Sometimes, or Rarely
             </div>
           )}
         </div>
@@ -236,6 +279,13 @@ export default function FinancialResetFlow({ open, onClose }) {
         <div className="text-center text-xs text-white/40">
           60 seconds or less. One action per step.
         </div>
+
+        {/* Usage Quiz Modal */}
+        <UsageModal
+          opened={showQuiz}
+          onClose={handleQuizClose}
+          manualSubscriptions={subscriptions}
+        />
       </div>
     </div>,
     portalTarget,
