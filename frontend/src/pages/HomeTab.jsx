@@ -60,7 +60,7 @@ export default function HomeTab() {
       </div>
 
       {/* Hero Stat Card */}
-      <div className="rounded-2xl bg-gradient-to-br from-black/5 to-black/10 p-5 dark:from-white/5 dark:to-white/10">
+      <div className="rounded-2xl bg-white/40 p-5 backdrop-blur-sm dark:bg-white/10">
         <p className="text-xs font-medium uppercase tracking-wider text-black/50 dark:text-white/50">
           Total Monthly Spend
         </p>
@@ -71,7 +71,7 @@ export default function HomeTab() {
 
       {/* Quick Stats Row */}
       <div className="grid grid-cols-3 gap-2">
-        <div className="rounded-xl bg-white/50 p-3 text-center dark:bg-white/5">
+        <div className="rounded-xl bg-white/40 p-3 text-center backdrop-blur-sm dark:bg-white/10">
           <p className="text-2xl font-bold text-black dark:text-white">
             {subscriptions?.length || 0}
           </p>
@@ -79,7 +79,7 @@ export default function HomeTab() {
             Subscriptions
           </p>
         </div>
-        <div className="rounded-xl bg-white/50 p-3 text-center dark:bg-white/5">
+        <div className="rounded-xl bg-white/40 p-3 text-center backdrop-blur-sm dark:bg-white/10">
           <p className="text-2xl font-bold text-green-600 dark:text-green-400">
             €{dashboardData?.potentialMonthlySavings?.toFixed(0) || "0"}
           </p>
@@ -87,7 +87,7 @@ export default function HomeTab() {
             Potential Savings
           </p>
         </div>
-        <div className="rounded-xl bg-white/50 p-3 text-center dark:bg-white/5">
+        <div className="rounded-xl bg-white/40 p-3 text-center backdrop-blur-sm dark:bg-white/10">
           <p className="text-2xl font-bold text-black dark:text-white">
             {notifications?.length || 0}
           </p>
@@ -129,7 +129,7 @@ export default function HomeTab() {
 
       {/* Empty State */}
       {subscriptions?.length === 0 && (
-        <div className="flex flex-col items-center justify-center rounded-2xl bg-white/50 py-12 text-center dark:bg-white/5">
+        <div className="flex flex-col items-center justify-center rounded-2xl bg-white/40 py-12 text-center backdrop-blur-sm dark:bg-white/10">
           <div className="mb-3 rounded-full bg-black/5 p-4 dark:bg-white/10">
             <svg
               xmlns="http://www.w3.org/2000/svg"

@@ -90,7 +90,7 @@ const tabs = [
 
 export default function BottomTabBar({ activeTab, onTabChange }) {
   return (
-    <nav className="fixed bottom-0 left-0 right-0 z-50 border-t border-black/5 bg-white/80 backdrop-blur-xl dark:border-white/10 dark:bg-black/80">
+    <nav className="fixed bottom-0 left-0 right-0 z-50 border-t border-black/10 bg-white/60 backdrop-blur-xl dark:border-white/10 dark:bg-black/60">
       <div className="mx-auto flex max-w-lg items-center justify-around px-2 py-2">
         {tabs.map((tab) => {
           const isActive = activeTab === tab.id;

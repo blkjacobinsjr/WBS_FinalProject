@@ -49,7 +49,7 @@ export default function SubscriptionsTab({ onOpenBulkImport }) {
           placeholder="Search subscriptions..."
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
-          className="w-full rounded-xl border-0 bg-white/50 py-3 pl-10 pr-4 text-sm placeholder-black/30 focus:outline-none focus:ring-2 focus:ring-black/10 dark:bg-white/5 dark:placeholder-white/30 dark:focus:ring-white/20"
+          className="w-full rounded-xl border-0 bg-white/40 py-3 pl-10 pr-4 text-sm placeholder-black/30 backdrop-blur-sm focus:outline-none focus:ring-2 focus:ring-black/10 dark:bg-white/10 dark:placeholder-white/30 dark:focus:ring-white/20"
         />
       </div>
 
@@ -132,7 +132,7 @@ export default function SubscriptionsTab({ onOpenBulkImport }) {
       {/* Bulk Import Card */}
       <button
         onClick={onOpenBulkImport}
-        className="flex items-center gap-3 rounded-xl bg-white/50 p-4 text-left transition-all active:scale-[0.98] dark:bg-white/5"
+        className="flex items-center gap-3 rounded-xl bg-white/40 p-4 text-left backdrop-blur-sm transition-all active:scale-[0.98] dark:bg-white/10"
       >
         <div className="rounded-full bg-black/5 p-2 dark:bg-white/10">
           <svg

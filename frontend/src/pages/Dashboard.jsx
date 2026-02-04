@@ -380,7 +380,7 @@ function Dashboard() {
 
   // Main return block for the Dashboard component
   return (
-    <div className="min-h-screen w-full bg-gray-50 dark:bg-gray-900">
+    <div className="apple-bg min-h-screen w-full">
       {loading && <Loading />}
 
       {!loading && error && <ErrorDisplay message={errorMessage} />}
@@ -388,7 +388,7 @@ function Dashboard() {
       {!loading && !error && checkDataLoadingSuccessful() && (
         <div className="mx-auto flex min-h-screen max-w-lg flex-col">
           {/* Header */}
-          <header className="sticky top-0 z-40 border-b border-black/5 bg-white/80 px-4 py-3 backdrop-blur-xl dark:border-white/10 dark:bg-black/80">
+          <header className="sticky top-0 z-40 border-b border-black/10 bg-white/60 px-4 py-3 backdrop-blur-xl dark:border-white/10 dark:bg-black/60">
             <div className="flex items-center justify-between">
               <Link to="/dashboard" className="flex items-center gap-2">
                 <img

@@ -29,7 +29,7 @@ export default function SettingsTab({ onResetData, isResettingData }) {
   return (
     <div className="flex flex-col gap-4 pb-24">
       {/* Account Section */}
-      <div className="rounded-2xl bg-white/50 p-5 dark:bg-white/5">
+      <div className="rounded-2xl bg-white/40 p-5 backdrop-blur-sm dark:bg-white/10">
         <p className="mb-4 text-xs font-medium uppercase tracking-wider text-black/40 dark:text-white/40">
           Account
         </p>
@@ -53,7 +53,7 @@ export default function SettingsTab({ onResetData, isResettingData }) {
       </div>
 
       {/* Appearance Section */}
-      <div className="rounded-2xl bg-white/50 p-5 dark:bg-white/5">
+      <div className="rounded-2xl bg-white/40 p-5 backdrop-blur-sm dark:bg-white/10">
         <p className="mb-4 text-xs font-medium uppercase tracking-wider text-black/40 dark:text-white/40">
           Appearance
         </p>
@@ -117,7 +117,7 @@ export default function SettingsTab({ onResetData, isResettingData }) {
       </div>
 
       {/* Data Section */}
-      <div className="rounded-2xl bg-white/50 p-5 dark:bg-white/5">
+      <div className="rounded-2xl bg-white/40 p-5 backdrop-blur-sm dark:bg-white/10">
         <p className="mb-4 text-xs font-medium uppercase tracking-wider text-black/40 dark:text-white/40">
           Data
         </p>
@@ -170,7 +170,7 @@ export default function SettingsTab({ onResetData, isResettingData }) {
       </div>
 
       {/* About Section */}
-      <div className="rounded-2xl bg-white/50 p-5 dark:bg-white/5">
+      <div className="rounded-2xl bg-white/40 p-5 backdrop-blur-sm dark:bg-white/10">
         <p className="mb-4 text-xs font-medium uppercase tracking-wider text-black/40 dark:text-white/40">
           About
         </p>

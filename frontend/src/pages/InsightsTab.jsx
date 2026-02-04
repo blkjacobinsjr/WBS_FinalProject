@@ -57,7 +57,7 @@ export default function InsightsTab() {
 
       {/* Stats Grid */}
       <div className="grid grid-cols-2 gap-2">
-        <div className="rounded-xl bg-white/50 p-4 dark:bg-white/5">
+        <div className="rounded-xl bg-white/40 p-4 backdrop-blur-sm dark:bg-white/10">
           <p className="text-xs font-medium text-black/40 dark:text-white/40">
             Most Used
           </p>
@@ -65,7 +65,7 @@ export default function InsightsTab() {
             {dashboardData?.mostUsed?.name || "—"}
           </p>
         </div>
-        <div className="rounded-xl bg-white/50 p-4 dark:bg-white/5">
+        <div className="rounded-xl bg-white/40 p-4 backdrop-blur-sm dark:bg-white/10">
           <p className="text-xs font-medium text-black/40 dark:text-white/40">
             Least Used
           </p>
@@ -73,7 +73,7 @@ export default function InsightsTab() {
             {dashboardData?.leastUsed?.name || "—"}
           </p>
         </div>
-        <div className="rounded-xl bg-white/50 p-4 dark:bg-white/5">
+        <div className="rounded-xl bg-white/40 p-4 backdrop-blur-sm dark:bg-white/10">
           <p className="text-xs font-medium text-black/40 dark:text-white/40">
             Potential Savings
           </p>
@@ -81,7 +81,7 @@ export default function InsightsTab() {
             €{dashboardData?.potentialMonthlySavings?.toFixed(2) || "0.00"}
           </p>
         </div>
-        <div className="rounded-xl bg-white/50 p-4 dark:bg-white/5">
+        <div className="rounded-xl bg-white/40 p-4 backdrop-blur-sm dark:bg-white/10">
           <p className="text-xs font-medium text-black/40 dark:text-white/40">
             Barely Used, Expensive
           </p>
@@ -92,7 +92,7 @@ export default function InsightsTab() {
       </div>
 
       {/* Spend-O-Meter */}
-      <div className="rounded-2xl bg-white/50 p-5 dark:bg-white/5">
+      <div className="rounded-2xl bg-white/40 p-5 backdrop-blur-sm dark:bg-white/10">
         <p className="text-center text-sm font-semibold text-black/80 dark:text-white/80">
           Spend-O-Meter
         </p>
@@ -109,7 +109,7 @@ export default function InsightsTab() {
 
       {/* Usage Radar Chart */}
       {usedCategories?.length > 0 && (
-        <div className="rounded-2xl bg-white/50 p-5 dark:bg-white/5">
+        <div className="rounded-2xl bg-white/40 p-5 backdrop-blur-sm dark:bg-white/10">
           <p className="text-center text-sm font-semibold text-black/80 dark:text-white/80">
             Category Usage vs. Cost
           </p>
@@ -121,7 +121,7 @@ export default function InsightsTab() {
 
       {/* Empty State */}
       {subscriptions?.length === 0 && (
-        <div className="flex flex-col items-center justify-center rounded-2xl bg-white/50 py-12 text-center dark:bg-white/5">
+        <div className="flex flex-col items-center justify-center rounded-2xl bg-white/40 py-12 text-center backdrop-blur-sm dark:bg-white/10">
           <p className="text-sm text-black/50 dark:text-white/50">
             Add subscriptions to see insights
           </p>
