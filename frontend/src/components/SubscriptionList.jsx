@@ -29,10 +29,43 @@ export default function SubscriptionList({
   function handleRelativeButtonClick(change) {
     const newPage = currentPage + change;
 
-    if (newPage >= 0 && newPage <= totalPages) {
+    if (newPage >= 1 && newPage <= totalPages) {
       setCurrentPage(newPage);
     }
   }
+
+  function buildPageItems() {
+    if (totalPages <= 1) return [];
+    if (totalPages <= 7) {
+      return Array.from({ length: totalPages }, (_, i) => i + 1);
+    }
+
+    const pages = new Set([
+      1,
+      totalPages,
+      currentPage - 1,
+      currentPage,
+      currentPage + 1,
+    ]);
+
+    const sorted = Array.from(pages)
+      .filter((page) => page >= 1 && page <= totalPages)
+      .sort((a, b) => a - b);
+
+    const items = [];
+    let prev = null;
+    for (const page of sorted) {
+      if (prev !== null && page - prev > 1) {
+        items.push("ellipsis");
+      }
+      items.push(page);
+      prev = page;
+    }
+
+    return items;
+  }
+
+  const pageItems = buildPageItems();
 
   return (
     <div className="flex h-full min-w-0 flex-col justify-between">
@@ -51,7 +84,7 @@ export default function SubscriptionList({
 
       {/* Pagination */}
       {/* Previous Button */}
-      <div className="flex justify-center space-x-2 bg-opacity-50 py-4">
+      <div className="flex flex-wrap items-center justify-center gap-2 bg-opacity-50 py-4">
         {totalPages > 1 && (
           <PaginationButton
             isActive={hasPrevious}
@@ -76,17 +109,25 @@ export default function SubscriptionList({
         )}
 
         {/* Page Buttons */}
-        {totalPages > 1 &&
-          Array.from({ length: totalPages }, (_, i) => (
-            <PaginationButton
-              key={i}
-              isActive={true}
-              isCurrent={i + 1 === currentPage}
-              clickHandler={() => setCurrentPage(i + 1)}
+        {pageItems.map((item, index) =>
+          item === "ellipsis" ? (
+            <span
+              key={`ellipsis-${index}`}
+              className="px-2 text-xs font-semibold text-gray-500"
             >
-              {i + 1}
+              ...
+            </span>
+          ) : (
+            <PaginationButton
+              key={item}
+              isActive={true}
+              isCurrent={item === currentPage}
+              clickHandler={() => setCurrentPage(item)}
+            >
+              {item}
             </PaginationButton>
-          ))}
+          ),
+        )}
 
         {/* Next Button */}
         {totalPages > 1 && (
