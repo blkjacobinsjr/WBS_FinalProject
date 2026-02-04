@@ -369,22 +369,27 @@ function detectFromStatementLines(lines) {
     // N26 format: date+amount on one line, merchant on previous lines
     // Line format: "01.01.2026 -91,45€" (date at position 0)
     if (!parsed && DATE_DMY.test(line) && /€/i.test(line)) {
+      console.log("[DEBUG N26] Potential N26 line:", line);
       const dateMatch = line.match(DATE_DMY);
       if (dateMatch?.index === 0) {
+        console.log("[DEBUG N26] Date at position 0, extracting amount...");
         const amount = extractEuroAmount(line);
+        console.log("[DEBUG N26] Extracted amount:", amount);
         if (amount) {
           // Look back up to 4 lines for merchant name
           let merchantName = null;
           for (let back = 1; back <= 4 && i - back >= 0; back += 1) {
             const prevLine = lines[i - back];
+            console.log("[DEBUG N26] Looking back", back, ":", prevLine);
             if (!prevLine) continue;
-            if (isStatementHeader(prevLine) || isBlockedLine(prevLine)) continue;
-            if (DATE_DMY.test(prevLine) || DATE_DMY_SHORT.test(prevLine)) continue;
-            if (/wertstellung/i.test(prevLine)) continue;
-            if (/mastercard|visa|iban|bic/i.test(prevLine)) continue;
-            if (extractEuroAmount(prevLine)) continue;
+            if (isStatementHeader(prevLine) || isBlockedLine(prevLine)) { console.log("[DEBUG N26] Skipped: header/blocked"); continue; }
+            if (DATE_DMY.test(prevLine) || DATE_DMY_SHORT.test(prevLine)) { console.log("[DEBUG N26] Skipped: date"); continue; }
+            if (/wertstellung/i.test(prevLine)) { console.log("[DEBUG N26] Skipped: wertstellung"); continue; }
+            if (/mastercard|visa|iban|bic/i.test(prevLine)) { console.log("[DEBUG N26] Skipped: card/iban"); continue; }
+            if (extractEuroAmount(prevLine)) { console.log("[DEBUG N26] Skipped: has amount"); continue; }
 
             const candidate = strictMerchantName(prevLine);
+            console.log("[DEBUG N26] Candidate merchant:", candidate, "isLikely:", isLikelyMerchant(candidate));
             if (isLikelyMerchant(candidate)) {
               merchantName = candidate;
               break;
@@ -392,6 +397,7 @@ function detectFromStatementLines(lines) {
           }
 
           if (merchantName) {
+            console.log("[DEBUG N26] Found merchant:", merchantName, "amount:", amount.amount);
             parsed = {
               name: merchantName,
               amount: amount.amount,
@@ -399,6 +405,8 @@ function detectFromStatementLines(lines) {
               source: "statement",
               rawLine: line,
             };
+          } else {
+            console.log("[DEBUG N26] No merchant found for line:", line);
           }
         }
       }
@@ -914,10 +922,17 @@ export default function BulkImport({
               console.error("PDF parse failed", file.name, error);
             }
 
+            console.log("[DEBUG] PDF text extracted, length:", text.length);
+            console.log("[DEBUG] First 2000 chars:", text.slice(0, 2000));
+
             const textLines = text
               .split(/\r?\n/)
               .map((line) => line.trim())
               .filter(Boolean);
+
+            console.log("[DEBUG] Total lines:", textLines.length);
+            console.log("[DEBUG] Sample lines:", textLines.slice(0, 30));
+
             aiLines.push(...textLines);
             if (
               textLines.some(
@@ -927,8 +942,10 @@ export default function BulkImport({
               )
             ) {
               statementModeDetected = true;
+              console.log("[DEBUG] Statement mode detected");
             }
             let pdfCandidates = detectFromPdfText(text);
+            console.log("[DEBUG] Candidates from PDF text:", pdfCandidates.length, pdfCandidates);
             if (pdfCandidates.length === 0) {
               const ocrText = await extractPdfTextWithOcr(buffer);
               if (ocrText) {
