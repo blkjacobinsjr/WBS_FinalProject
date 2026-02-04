@@ -120,7 +120,11 @@ function extractAmount(line) {
   );
   for (const match of fallbackMatches) {
     const token = match[0];
-    if (DATE_DMY.test(token) || DATE_DMY_SHORT.test(token)) {
+    if (
+      DATE_DMY.test(token) ||
+      DATE_DMY_SHORT.test(token) ||
+      DATE_DMY_NOYEAR.test(token)
+    ) {
       continue;
     }
     return parseAmount(token);
@@ -173,6 +177,9 @@ const SUBSCRIPTION_HINTS =
 
 const DATE_DMY = /\b\d{2}[./-]\d{2}[./-]\d{4}\b/;
 const DATE_DMY_SHORT = /\b\d{2}[./-]\d{2}[./-]\d{2}\b/;
+const DATE_DMY_NOYEAR = /\b\d{2}[./-]\d{2}\b/;
+const DATE_RANGE =
+  /\b\d{2}[./-]\d{2}[./-]\d{2,4}\s*[-–]\s*\d{2}[./-]\d{2}[./-]\d{2,4}\b/;
 
 function detectInterval(line) {
   if (!line) return "month";
@@ -191,6 +198,13 @@ function parseSignedAmountToken(token) {
   if (!token) return null;
   let negative = false;
   let cleaned = token.trim();
+  if (
+    DATE_DMY.test(cleaned) ||
+    DATE_DMY_SHORT.test(cleaned) ||
+    DATE_DMY_NOYEAR.test(cleaned)
+  ) {
+    return null;
+  }
   if (cleaned.startsWith("(") && cleaned.endsWith(")")) {
     negative = true;
     cleaned = cleaned.slice(1, -1);
@@ -236,15 +250,16 @@ function extractSignedAmount(line) {
   return null;
 }
 
-function extractEuroAmount(line) {
+function extractEuroAmount(line, allowPositive = false) {
   if (!line) return null;
   const matches = Array.from(line.matchAll(EURO_AMOUNT_REGEX));
   if (matches.length === 0) return null;
 
-  for (const match of matches) {
+  for (let i = matches.length - 1; i >= 0; i -= 1) {
+    const match = matches[i];
     const token = match[0];
     const parsed = parseEuroAmountToken(token);
-    if (parsed?.negative) {
+    if (parsed?.negative || allowPositive) {
       return {
         amount: parsed.amount,
         index: match.index ?? 0,
@@ -298,13 +313,22 @@ function parseEuroStatementLine(line) {
   if (!line) return null;
   if (isStatementHeader(line)) return null;
   if (isBlockedLine(line)) return null;
-  if (!DATE_DMY.test(line) && !DATE_DMY_SHORT.test(line)) return null;
-  if (!/€|eur/i.test(line)) return null;
+  if (
+    !DATE_DMY.test(line) &&
+    !DATE_DMY_SHORT.test(line) &&
+    !DATE_DMY_NOYEAR.test(line)
+  )
+    return null;
+  if (!/€|eur/i.test(line) && !DATE_RANGE.test(line)) return null;
 
-  const amount = extractEuroAmount(line);
+  const allowPositive = DATE_RANGE.test(line) || /lastschrift/i.test(line);
+  const amount = extractEuroAmount(line, allowPositive);
   if (!amount) return null;
 
-  const dateMatch = line.match(DATE_DMY) || line.match(DATE_DMY_SHORT);
+  const dateMatch =
+    line.match(DATE_DMY) ||
+    line.match(DATE_DMY_SHORT) ||
+    line.match(DATE_DMY_NOYEAR);
   const dateIndex = dateMatch?.index ?? -1;
   const dateLength = dateMatch?.[0]?.length ?? 0;
 
@@ -333,11 +357,67 @@ function parseEuroStatementLine(line) {
 
 function detectFromStatementLines(lines) {
   const candidates = [];
-  for (const line of lines) {
-    const parsed =
-      parseStatementLine(line) || parseEuroStatementLine(line);
-    if (parsed) candidates.push(parsed);
+
+  for (let index = 0; index < lines.length; index += 1) {
+    const line = lines[index];
+    let parsed = null;
+
+    if (MONTH_PREFIX.test(line)) {
+      parsed = parseStatementLine(line);
+    } else if (
+      DATE_DMY.test(line) ||
+      DATE_DMY_SHORT.test(line) ||
+      DATE_DMY_NOYEAR.test(line)
+    ) {
+      parsed = parseEuroStatementLine(line);
+    }
+
+    if (parsed && parsed.name) {
+      candidates.push(parsed);
+      continue;
+    }
+
+    if (
+      DATE_DMY.test(line) ||
+      DATE_DMY_SHORT.test(line) ||
+      DATE_DMY_NOYEAR.test(line) ||
+      DATE_RANGE.test(line)
+    ) {
+      const amount = extractEuroAmount(line, true);
+      if (!amount) continue;
+
+      let merchantLine = null;
+      for (let back = 1; back <= 3; back += 1) {
+        const prev = lines[index - back];
+        if (!prev) continue;
+        if (isStatementHeader(prev) || isBlockedLine(prev)) continue;
+        if (
+          DATE_DMY.test(prev) ||
+          DATE_DMY_SHORT.test(prev) ||
+          DATE_DMY_NOYEAR.test(prev)
+        )
+          continue;
+        if (extractEuroAmount(prev) || extractSignedAmount(prev)) continue;
+
+        const candidate = strictMerchantName(prev);
+        if (isLikelyMerchant(candidate)) {
+          merchantLine = candidate;
+          break;
+        }
+      }
+
+      if (!merchantLine) continue;
+
+      candidates.push({
+        name: merchantLine,
+        amount: amount.amount,
+        interval: detectInterval(line),
+        source: "statement",
+        rawLine: line,
+      });
+    }
   }
+
   return candidates;
 }
 
@@ -478,7 +558,9 @@ function detectFromPdfText(text) {
   const statementMode = lines.some(
     (line) =>
       MONTH_PREFIX.test(line) ||
-      (DATE_DMY.test(line) && /€|eur/i.test(line)),
+      DATE_DMY.test(line) ||
+      DATE_DMY_SHORT.test(line) ||
+      DATE_DMY_NOYEAR.test(line),
   );
   const forcedCandidates = dedupeCandidates(collectForcedCandidates(lines));
   const statementCandidates = detectFromStatementLines(lines);
@@ -814,7 +896,9 @@ export default function BulkImport({
             textLines.some(
               (line) =>
                 MONTH_PREFIX.test(line) ||
-                (DATE_DMY.test(line) && /€|eur/i.test(line)),
+                DATE_DMY.test(line) ||
+                DATE_DMY_SHORT.test(line) ||
+                DATE_DMY_NOYEAR.test(line),
             )
           ) {
             statementModeDetected = true;
@@ -832,7 +916,9 @@ export default function BulkImport({
                 ocrLines.some(
                   (line) =>
                     MONTH_PREFIX.test(line) ||
-                    (DATE_DMY.test(line) && /€|eur/i.test(line)),
+                    DATE_DMY.test(line) ||
+                    DATE_DMY_SHORT.test(line) ||
+                    DATE_DMY_NOYEAR.test(line),
                 )
               ) {
                 statementModeDetected = true;
