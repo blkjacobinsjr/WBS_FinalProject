@@ -1,25 +1,18 @@
 import { useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
-import { UserButton, useUser } from "@clerk/clerk-react";
+import { useUser } from "@clerk/clerk-react";
 import { toast } from "sonner";
 
 import ErrorDisplay from "../components/ErrorDisplay";
 import Loading from "../components/Loading";
-import Notifications from "../components/Notifications";
-import OverviewStat from "../components/OverviewStat"; // Import BarChart component
-import Recommendations from "../components/Recommendations";
-import SearchModal from "../components/SearchModal"; // Import SearchModal component
-import Sidebar from "../components/Sidebar";
-import SidebarTop from "../components/SidebarTop";
-import Stats from "../components/Stats"; // Import Stats component
-import SubscriptionForm from "../components/SubscriptionForm"; // Import AddSubscriptionForm component
-import SubscriptionList from "../components/SubscriptionList"; // Import SubscriptionList component
-import FinancialResetCard from "../components/FinancialResetCard";
+import SubscriptionForm from "../components/SubscriptionForm";
 import UsageModal from "../components/UsageModal";
-import LoadingButton from "../components/LoadingButton";
-import CategoryPage from "./CategoryPage";
+import BottomTabBar from "../components/BottomTabBar";
+import HomeTab from "./HomeTab";
+import SubscriptionsTab from "./SubscriptionsTab";
+import InsightsTab from "./InsightsTab";
+import SettingsTab from "./SettingsTab";
 import BulkImport from "./BulkImport";
-import FinanceInsights from "./FinanceInsights";
 
 import { useDataContext } from "../contexts/dataContext";
 import useCategory from "../hooks/useCategory";
@@ -29,16 +22,12 @@ import useNotifications from "../hooks/useNotifications";
 import useSubscription from "../hooks/useSubscription";
 import useUsage from "../hooks/useUsage";
 import eventEmitter from "../utils/EventEmitter";
-import getGreeting from "../utils/greetings.js";
 import { createUsageBody } from "../utils/schemaBuilder";
-import UsagePage from "../components/UsagePage";
 
 function Dashboard() {
   // ---- PAGE INFORMATION ----
   const { pageId } = useParams();
-  const {
-    user: { firstName },
-  } = useUser();
+  const { user } = useUser();
 
   // ---- CONTEXT ----
   const {
@@ -53,15 +42,14 @@ function Dashboard() {
   } = useDataContext();
 
   // ---- STATE ----
+  const [activeTab, setActiveTab] = useState("home");
+  const [showBulkImport, setShowBulkImport] = useState(false);
   const [subscriptionFormState, setSubscriptionFormState] = useState({
     mode: null,
     subscription: {},
     showForm: false,
   });
-  const [isOpeningSubscription, setIsOpeningSubscription] = useState(false);
   const [isResettingData, setIsResettingData] = useState(false);
-  const [importSyncing, setImportSyncing] = useState(false);
-  const [animateImport, setAnimateImport] = useState(false);
   const [usageModalState, setUsageModalState] = useState({
     showForm: false,
     notificationId: null,
@@ -277,6 +265,11 @@ function Dashboard() {
     }
 
     // register event listeners
+    // Switch tab event handler
+    function switchTabCallback(tabId) {
+      setActiveTab(tabId);
+    }
+
     eventEmitter.on("refetchData", refetchCallback);
     eventEmitter.on("openSubscriptionForm", openSubscriptionFormCallback);
     eventEmitter.on("changeFormMode", switchFormModeCallback);
@@ -285,6 +278,7 @@ function Dashboard() {
     eventEmitter.on("useScoreSelected", usageScoreSelectedCallback);
     eventEmitter.on("openUsageQuiz", openUsageQuizCallback);
     eventEmitter.on("deleteSubscription", deleteSubscriptionCallback);
+    eventEmitter.on("switchTab", switchTabCallback);
 
     return () => {
       abortController.abort();
@@ -299,48 +293,11 @@ function Dashboard() {
       eventEmitter.off("useScoreSelected", usageScoreSelectedCallback);
       eventEmitter.off("openUsageQuiz", openUsageQuizCallback);
       eventEmitter.off("deleteSubscription", deleteSubscriptionCallback);
+      eventEmitter.off("switchTab", switchTabCallback);
     };
   }, []);
 
-  useEffect(() => {
-    const flag = localStorage.getItem("bulkImport:justImported");
-    if (!flag) return;
-    try {
-      const payload = JSON.parse(flag);
-      if (payload?.ts && Date.now() - payload.ts < 2 * 60 * 1000) {
-        setImportSyncing(true);
-        setAnimateImport(true);
-      }
-    } catch (error) {
-      // ignore
-    }
-    localStorage.removeItem("bulkImport:justImported");
-  }, []);
-
-  useEffect(() => {
-    if (importSyncing && subscriptions?.length > 0) {
-      setImportSyncing(false);
-    }
-  }, [importSyncing, subscriptions]);
-
-  useEffect(() => {
-    if (!animateImport) return;
-    const timer = setTimeout(() => setAnimateImport(false), 2000);
-    return () => clearTimeout(timer);
-  }, [animateImport]);
-
   // ---- MORE FUNCTIONS ----
-  // open subscription form with an empty subscription
-  function handleAddSubscriptionClick() {
-    setIsOpeningSubscription(true);
-    setTimeout(() => setIsOpeningSubscription(false), 200);
-    setSubscriptionFormState({
-      mode: "add",
-      subscription: {},
-      showForm: true,
-    });
-  }
-
   async function handleResetData() {
     setIsResettingData(true);
 
@@ -384,143 +341,77 @@ function Dashboard() {
     return loadingSuccessful;
   }
 
+  // Render tab content based on activeTab
+  function renderTabContent() {
+    if (showBulkImport) {
+      return (
+        <BulkImport
+          embedded={true}
+          redirectOnComplete={false}
+          onBack={() => setShowBulkImport(false)}
+          onComplete={() => {
+            setShowBulkImport(false);
+            setActiveTab("subscriptions");
+          }}
+        />
+      );
+    }
+
+    switch (activeTab) {
+      case "home":
+        return <HomeTab />;
+      case "subscriptions":
+        return (
+          <SubscriptionsTab onOpenBulkImport={() => setShowBulkImport(true)} />
+        );
+      case "insights":
+        return <InsightsTab />;
+      case "settings":
+        return (
+          <SettingsTab
+            onResetData={handleResetData}
+            isResettingData={isResettingData}
+          />
+        );
+      default:
+        return <HomeTab />;
+    }
+  }
+
   // Main return block for the Dashboard component
   return (
-    <div className="apple-bg min-h-screen w-full">
+    <div className="min-h-screen w-full bg-gray-50 dark:bg-gray-900">
       {loading && <Loading />}
 
       {!loading && error && <ErrorDisplay message={errorMessage} />}
 
       {!loading && !error && checkDataLoadingSuccessful() && (
-        <div className="mx-auto flex w-full max-w-6xl flex-col gap-4 px-4 py-4 sm:px-6 lg:px-8">
-          {/* Top bar with logo and search */}
-          <div className="flex w-full flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-            {/* Logo */}
-            <Link to="/dashboard" className="flex items-center gap-2">
-              <img
-                src="/subzero_logo_icon.png"
-                className="h-7 w-7"
-                alt="Logo"
-              />
-              <span className="text-sm font-semibold text-gray-800 sm:hidden">
-                Subzero
-              </span>
-            </Link>
-
-            {/* Search Bar */}
-            <div className="flex w-full sm:flex-1 sm:justify-center">
-              <SearchModal />
+        <div className="mx-auto flex min-h-screen max-w-lg flex-col">
+          {/* Header */}
+          <header className="sticky top-0 z-40 border-b border-black/5 bg-white/80 px-4 py-3 backdrop-blur-xl dark:border-white/10 dark:bg-black/80">
+            <div className="flex items-center justify-between">
+              <Link to="/dashboard" className="flex items-center gap-2">
+                <img
+                  src="/subzero_logo_icon.png"
+                  className="h-7 w-7"
+                  alt="Logo"
+                />
+                <span className="text-sm font-semibold text-black/80 dark:text-white/80">
+                  Subzero
+                </span>
+              </Link>
             </div>
-          </div>
+          </header>
 
-          {/* App content */}
-          <div className="w-full">
-            <div className="flex w-full flex-col rounded-lg border border-black/25 bg-gray-300/25 shadow-xl backdrop-blur">
-              {/* Title Bar */}
-              <div className="flex flex-col gap-3 p-4 sm:flex-row sm:items-center sm:justify-between">
-                {/* Title */}
-                <div className="text-lg font-bold uppercase">
-                  {getGreeting(firstName)}
-                </div>
+          {/* Main Content */}
+          <main className="flex-1 overflow-y-auto px-4 py-4">
+            {renderTabContent()}
+          </main>
 
-                <div className="flex flex-wrap items-center justify-end gap-2">
-                  <LoadingButton
-                    onClick={handleResetData}
-                    isLoading={isResettingData}
-                    className="rounded-full border border-black/20 bg-white/70 px-3 py-1 text-xs font-semibold text-black/70"
-                  >
-                    Reset Data
-                  </LoadingButton>
-                  {/* Notification */}
-                  <Notifications />
-
-                  {/* User Icon */}
-                  <UserButton />
-                </div>
-              </div>
-
-              {/* Content Area */}
-              <div className="flex w-full flex-1 flex-col divide-y divide-black/25 lg:flex-row lg:divide-y-0 lg:divide-x">
-                {/* Sidebar Content */}
-                <div className="flex w-full flex-none flex-col divide-y divide-black/25 lg:w-72">
-                  {/* Add Subscription Button */}
-                  <div className="flex justify-center p-2">
-                    <LoadingButton
-                      onClick={handleAddSubscriptionClick}
-                      isLoading={isOpeningSubscription}
-                      className="w-full transform-gpu cursor-pointer rounded-lg border-none bg-gradient-to-r from-black to-gray-500 px-5 py-3 text-base text-white outline-none transition-all duration-300 ease-in-out hover:scale-[1.02] hover:from-gray-500 hover:to-black hover:shadow-lg"
-                    >
-                      Add Subscription
-                    </LoadingButton>
-                  </div>
-
-                  {/* Overview, Recommendations, Cancel */}
-                  <SidebarTop className="w-full p-2" />
-
-                  {/* Categories */}
-                  <Sidebar className="p-2" />
-                </div>
-
-                {/* Main Content */}
-                <div className="min-w-0 w-full flex-1 rounded-br-lg bg-white/25 p-3 sm:p-4">
-                  {/* Main Dashboard View */}
-                    {!pageId && (
-                      <div className="grid h-full grid-rows-[max-content_max-content_1fr] gap-4">
-                        <FinancialResetCard />
-                        <Stats />
-                        <OverviewStat />
-                        <SubscriptionList animateOnMount={animateImport} />
-
-                      {/* No subscriptions added yet */}
-                      {subscriptions?.length === 0 && !importSyncing && (
-                        <div className="flex flex-col items-center justify-center gap-2 pb-6 text-center text-gray-700 sm:flex-row">
-                          <span>Welcome. Get started by</span>
-                          <button
-                            className="underline"
-                            onClick={() =>
-                              eventEmitter.emit(
-                                "openSubscriptionForm",
-                                {},
-                                "add",
-                              )
-                            }
-                          >
-                            adding your first subscription
-                          </button>
-                        </div>
-                      )}
-                      {subscriptions?.length === 0 && importSyncing && (
-                        <div className="flex flex-col items-center justify-center gap-2 pb-6 text-center text-gray-700">
-                          <span>Syncing imports</span>
-                        </div>
-                      )}
-                    </div>
-                  )}
-
-                  {/* Recommendations / Cancel */}
-                  {pageId === "recommendations" && <Recommendations />}
-
-                    {/* Usage Page */}
-                    {pageId === "usage" && <UsagePage />}
-
-                    {/* Bulk Import Page */}
-                    {pageId === "bulk" && <BulkImport />}
-
-                    {/* Finance Insights Page */}
-                    {pageId === "insights" && <FinanceInsights />}
-
-                    {/* Category Pages */}
-                    {pageId &&
-                      pageId !== "recommendations" &&
-                      pageId !== "usage" &&
-                      pageId !== "bulk" &&
-                      pageId !== "insights" && (
-                        <CategoryPage categoryId={pageId} />
-                      )}
-                </div>
-              </div>
-            </div>
-          </div>
+          {/* Bottom Tab Bar */}
+          {!showBulkImport && (
+            <BottomTabBar activeTab={activeTab} onTabChange={setActiveTab} />
+          )}
         </div>
       )}
 

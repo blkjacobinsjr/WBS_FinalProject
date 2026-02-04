@@ -6,6 +6,7 @@ import useSubscription from "../hooks/useSubscription";
 import eventEmitter from "../utils/EventEmitter";
 import CategoryIcon from "./CategoryIcon";
 import { createSubscriptionBody } from "../utils/schemaBuilder";
+import { resolveCancelLink } from "../utils/cancelProviders";
 import LoadingButton from "./LoadingButton";
 
 export default function SubscriptionForm({
@@ -334,6 +335,63 @@ export default function SubscriptionForm({
                 </div>
               )}
             </div>
+
+            {/* Just Cancel Button - Show mode only */}
+            {mode === "show" && subscription?.name && (() => {
+              const cancelInfo = resolveCancelLink(subscription.name);
+              if (!cancelInfo?.link) return null;
+              return (
+                <div className="mt-6">
+                  <a
+                    href={cancelInfo.link}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex w-full items-center justify-between rounded-xl bg-red-50 px-4 py-3 transition-all hover:bg-red-100 active:scale-[0.98]"
+                  >
+                    <div className="flex items-center gap-3">
+                      <div className="rounded-full bg-red-100 p-2">
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          fill="none"
+                          viewBox="0 0 24 24"
+                          strokeWidth={1.5}
+                          stroke="currentColor"
+                          className="h-5 w-5 text-red-600"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            d="M13.5 6H5.25A2.25 2.25 0 003 8.25v10.5A2.25 2.25 0 005.25 21h10.5A2.25 2.25 0 0018 18.75V10.5m-10.5 6L21 3m0 0h-5.25M21 3v5.25"
+                          />
+                        </svg>
+                      </div>
+                      <div className="text-left">
+                        <p className="text-sm font-medium text-red-700">
+                          Cancel Subscription
+                        </p>
+                        <p className="text-xs text-red-600/60">
+                          Opens {cancelInfo.source || subscription.name} cancel page
+                        </p>
+                      </div>
+                    </div>
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      strokeWidth={1.5}
+                      stroke="currentColor"
+                      className="h-5 w-5 text-red-400"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        d="M8.25 4.5l7.5 7.5-7.5 7.5"
+                      />
+                    </svg>
+                  </a>
+                </div>
+              );
+            })()}
 
             {/* Buttons */}
             <div className="grid grid-cols-1 gap-2 pt-8 sm:auto-cols-fr sm:grid-flow-col">

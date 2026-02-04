@@ -695,6 +695,7 @@ export default function BulkImport({
   embedded = false,
   redirectOnComplete = true,
   onComplete,
+  onBack,
   deferCompleteUntilReview = false,
 }) {
   const {
@@ -1238,10 +1239,34 @@ export default function BulkImport({
 
   return (
     <div
-      className={`flex w-full flex-col gap-4 ${
+      className={`flex w-full flex-col gap-4 pb-24 ${
         embedded ? "max-w-none" : ""
       }`}
     >
+      {/* Back button when embedded */}
+      {embedded && onBack && (
+        <button
+          onClick={onBack}
+          className="flex items-center gap-2 text-sm font-medium text-black/60 transition-colors hover:text-black/80 dark:text-white/60 dark:hover:text-white/80"
+        >
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            fill="none"
+            viewBox="0 0 24 24"
+            strokeWidth={2}
+            stroke="currentColor"
+            className="h-4 w-4"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              d="M15.75 19.5L8.25 12l7.5-7.5"
+            />
+          </svg>
+          Back to Subscriptions
+        </button>
+      )}
+
       <div className={`rounded-lg border p-4 ${theme.container}`}>
         <h2 className={`text-lg font-semibold ${theme.title}`}>Bulk Import and Cancel</h2>
         <p className={`text-sm ${theme.subtitle}`}>
