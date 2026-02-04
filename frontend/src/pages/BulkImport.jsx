@@ -11,7 +11,7 @@ import useCategory from "../hooks/useCategory";
 import useOcr from "../hooks/useOcr";
 import useAiCleaner from "../hooks/useAiCleaner";
 import { createSubscriptionBody } from "../utils/schemaBuilder";
-import { resolveCancelLink } from "../utils/cancelProviders";
+import { resolveCancelLink, isLikelySubscription } from "../utils/cancelProviders";
 import eventEmitter from "../utils/EventEmitter";
 import LoadingButton from "../components/LoadingButton";
 
@@ -922,16 +922,10 @@ export default function BulkImport({
               console.error("PDF parse failed", file.name, error);
             }
 
-            console.log("[DEBUG] PDF text extracted, length:", text.length);
-            console.log("[DEBUG] First 2000 chars:", text.slice(0, 2000));
-
             const textLines = text
               .split(/\r?\n/)
               .map((line) => line.trim())
               .filter(Boolean);
-
-            console.log("[DEBUG] Total lines:", textLines.length);
-            console.log("[DEBUG] Sample lines:", textLines.slice(0, 30));
 
             aiLines.push(...textLines);
             if (
@@ -942,10 +936,8 @@ export default function BulkImport({
               )
             ) {
               statementModeDetected = true;
-              console.log("[DEBUG] Statement mode detected");
             }
             let pdfCandidates = detectFromPdfText(text);
-            console.log("[DEBUG] Candidates from PDF text:", pdfCandidates.length, pdfCandidates);
             if (pdfCandidates.length === 0) {
               const ocrText = await extractPdfTextWithOcr(buffer);
               if (ocrText) {
@@ -1027,6 +1019,21 @@ export default function BulkImport({
     }
 
     candidates = dedupeCandidates(candidates);
+
+    // Filter to likely subscriptions only
+    const allCandidates = candidates;
+    candidates = candidates.filter((c) => isLikelySubscription(c.name));
+    console.log(
+      `[DEBUG] Filtered ${allCandidates.length} candidates to ${candidates.length} likely subscriptions`,
+    );
+
+    if (candidates.length === 0 && allCandidates.length > 0) {
+      toast.error(
+        `Found ${allCandidates.length} transactions but none matched known subscriptions`,
+      );
+      setStage("idle");
+      return;
+    }
 
     if (replaceExisting) {
       await wipeAllSubscriptions({ silent: true });
