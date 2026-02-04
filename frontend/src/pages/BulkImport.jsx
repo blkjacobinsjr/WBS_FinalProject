@@ -206,7 +206,7 @@ const AMOUNT_TOKEN_REGEX =
   /\(?[-–—]?\$?\d{1,3}(?:[.,]\d{3})*[.,]\d{2}\)?-?/g;
 
 const EURO_AMOUNT_REGEX =
-  /(?:€\s*[-–—]?\s*\d{1,3}(?:[.,]\d{3})*[.,]\d{2})|(?:[-–—]?\s*\d{1,3}(?:[.,]\d{3})*[.,]\d{2}\s*(?:€|eur)\b)/gi;
+  /(?:€\s*[-–—]?\s*\d{1,3}(?:[.,]\d{3})*[.,]\d{2})|(?:[-–—]?\s*\d{1,3}(?:[.,]\d{3})*[.,]\d{2}\s*(?:€|eur\b))/gi;
 
 function parseSignedAmountToken(token) {
   if (!token) return null;
