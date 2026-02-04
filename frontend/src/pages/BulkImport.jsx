@@ -684,6 +684,19 @@ function bufferToBase64(buffer) {
   return btoa(binary);
 }
 
+function readFileBuffer(file) {
+  if (file?.arrayBuffer) {
+    return file.arrayBuffer();
+  }
+
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result);
+    reader.onerror = () => reject(reader.error);
+    reader.readAsArrayBuffer(file);
+  });
+}
+
 export default function BulkImport({
   embedded = false,
   redirectOnComplete = true,
@@ -790,7 +803,7 @@ export default function BulkImport({
   }
 
   async function extractPdfTextWithOcr(buffer) {
-    const maxSize = 1_000_000;
+    const maxSize = 6_000_000;
     if (buffer.byteLength > maxSize) return "";
 
     try {
@@ -852,6 +865,7 @@ export default function BulkImport({
     let baseSubscriptions = subscriptions || [];
     const fingerprintsToStore = [];
     const skippedFiles = [];
+    const failedFiles = [];
     const aiLines = [];
     let statementModeDetected = false;
 
@@ -865,79 +879,103 @@ export default function BulkImport({
       }
 
       for (const file of files) {
-        const extension = getExtension(file.name);
-        if (!["pdf", "csv", "xlsx", "xls"].includes(extension)) {
-          skippedFiles.push(file.name);
-          continue;
-        }
-
-        const buffer = await file.arrayBuffer();
-
-        if (!replaceExisting) {
-          const fingerprint = await hashBuffer(buffer);
-          if (fingerprint) {
-            const seen = loadFingerprints();
-            if (seen.includes(fingerprint)) {
-              skippedFiles.push(file.name);
-              continue;
-            }
-            fingerprintsToStore.push(fingerprint);
+        try {
+          const extension = getExtension(file.name);
+          if (!["pdf", "csv", "xlsx", "xls"].includes(extension)) {
+            skippedFiles.push(file.name);
+            continue;
           }
-        }
 
-        if (extension === "pdf") {
-          const text = await extractPdfText(buffer);
-          const textLines = text
-            .split(/\r?\n/)
-            .map((line) => line.trim())
-            .filter(Boolean);
-          aiLines.push(...textLines);
-          if (
-            textLines.some(
-              (line) =>
-                MONTH_PREFIX.test(line) ||
-                DATE_DMY.test(line) ||
-                DATE_DMY_SHORT.test(line) ||
-                DATE_DMY_NOYEAR.test(line),
-            )
-          ) {
-            statementModeDetected = true;
+          const buffer = await readFileBuffer(file);
+          if (!buffer) {
+            failedFiles.push(file.name);
+            continue;
           }
-          let pdfCandidates = detectFromPdfText(text);
-          if (pdfCandidates.length === 0) {
-            const ocrText = await extractPdfTextWithOcr(buffer);
-            if (ocrText) {
-              const ocrLines = ocrText
-                .split(/\r?\n/)
-                .map((line) => line.trim())
-                .filter(Boolean);
-              aiLines.push(...ocrLines);
-              if (
-                ocrLines.some(
-                  (line) =>
-                    MONTH_PREFIX.test(line) ||
-                    DATE_DMY.test(line) ||
-                    DATE_DMY_SHORT.test(line) ||
-                    DATE_DMY_NOYEAR.test(line),
-                )
-              ) {
-                statementModeDetected = true;
+
+          if (!replaceExisting) {
+            const fingerprint = await hashBuffer(buffer);
+            if (fingerprint) {
+              const seen = loadFingerprints();
+              if (seen.includes(fingerprint)) {
+                skippedFiles.push(file.name);
+                continue;
               }
-              pdfCandidates = detectFromPdfText(ocrText);
+              fingerprintsToStore.push(fingerprint);
             }
           }
-          candidates = candidates.concat(pdfCandidates);
-        } else if (extension === "csv") {
-          const text = new TextDecoder("utf-8").decode(buffer);
-          candidates = candidates.concat(detectFromCsvText(text));
-        } else {
-          candidates = candidates.concat(detectFromSpreadsheet(buffer));
+
+          if (extension === "pdf") {
+            let text = "";
+            try {
+              text = await extractPdfText(buffer);
+            } catch (error) {
+              console.error("PDF parse failed", file.name, error);
+            }
+
+            const textLines = text
+              .split(/\r?\n/)
+              .map((line) => line.trim())
+              .filter(Boolean);
+            aiLines.push(...textLines);
+            if (
+              textLines.some(
+                (line) =>
+                  MONTH_PREFIX.test(line) ||
+                  DATE_DMY.test(line) ||
+                  DATE_DMY_SHORT.test(line) ||
+                  DATE_DMY_NOYEAR.test(line),
+              )
+            ) {
+              statementModeDetected = true;
+            }
+            let pdfCandidates = detectFromPdfText(text);
+            if (pdfCandidates.length === 0) {
+              const ocrText = await extractPdfTextWithOcr(buffer);
+              if (ocrText) {
+                const ocrLines = ocrText
+                  .split(/\r?\n/)
+                  .map((line) => line.trim())
+                  .filter(Boolean);
+                aiLines.push(...ocrLines);
+                if (
+                  ocrLines.some(
+                    (line) =>
+                      MONTH_PREFIX.test(line) ||
+                      DATE_DMY.test(line) ||
+                      DATE_DMY_SHORT.test(line) ||
+                      DATE_DMY_NOYEAR.test(line),
+                  )
+                ) {
+                  statementModeDetected = true;
+                }
+                pdfCandidates = detectFromPdfText(ocrText);
+              }
+            }
+            candidates = candidates.concat(pdfCandidates);
+          } else if (extension === "csv") {
+            const text = new TextDecoder("utf-8").decode(buffer);
+            candidates = candidates.concat(detectFromCsvText(text));
+          } else {
+            candidates = candidates.concat(detectFromSpreadsheet(buffer));
+          }
+        } catch (error) {
+          console.error("File processing failed", file.name, error);
+          failedFiles.push(file.name);
         }
       }
     } catch (error) {
-      toast.error("Could not read file");
+      toast.error("Could not read files");
       setStage("idle");
       return;
+    }
+
+    if (failedFiles.length > 0) {
+      const shortList = failedFiles.slice(0, 3).join(", ");
+      const suffix =
+        failedFiles.length > 3
+          ? ` +${failedFiles.length - 3} more`
+          : "";
+      toast.error(`Failed to read: ${shortList}${suffix}`);
     }
 
     if (
