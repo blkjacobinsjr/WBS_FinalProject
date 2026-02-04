@@ -44,11 +44,7 @@ export async function postSubscription(req, res, next) {
     body,
   );
 
-  const postThis = { ...body };
-
-  if (Object.hasOwn(postThis, "userId")) {
-    postThis.userId = userId;
-  }
+  const postThis = { ...body, userId };
 
   const { _id: newSubId } = await Subscription.create(postThis);
 

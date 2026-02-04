@@ -1,11 +1,13 @@
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 import { GlobalWorkerOptions, getDocument } from "pdfjs-dist";
 import workerUrl from "pdfjs-dist/build/pdf.worker.min.mjs?url";
+import * as XLSX from "xlsx";
 import { useDataContext } from "../contexts/dataContext";
 import useSubscription from "../hooks/useSubscription";
 import useDashboard from "../hooks/useDashboard";
 import useCategory from "../hooks/useCategory";
+import useOcr from "../hooks/useOcr";
 import { createSubscriptionBody } from "../utils/schemaBuilder";
 import { resolveCancelLink } from "../utils/cancelProviders";
 import eventEmitter from "../utils/EventEmitter";
@@ -53,6 +55,14 @@ function loadFingerprints() {
     return raw ? JSON.parse(raw) : [];
   } catch (error) {
     return [];
+  }
+}
+
+function clearFingerprints() {
+  try {
+    localStorage.removeItem("bulkImport:fingerprints");
+  } catch (error) {
+    // ignore storage errors
   }
 }
 
@@ -266,6 +276,31 @@ function detectFromCsvText(text) {
   return candidates;
 }
 
+function detectFromSpreadsheet(buffer) {
+  const workbook = XLSX.read(buffer, { type: "array" });
+  const [sheetName] = workbook.SheetNames;
+  if (!sheetName) return [];
+  const sheet = workbook.Sheets[sheetName];
+  const csv = XLSX.utils.sheet_to_csv(sheet);
+  if (!csv) return [];
+  return detectFromCsvText(csv);
+}
+
+function getExtension(fileName) {
+  const parts = fileName.toLowerCase().split(".");
+  return parts.length > 1 ? parts.pop() : "";
+}
+
+function bufferToBase64(buffer) {
+  const bytes = new Uint8Array(buffer);
+  const chunkSize = 0x8000;
+  let binary = "";
+  for (let i = 0; i < bytes.length; i += chunkSize) {
+    binary += String.fromCharCode(...bytes.subarray(i, i + chunkSize));
+  }
+  return btoa(binary);
+}
+
 export default function BulkImport() {
   const {
     subscriptions,
@@ -273,18 +308,27 @@ export default function BulkImport() {
     setDashboardData,
     setUsedCategories,
   } = useDataContext();
-  const { createSubscription, updateSubscription, getAllSubscriptions } =
-    useSubscription();
+  const {
+    createSubscription,
+    updateSubscription,
+    getAllSubscriptions,
+    deleteSubscription,
+  } = useSubscription();
   const { getDashboardData } = useDashboard();
   const { getUsedCategories } = useCategory();
+  const { processOcr } = useOcr();
 
-  const [file, setFile] = useState(null);
+  const [files, setFiles] = useState([]);
+  const [dragActive, setDragActive] = useState(false);
+  const fileInputRef = useRef(null);
   const [stage, setStage] = useState("idle");
   const [detected, setDetected] = useState([]);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [summary, setSummary] = useState({ created: 0, skipped: 0 });
   const [decisionLoading, setDecisionLoading] = useState(null);
   const [cancelAllLoading, setCancelAllLoading] = useState(false);
+  const [wipeLoading, setWipeLoading] = useState(false);
+  const [replaceExisting, setReplaceExisting] = useState(true);
 
   const current = detected[currentIndex];
 
@@ -292,6 +336,29 @@ export default function BulkImport() {
     if (detected.length === 0) return 0;
     return Math.min(100, Math.round((currentIndex / detected.length) * 100));
   }, [currentIndex, detected.length]);
+
+  function fileKey(file) {
+    return `${file.name}|${file.size}|${file.lastModified}`;
+  }
+
+  function addFiles(newFiles) {
+    const incoming = Array.from(newFiles || []);
+    if (incoming.length === 0) return;
+    setFiles((prev) => {
+      const map = new Map(prev.map((item) => [fileKey(item), item]));
+      for (const file of incoming) {
+        map.set(fileKey(file), file);
+      }
+      return Array.from(map.values());
+    });
+  }
+
+  function clearFiles() {
+    setFiles([]);
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
+    }
+  }
 
   async function extractPdfText(buffer) {
     const pdf = await getDocument({ data: buffer }).promise;
@@ -333,9 +400,61 @@ export default function BulkImport() {
     return combinedText;
   }
 
-  async function handleProcessFile() {
-    if (!file) {
-      toast.error("Select a PDF or CSV");
+  async function extractPdfTextWithOcr(buffer) {
+    const maxSize = 1_000_000;
+    if (buffer.byteLength > maxSize) return "";
+
+    try {
+      const base64 = bufferToBase64(buffer);
+      const result = await processOcr(
+        { base64 },
+        new AbortController(),
+      );
+      return result?.extractedText || result?.text || "";
+    } catch (error) {
+      return "";
+    }
+  }
+
+  async function wipeAllSubscriptions({ silent = false } = {}) {
+    setWipeLoading(true);
+    let latest = [];
+
+    try {
+      const fetched = await getAllSubscriptions(new AbortController());
+      latest = Array.isArray(fetched) ? fetched : [];
+    } catch (error) {
+      // ignore fetch errors
+    }
+
+    for (const subscription of latest) {
+      if (!subscription?._id) continue;
+      try {
+        await deleteSubscription(subscription._id, new AbortController());
+      } catch (error) {
+        // ignore delete errors
+      }
+    }
+
+    const refreshed = await getAllSubscriptions(new AbortController());
+    const refreshedDashboard = await getDashboardData(new AbortController());
+    const refreshedCategories = await getUsedCategories(new AbortController());
+
+    setSubscriptions(refreshed || []);
+    if (refreshedDashboard) setDashboardData(refreshedDashboard);
+    if (refreshedCategories) setUsedCategories(refreshedCategories);
+    eventEmitter.emit("refetchData");
+
+    if (!silent) {
+      toast.success("All subscriptions wiped");
+    }
+
+    setWipeLoading(false);
+  }
+
+  async function handleProcessFiles() {
+    if (!files.length) {
+      toast.error("Select a PDF, CSV, or Excel file");
       return;
     }
 
@@ -344,22 +463,11 @@ export default function BulkImport() {
     setCurrentIndex(0);
 
     let candidates = [];
-    let buffer = null;
-    let fingerprint = null;
     let baseSubscriptions = subscriptions || [];
+    const fingerprintsToStore = [];
+    const skippedFiles = [];
 
     try {
-      buffer = await file.arrayBuffer();
-      fingerprint = await hashBuffer(buffer);
-      if (fingerprint) {
-        const seen = loadFingerprints();
-        if (seen.includes(fingerprint)) {
-          toast.error("File already processed");
-          setStage("idle");
-          return;
-        }
-      }
-
       const latestSubscriptions = await getAllSubscriptions(
         new AbortController(),
       );
@@ -368,16 +476,43 @@ export default function BulkImport() {
         baseSubscriptions = latestSubscriptions;
       }
 
-      if (file.name.toLowerCase().endsWith(".pdf")) {
-        const text = await extractPdfText(buffer);
-        candidates = detectFromPdfText(text);
-      } else if (file.name.toLowerCase().endsWith(".csv")) {
-        const text = new TextDecoder("utf-8").decode(buffer);
-        candidates = detectFromCsvText(text);
-      } else {
-        toast.error("Unsupported file type");
-        setStage("idle");
-        return;
+      for (const file of files) {
+        const extension = getExtension(file.name);
+        if (!["pdf", "csv", "xlsx", "xls"].includes(extension)) {
+          skippedFiles.push(file.name);
+          continue;
+        }
+
+        const buffer = await file.arrayBuffer();
+
+        if (!replaceExisting) {
+          const fingerprint = await hashBuffer(buffer);
+          if (fingerprint) {
+            const seen = loadFingerprints();
+            if (seen.includes(fingerprint)) {
+              skippedFiles.push(file.name);
+              continue;
+            }
+            fingerprintsToStore.push(fingerprint);
+          }
+        }
+
+        if (extension === "pdf") {
+          const text = await extractPdfText(buffer);
+          let pdfCandidates = detectFromPdfText(text);
+          if (pdfCandidates.length === 0) {
+            const ocrText = await extractPdfTextWithOcr(buffer);
+            if (ocrText) {
+              pdfCandidates = detectFromPdfText(ocrText);
+            }
+          }
+          candidates = candidates.concat(pdfCandidates);
+        } else if (extension === "csv") {
+          const text = new TextDecoder("utf-8").decode(buffer);
+          candidates = candidates.concat(detectFromCsvText(text));
+        } else {
+          candidates = candidates.concat(detectFromSpreadsheet(buffer));
+        }
       }
     } catch (error) {
       toast.error("Could not read file");
@@ -393,6 +528,12 @@ export default function BulkImport() {
 
     candidates = dedupeCandidates(candidates);
 
+    if (replaceExisting) {
+      await wipeAllSubscriptions({ silent: true });
+      clearFingerprints();
+      baseSubscriptions = [];
+    }
+
     const existingKeys = new Set(
       baseSubscriptions.map((sub) => normalizeKey(sub.name, sub.price)),
     );
@@ -403,7 +544,6 @@ export default function BulkImport() {
     setStage("creating");
 
     for (const candidate of candidates) {
-      const key = normalizeName(candidate.name);
       const candidateKey = normalizeKey(candidate.name, candidate.amount);
       if (existingKeys.has(candidateKey)) {
         skippedCount += 1;
@@ -430,10 +570,10 @@ export default function BulkImport() {
     const refreshedDashboard = await getDashboardData(new AbortController());
     const refreshedCategories = await getUsedCategories(new AbortController());
     const enriched = candidates.map((candidate) => {
-      const key = normalizeName(candidate.name);
+      const candidateKey = normalizeName(candidate.name);
       const match = refreshed?.find(
         (sub) =>
-          normalizeName(sub.name) === key &&
+          normalizeName(sub.name) === candidateKey &&
           Math.abs(sub.price - candidate.amount) < 0.01,
       );
 
@@ -453,7 +593,12 @@ export default function BulkImport() {
     if (refreshedDashboard) setDashboardData(refreshedDashboard);
     if (refreshedCategories) setUsedCategories(refreshedCategories);
     eventEmitter.emit("refetchData");
-    storeFingerprint(fingerprint);
+
+    if (!replaceExisting && fingerprintsToStore.length > 0) {
+      for (const fingerprint of fingerprintsToStore) {
+        storeFingerprint(fingerprint);
+      }
+    }
 
     if (createdCount > 0) {
       const label =
@@ -463,6 +608,10 @@ export default function BulkImport() {
       toast.success(label);
     } else {
       toast.success("No new subscriptions added");
+    }
+
+    if (skippedFiles.length > 0) {
+      toast.info(`Skipped ${skippedFiles.length} file(s).`);
     }
   }
 
@@ -517,25 +666,108 @@ export default function BulkImport() {
       <div className="rounded-lg border border-black/10 bg-white/60 p-4">
         <h2 className="text-lg font-semibold">Bulk Import and Cancel</h2>
         <p className="text-sm text-gray-600">
-          Upload a PDF or CSV. Subscriptions are auto added. Then decide keep or
-          cancel.
+          Upload PDF, CSV, or Excel files. Subscriptions are auto added. Then
+          decide keep or cancel.
         </p>
 
-        <div className="mt-4 flex flex-col gap-3 sm:flex-row sm:items-center">
-          <input
-            type="file"
-            accept=".pdf,.csv"
-            onChange={(event) => setFile(event.target.files?.[0] || null)}
-            className="w-full rounded-lg border border-black/20 bg-white px-3 py-2 text-sm"
-          />
+        <div className="mt-4 flex flex-wrap items-center gap-3 text-xs text-gray-600">
+          <label className="flex items-center gap-2 rounded-full border border-black/10 bg-white/70 px-3 py-2">
+            <input
+              type="checkbox"
+              className="h-4 w-4 accent-black"
+              checked={replaceExisting}
+              onChange={(event) => setReplaceExisting(event.target.checked)}
+            />
+            Replace existing on import
+          </label>
+          <span className="text-xs text-gray-500">
+            Wipes current subscriptions before adding new ones.
+          </span>
           <LoadingButton
-            onClick={handleProcessFile}
+            onClick={() => wipeAllSubscriptions()}
+            isLoading={wipeLoading}
+            className="rounded-full border border-black/20 px-3 py-2 text-xs font-semibold"
+          >
+            Wipe all subscriptions
+          </LoadingButton>
+        </div>
+
+        <div
+          className={`mt-4 rounded-xl border-2 border-dashed px-4 py-4 text-sm transition ${
+            dragActive
+              ? "border-black bg-black/5"
+              : "border-black/20 bg-white/60"
+          }`}
+          onDragOver={(event) => {
+            event.preventDefault();
+            setDragActive(true);
+          }}
+          onDragLeave={() => setDragActive(false)}
+          onDrop={(event) => {
+            event.preventDefault();
+            setDragActive(false);
+            addFiles(event.dataTransfer.files);
+          }}
+        >
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <div className="text-sm font-semibold">
+                Drop files here or select
+              </div>
+              <div className="text-xs text-gray-600">
+                PDF, CSV, XLSX, XLS
+              </div>
+            </div>
+            <label className="inline-flex cursor-pointer items-center justify-center rounded-full border border-black/20 bg-white px-4 py-2 text-xs font-semibold">
+              Choose files
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept=".pdf,.csv,.xlsx,.xls"
+                multiple
+                onChange={(event) => {
+                  addFiles(event.target.files);
+                }}
+                className="hidden"
+              />
+            </label>
+          </div>
+
+          {files.length > 0 && (
+            <div className="mt-3 flex flex-col gap-1 text-xs text-gray-600">
+              <div>
+                Selected: {files.length} file{files.length > 1 ? "s" : ""}
+              </div>
+              <div className="flex flex-wrap gap-2">
+                {files.map((item) => (
+                  <span
+                    key={fileKey(item)}
+                    className="rounded-full border border-black/10 bg-white/80 px-3 py-1"
+                  >
+                    {item.name}
+                  </span>
+                ))}
+              </div>
+              <button
+                type="button"
+                onClick={clearFiles}
+                className="mt-1 text-left text-xs font-semibold text-black/70"
+              >
+                Clear selection
+              </button>
+            </div>
+          )}
+        </div>
+
+        <div className="mt-4 flex flex-col gap-3 sm:flex-row sm:items-center">
+          <LoadingButton
+            onClick={handleProcessFiles}
             isLoading={stage === "parsing" || stage === "creating"}
-            disabled={!file || stage === "parsing" || stage === "creating"}
+            disabled={!files.length || stage === "parsing" || stage === "creating"}
             loadingText="Processing"
             className="rounded-lg bg-black px-4 py-2 text-sm font-semibold text-white disabled:opacity-50"
           >
-            Process
+            Process files
           </LoadingButton>
         </div>
 

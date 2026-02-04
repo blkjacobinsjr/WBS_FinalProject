@@ -169,6 +169,7 @@ export function fullSubscriptionData(userId) {
     {
       $unwind: {
         path: "$category",
+        preserveNullAndEmptyArrays: true,
       },
     },
   ];

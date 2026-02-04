@@ -23,8 +23,8 @@ export default function SubscriptionListCard({
           {showCategory && (
             <div className="flex items-center justify-start gap-2 pt-1 text-xs text-gray-500">
               {/* {subscription.active ? "Active" : "Inactive"} */}
-              <CategoryIcon icon={subscription.category.icon} iconSize={4} />
-              <div>{subscription.category.name}</div>
+              <CategoryIcon icon={subscription?.category?.icon} iconSize={4} />
+              <div>{subscription?.category?.name || "Uncategorized"}</div>
             </div>
           )}
         </div>

@@ -20,6 +20,7 @@ export default class ApiEndpoints {
       subscriptionUsage: `${baseUrl.href}/subscriptionUsage`,
       dashboard: `${baseUrl.href}/dashboard`,
       search: `${baseUrl.href}/search`,
+      ocr: `${baseUrl.href}/ocr`,
       notifications: `${baseUrl}/notifications`,
     };
   }
@@ -75,6 +76,10 @@ export default class ApiEndpoints {
 
   static get notifications() {
     return this.endpoints.notifications;
+  }
+
+  static get ocr() {
+    return this.endpoints.ocr;
   }
 
   // ---- API endpoints with params ----

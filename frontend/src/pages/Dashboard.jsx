@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { UserButton, useUser } from "@clerk/clerk-react";
+import { toast } from "sonner";
 
 import ErrorDisplay from "../components/ErrorDisplay";
 import Loading from "../components/Loading";
@@ -58,6 +59,7 @@ function Dashboard() {
     showForm: false,
   });
   const [isOpeningSubscription, setIsOpeningSubscription] = useState(false);
+  const [isResettingData, setIsResettingData] = useState(false);
   const [usageModalState, setUsageModalState] = useState({
     showForm: false,
     notificationId: null,
@@ -66,7 +68,7 @@ function Dashboard() {
   // ---- CUSTOM HOOKS ----
   const { loading, error, errorMessage, refetchData } = useDataFetching();
   const { createUsage } = useUsage();
-  const { getAllSubscriptions } = useSubscription();
+  const { getAllSubscriptions, deleteSubscription } = useSubscription();
   const { getUsedCategories } = useCategory();
   const { getDashboardData } = useDashboard();
   const { getAllNotifications, getAndUpdateNotificationById } =
@@ -238,6 +240,38 @@ function Dashboard() {
     });
   }
 
+  async function handleResetData() {
+    setIsResettingData(true);
+
+    try {
+      const current = await getAllSubscriptions(new AbortController());
+      const deletions = (current || [])
+        .filter((sub) => sub?._id)
+        .map((sub) =>
+          deleteSubscription(sub._id, new AbortController()),
+        );
+
+      await Promise.allSettled(deletions);
+
+      const [updatedSubscriptions, updatedUsedCategories, updatedDashboardData] =
+        await Promise.all([
+          getAllSubscriptions(new AbortController()),
+          getUsedCategories(new AbortController()),
+          getDashboardData(new AbortController()),
+        ]);
+
+      setSubscriptions(updatedSubscriptions || []);
+      setUsedCategories(updatedUsedCategories || []);
+      setDashboardData(updatedDashboardData || {});
+
+      toast.success("Data reset");
+    } catch (error) {
+      toast.error("Reset failed");
+    } finally {
+      setIsResettingData(false);
+    }
+  }
+
   // quick helper function to keep JSX less cluttered
   function checkDataLoadingSuccessful() {
     const loadingSuccessful =
@@ -289,6 +323,13 @@ function Dashboard() {
                 </div>
 
                 <div className="flex items-center gap-3">
+                  <LoadingButton
+                    onClick={handleResetData}
+                    isLoading={isResettingData}
+                    className="rounded-full border border-black/20 bg-white/70 px-3 py-1 text-xs font-semibold text-black/70"
+                  >
+                    Reset Data
+                  </LoadingButton>
                   {/* Notification */}
                   <Notifications />
 
