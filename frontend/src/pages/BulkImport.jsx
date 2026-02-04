@@ -360,9 +360,50 @@ function parseEuroStatementLine(line) {
 
 function detectFromStatementLines(lines) {
   const candidates = [];
-  for (const line of lines) {
-    const parsed =
-      parseStatementLine(line) || parseEuroStatementLine(line);
+  for (let i = 0; i < lines.length; i += 1) {
+    const line = lines[i];
+
+    // Try standard parsing first
+    let parsed = parseStatementLine(line) || parseEuroStatementLine(line);
+
+    // N26 format: date+amount on one line, merchant on previous lines
+    // Line format: "01.01.2026 -91,45€" (date at position 0)
+    if (!parsed && DATE_DMY.test(line) && /€/i.test(line)) {
+      const dateMatch = line.match(DATE_DMY);
+      if (dateMatch?.index === 0) {
+        const amount = extractEuroAmount(line);
+        if (amount) {
+          // Look back up to 4 lines for merchant name
+          let merchantName = null;
+          for (let back = 1; back <= 4 && i - back >= 0; back += 1) {
+            const prevLine = lines[i - back];
+            if (!prevLine) continue;
+            if (isStatementHeader(prevLine) || isBlockedLine(prevLine)) continue;
+            if (DATE_DMY.test(prevLine) || DATE_DMY_SHORT.test(prevLine)) continue;
+            if (/wertstellung/i.test(prevLine)) continue;
+            if (/mastercard|visa|iban|bic/i.test(prevLine)) continue;
+            if (extractEuroAmount(prevLine)) continue;
+
+            const candidate = strictMerchantName(prevLine);
+            if (isLikelyMerchant(candidate)) {
+              merchantName = candidate;
+              break;
+            }
+          }
+
+          if (merchantName) {
+            parsed = {
+              name: merchantName,
+              amount: amount.amount,
+              interval: detectInterval(line),
+              source: "statement",
+              rawLine: line,
+            };
+          }
+        }
+      }
+    }
+
     if (parsed) candidates.push(parsed);
   }
   return candidates;
