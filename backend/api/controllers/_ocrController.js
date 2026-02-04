@@ -7,8 +7,11 @@ export async function processOcr(req, res, next) {
     return res.status(400).json({ error: "Missing OCR input" });
   }
 
-  const apiKey =
-    process.env.MISTRAL_OCR_KEY || "38pT6SB268XUET225fvWEfsNjJIBy8Zu";
+  const apiKey = process.env.MISTRAL_OCR_KEY;
+
+  if (!apiKey) {
+    return res.status(500).json({ error: "Missing MISTRAL_OCR_KEY" });
+  }
 
   try {
     const payload = base64

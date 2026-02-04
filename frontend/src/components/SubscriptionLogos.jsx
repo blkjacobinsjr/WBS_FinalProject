@@ -22,6 +22,7 @@ export default function SubscriptionLogo({ subscriptionName }) {
     openai: "openai.com",
     anthropic: "anthropic.com",
     google: "google.com",
+    xai: "x.ai",
     youtube: "youtube.com",
     apple: "apple.com",
     amazon: "amazon.com",
@@ -33,6 +34,8 @@ export default function SubscriptionLogo({ subscriptionName }) {
     notion: "notion.so",
     slack: "slack.com",
     zoom: "zoom.us",
+    replicate: "replicate.com",
+    replit: "replit.com",
   };
   const suffixWords = [
     "workspace",
@@ -111,9 +114,16 @@ export default function SubscriptionLogo({ subscriptionName }) {
   ];
 
   // try matching our icon list with the name of th subscription
+  const normalizedName = useMemo(() => {
+    return (subscriptionName || "")
+      .toLowerCase()
+      .replace(/[^a-z0-9\s]/g, " ")
+      .replace(/\s+/g, " ")
+      .trim();
+  }, [subscriptionName]);
+
   const match = useMemo(() => {
-    const safeName = (subscriptionName || "").toLowerCase();
-    const nameTokens = safeName.split(/\s+/);
+    const nameTokens = normalizedName.split(/\s+/).filter(Boolean);
 
     return icons.reduce(
       (bestMatch, iconMeta) => {
@@ -126,21 +136,17 @@ export default function SubscriptionLogo({ subscriptionName }) {
       },
       { overlap: 0, icon: defaultIcon, domain: null },
     );
-  }, [subscriptionName]);
+  }, [defaultIcon, normalizedName]);
 
   const derivedDomain = useMemo(() => {
-    const safeName = (subscriptionName || "").toLowerCase().trim();
-    if (!safeName) return null;
-    if (safeName.includes(".")) {
-      return safeName.replace(/https?:\/\//, "").split("/")[0];
+    if (!normalizedName) return null;
+    if (normalizedName.includes(".")) {
+      return normalizedName.replace(/https?:\/\//, "").split("/")[0];
     }
 
     if (match.domain) return match.domain;
 
-    const tokens = safeName
-      .replace(/[^a-z0-9\s]/g, " ")
-      .split(/\s+/)
-      .filter(Boolean);
+    const tokens = normalizedName.split(/\s+/).filter(Boolean);
     if (tokens.length === 0) return null;
 
     const primary =
@@ -151,7 +157,7 @@ export default function SubscriptionLogo({ subscriptionName }) {
     if (domainAliases[primary]) return domainAliases[primary];
 
     return `${primary}.com`;
-  }, [match.domain, subscriptionName]);
+  }, [domainAliases, match.domain, normalizedName]);
 
   const logoUrl = derivedDomain
     ? `https://img.logo.dev/${derivedDomain}?token=${logoToken}&format=png`
@@ -162,7 +168,7 @@ export default function SubscriptionLogo({ subscriptionName }) {
       <img
         src={logoUrl}
         alt={`${subscriptionName} logo`}
-        className="h-6 w-6 object-contain"
+        className="h-6 w-6 rounded-lg object-contain"
         loading="lazy"
         onError={() => setLogoError(true)}
       />

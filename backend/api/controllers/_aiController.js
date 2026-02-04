@@ -65,8 +65,11 @@ export async function cleanTransactions(req, res, next) {
     return res.status(400).json({ error: "Missing lines" });
   }
 
-  const apiKey =
-    process.env.GEMINI_API_KEY || "AIzaSyBhtrBvQ82XJlAYLnxjS1qq_yboSObmylQ";
+  const apiKey = process.env.GEMINI_API_KEY;
+
+  if (!apiKey) {
+    return res.status(500).json({ error: "Missing GEMINI_API_KEY" });
+  }
 
   try {
     let { response, data } = await callGemini({
