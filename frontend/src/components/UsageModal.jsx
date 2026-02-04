@@ -19,6 +19,7 @@ export default function UsageModal({
   const [unratedNotifications, setUnratedNotifications] = useState([]);
   const [initialTotal, setInitialTotal] = useState(0);
   const [completedCount, setCompletedCount] = useState(0);
+  const [isInitialized, setIsInitialized] = useState(false);
 
   // ---- DERIVED STATE ----
   const currentIndex = unratedNotifications?.findIndex(
@@ -29,9 +30,18 @@ export default function UsageModal({
     ? Math.round((completedCount / initialTotal) * 100)
     : 0;
 
-  // ---- USE EFFECT ----
-  // we need to rerender based on whether property and notifications are available
+  // Reset initialized state when modal closes
   useEffect(() => {
+    if (!opened) {
+      setIsInitialized(false);
+    }
+  }, [opened]);
+
+  // ---- USE EFFECT ----
+  // Initialize only once when modal opens - don't re-run when notifications change
+  useEffect(() => {
+    if (!opened || isInitialized) return;
+
     if (Array.isArray(manualSubscriptions) && manualSubscriptions.length > 0) {
       const manualList = manualSubscriptions.map((subscription) => ({
         _id: subscription?._id,
@@ -41,6 +51,7 @@ export default function UsageModal({
       setUnratedNotifications(manualList);
       setInitialTotal(manualList.length);
       setCompletedCount(0);
+      setIsInitialized(true);
       return;
     }
 
@@ -78,7 +89,8 @@ export default function UsageModal({
       setInitialTotal(notifications?.length || 0);
       setCompletedCount(0);
     }
-  }, [notificationId, notifications, manualSubscriptions]);
+    setIsInitialized(true);
+  }, [opened, notificationId, notifications, manualSubscriptions, isInitialized]);
 
   // Auto-advance when user selects a score
   const autoAdvanceRef = useRef(null);
