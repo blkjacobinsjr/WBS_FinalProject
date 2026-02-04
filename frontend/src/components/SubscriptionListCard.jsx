@@ -5,6 +5,8 @@ export default function SubscriptionListCard({
   subscription,
   clickHandler,
   showCategory = true,
+  className = "",
+  style,
 }) {
   const displayName =
     subscription?.name
@@ -14,9 +16,10 @@ export default function SubscriptionListCard({
 
   return (
     <div
-      className="grid w-full min-w-0 cursor-pointer grid-cols-[2.5rem_minmax(0,1fr)_auto] items-center gap-3 rounded-md border border-white/50 bg-white/25 p-2 hover:bg-white/50"
+      className={`grid w-full min-w-0 cursor-pointer grid-cols-[2.5rem_minmax(0,1fr)_auto] items-center gap-3 rounded-md border border-white/50 bg-white/25 p-2 hover:bg-white/50 ${className}`}
       key={subscription?._id}
       onClick={clickHandler}
+      style={style}
     >
       <div className="flex h-9 w-9 items-center justify-center rounded-xl border border-black/15 bg-white/80 shadow-sm">
         <SubscriptionLogo subscriptionName={subscription.name} />

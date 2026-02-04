@@ -109,3 +109,16 @@
     background-position: -200% 0;
   }
 }
+
+.stagger-in {
+  opacity: 0;
+  transform: translateY(8px);
+  animation: staggerFade 420ms ease forwards;
+}
+
+@keyframes staggerFade {
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}

@@ -8,6 +8,7 @@ import PaginationButton from "./PaginationButton";
 export default function SubscriptionList({
   itemsPerPage = 3,
   categoryId = null,
+  animateOnMount = false,
 }) {
   const { subscriptions } = useDataContext();
   const [currentPage, setCurrentPage] = useState(1);
@@ -77,6 +78,12 @@ export default function SubscriptionList({
             showCategory={categoryId ? false : true}
             clickHandler={() =>
               eventEmitter.emit("openSubscriptionForm", subscription, "show")
+            }
+            className={animateOnMount ? "stagger-in" : ""}
+            style={
+              animateOnMount
+                ? { animationDelay: `${Math.min(index * 60, 600)}ms` }
+                : undefined
             }
           />
         ))}

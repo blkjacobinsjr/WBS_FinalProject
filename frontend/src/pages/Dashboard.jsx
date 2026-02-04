@@ -60,6 +60,8 @@ function Dashboard() {
   });
   const [isOpeningSubscription, setIsOpeningSubscription] = useState(false);
   const [isResettingData, setIsResettingData] = useState(false);
+  const [importSyncing, setImportSyncing] = useState(false);
+  const [animateImport, setAnimateImport] = useState(false);
   const [usageModalState, setUsageModalState] = useState({
     showForm: false,
     notificationId: null,
@@ -252,6 +254,33 @@ function Dashboard() {
     };
   }, []);
 
+  useEffect(() => {
+    const flag = localStorage.getItem("bulkImport:justImported");
+    if (!flag) return;
+    try {
+      const payload = JSON.parse(flag);
+      if (payload?.ts && Date.now() - payload.ts < 2 * 60 * 1000) {
+        setImportSyncing(true);
+        setAnimateImport(true);
+      }
+    } catch (error) {
+      // ignore
+    }
+    localStorage.removeItem("bulkImport:justImported");
+  }, []);
+
+  useEffect(() => {
+    if (importSyncing && subscriptions?.length > 0) {
+      setImportSyncing(false);
+    }
+  }, [importSyncing, subscriptions]);
+
+  useEffect(() => {
+    if (!animateImport) return;
+    const timer = setTimeout(() => setAnimateImport(false), 2000);
+    return () => clearTimeout(timer);
+  }, [animateImport]);
+
   // ---- MORE FUNCTIONS ----
   // open subscription form with an empty subscription
   function handleAddSubscriptionClick() {
@@ -392,10 +421,10 @@ function Dashboard() {
                         <FinancialResetCard />
                         <Stats />
                         <OverviewStat />
-                        <SubscriptionList />
+                        <SubscriptionList animateOnMount={animateImport} />
 
                       {/* No subscriptions added yet */}
-                      {subscriptions?.length === 0 && (
+                      {subscriptions?.length === 0 && !importSyncing && (
                         <div className="flex flex-col items-center justify-center gap-2 pb-6 text-center text-gray-700 sm:flex-row">
                           <span>Welcome. Get started by</span>
                           <button
@@ -410,6 +439,11 @@ function Dashboard() {
                           >
                             adding your first subscription
                           </button>
+                        </div>
+                      )}
+                      {subscriptions?.length === 0 && importSyncing && (
+                        <div className="flex flex-col items-center justify-center gap-2 pb-6 text-center text-gray-700">
+                          <span>Syncing imports</span>
                         </div>
                       )}
                     </div>

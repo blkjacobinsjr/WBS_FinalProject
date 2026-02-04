@@ -1,4 +1,5 @@
 import { useMemo, useRef, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { GlobalWorkerOptions, getDocument } from "pdfjs-dist";
 import workerUrl from "pdfjs-dist/build/pdf.worker.min.mjs?url";
@@ -630,6 +631,7 @@ export default function BulkImport() {
   const [cancelAllLoading, setCancelAllLoading] = useState(false);
   const [wipeLoading, setWipeLoading] = useState(false);
   const [replaceExisting, setReplaceExisting] = useState(true);
+  const navigate = useNavigate();
 
   const current = detected[currentIndex];
 
@@ -968,6 +970,12 @@ export default function BulkImport() {
     if (skippedFiles.length > 0) {
       toast.info(`Skipped ${skippedFiles.length} file(s).`);
     }
+
+    localStorage.setItem(
+      "bulkImport:justImported",
+      JSON.stringify({ count: createdCount, ts: Date.now() }),
+    );
+    navigate("/dashboard");
   }
 
   async function handleDecision(action) {
