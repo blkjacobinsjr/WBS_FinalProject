@@ -187,21 +187,13 @@ function Dashboard() {
       updateNotification(id);
     }
 
-    async function openUsageQuizCallback() {
-      try {
-        const latest = await getAllSubscriptions(new AbortController());
-        setUsageModalState({
-          showForm: true,
-          notificationId: null,
-          manualSubscriptions: latest || [],
-        });
-      } catch (error) {
-        setUsageModalState({
-          showForm: true,
-          notificationId: null,
-          manualSubscriptions: subscriptions || [],
-        });
-      }
+    function openUsageQuizCallback() {
+      // Open immediately with current subscriptions - no delay
+      setUsageModalState({
+        showForm: true,
+        notificationId: null,
+        manualSubscriptions: subscriptions || [],
+      });
     }
 
     // Debounce refetch to avoid multiple rapid calls during quiz

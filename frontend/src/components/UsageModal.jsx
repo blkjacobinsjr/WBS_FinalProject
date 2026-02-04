@@ -1,19 +1,16 @@
 import { Dialog, RadioGroup, Transition } from "@headlessui/react";
 import { Fragment, useEffect, useRef, useState } from "react";
-import { useDataContext } from "../contexts/dataContext"; // Context for data
-import eventEmitter from "../utils/EventEmitter"; // Event emitter for handling events
+import { useDataContext } from "../contexts/dataContext";
+import eventEmitter from "../utils/EventEmitter";
 
-// UsageTab now expects a subscriptions prop
 export default function UsageModal({
   opened,
   onClose,
   notificationId,
   manualSubscriptions = null,
 }) {
-  // ---- CONTEXT ----
   const { notifications } = useDataContext();
 
-  // ---- STATE ----
   const [selectedScore, setSelectedScore] = useState(null);
   const [currentNotification, setCurrentNotification] = useState(null);
   const [unratedNotifications, setUnratedNotifications] = useState([]);
@@ -21,24 +18,18 @@ export default function UsageModal({
   const [completedCount, setCompletedCount] = useState(0);
   const [isInitialized, setIsInitialized] = useState(false);
 
-  // ---- DERIVED STATE ----
   const currentIndex = unratedNotifications?.findIndex(
-    (n) => n?._id === currentNotification?._id,
+    (n) => n?._id === currentNotification?._id
   );
-  const totalCount = unratedNotifications?.length || 0;
-  const progress = initialTotal > 0
-    ? Math.round((completedCount / initialTotal) * 100)
-    : 0;
+  const progress =
+    initialTotal > 0 ? Math.round((completedCount / initialTotal) * 100) : 0;
 
-  // Reset initialized state when modal closes
   useEffect(() => {
     if (!opened) {
       setIsInitialized(false);
     }
   }, [opened]);
 
-  // ---- USE EFFECT ----
-  // Initialize only once when modal opens - don't re-run when notifications change
   useEffect(() => {
     if (!opened || isInitialized) return;
 
@@ -56,34 +47,24 @@ export default function UsageModal({
     }
 
     const initialNotification = notifications?.find(
-      (n) => n._id === notificationId,
+      (n) => n._id === notificationId
     );
 
-    // We can potentially have a state in which the notificationId the modal was opened with
-    // does not exist anymore, so we need to check if the notificationId is in the
-    // notifications array first before filtering and reordering the list (as we don't need
-    // any reordering if we already rated the original notification)
     const openedWithNotification =
       notifications?.findIndex((n) => n._id === notificationId) > -1;
 
     if (openedWithNotification) {
-      // Depending on which notification the user clicked we need to reorder our notifications
-      // to go through
       const remainingNotifications =
         notifications?.filter((n) => n._id !== notificationId) ?? [];
-
       const initialUnratedNotificatons = [
         initialNotification,
         ...remainingNotifications,
       ];
-
       setCurrentNotification(initialNotification);
       setUnratedNotifications(initialUnratedNotificatons);
       setInitialTotal(initialUnratedNotificatons.length);
       setCompletedCount(0);
     } else {
-      // if the notification we initially opened the modal with is gone, just use the first
-      // notification and the array itself
       setCurrentNotification(notifications?.at(0));
       setUnratedNotifications(notifications);
       setInitialTotal(notifications?.length || 0);
@@ -92,14 +73,10 @@ export default function UsageModal({
     setIsInitialized(true);
   }, [opened, notificationId, notifications, manualSubscriptions, isInitialized]);
 
-  // Auto-advance when user selects a score
   const autoAdvanceRef = useRef(null);
   useEffect(() => {
     if (selectedScore && unratedNotifications.length > 0) {
-      // Clear any pending auto-advance
       if (autoAdvanceRef.current) clearTimeout(autoAdvanceRef.current);
-
-      // Auto-advance after brief visual feedback
       autoAdvanceRef.current = setTimeout(() => {
         handleChangeSubscriptionClick(1);
       }, 350);
@@ -109,284 +86,248 @@ export default function UsageModal({
     };
   }, [selectedScore]);
 
-  // go throug all notifications currently active
   function handleChangeSubscriptionClick(direction) {
     if (direction !== 1 && direction !== -1) return;
-
-    let remainingAfterSubmit = unratedNotifications.length;
 
     if (selectedScore) {
       const selectedSubscriptionId =
         unratedNotifications[currentIndex].subscriptionId._id;
 
-      // we need to send a new event: 'usageRatingSent' -> set Rating for ID and mark Notification as read
       eventEmitter.emit(
         "useScoreSelected",
         selectedSubscriptionId,
-        selectedScore,
+        selectedScore
       );
 
-      // remove from unrated subscription
       const filtered = unratedNotifications.filter(
-        (n) => n._id !== currentNotification._id,
+        (n) => n._id !== currentNotification._id
       );
       setUnratedNotifications(filtered);
-      remainingAfterSubmit = filtered.length;
-
-      // increment completed count for progress bar
       setCompletedCount((prev) => prev + 1);
 
-      // if this was the last one, close modal
       if (filtered.length === 0) {
         setTimeout(() => onClose(), 300);
         return;
       }
 
-      // move to next item in the filtered list
       const nextIndex = Math.min(currentIndex, filtered.length - 1);
       setCurrentNotification(filtered[nextIndex]);
       setSelectedScore(null);
       return;
     }
 
-    // just move to next or previous if nothing is selected (skip)
     if (unratedNotifications.length > 1) {
-      // direction can be +/- 1 so check both edges
       const newIndex = currentIndex + direction;
-
       if (newIndex > unratedNotifications.length - 1) {
         setCurrentNotification(unratedNotifications[0]);
       } else if (newIndex < 0) {
         setCurrentNotification(
-          unratedNotifications[unratedNotifications.length - 1],
+          unratedNotifications[unratedNotifications.length - 1]
         );
       } else {
         setCurrentNotification(unratedNotifications[newIndex]);
       }
-
       setSelectedScore(null);
     }
   }
 
-  // User clicks 'done'
-  // Saves score if one is selected, just closed otherwise
   function handleDoneClick() {
     if (selectedScore) {
-      submitSelectedScore(
+      eventEmitter.emit(
+        "useScoreSelected",
         currentNotification.subscriptionId._id,
-        selectedScore,
+        selectedScore
       );
     }
-
     onClose();
   }
 
-  // Actually send the event to save the usage score and dismiss the related notification
-  function submitSelectedScore(subscriptionId, score) {
-    // Reset radiogroup
-    setSelectedScore(null);
-
-    eventEmitter.emit("useScoreSelected", subscriptionId, score);
-  }
-
-  // Render the modal
   return (
-    <Transition show={opened} as={Fragment} className="w-full">
-      <Dialog
-        as="div"
-        className="fixed inset-0 z-10 flex items-center justify-center"
-        open={opened}
-        onClose={onClose}
-      >
+    <Transition show={opened} as={Fragment}>
+      <Dialog as="div" className="relative z-50" onClose={onClose}>
+        {/* Backdrop */}
         <Transition.Child
           as={Fragment}
-          enter="w-full duration-200"
-          enterFrom="scale-100 opacity-0"
-          enterTo="scale-100 opacity-100"
-          leave="duration-200 ease-in"
-          leaveFrom="scale-100 opacity-100"
-          leaveTo="scale-100 opacity-0"
+          enter="ease-out duration-300"
+          enterFrom="opacity-0"
+          enterTo="opacity-100"
+          leave="ease-in duration-200"
+          leaveFrom="opacity-100"
+          leaveTo="opacity-0"
         >
-          <Dialog.Overlay className="fixed inset-0 bg-black bg-opacity-50 backdrop-blur" />
+          <div className="fixed inset-0 bg-black/60 backdrop-blur-sm" />
         </Transition.Child>
 
+        {/* Full-screen sheet */}
         <Transition.Child
-          enter="duration-200 ease-out"
-          enterFrom="scale-95 opacity-0"
-          enterTo="flex w-full scale-100 justify-center opacity-100"
-          leave="duration-200 ease-in"
-          leaveFrom="flex w-full scale-100 justify-center opacity-100"
-          leaveTo="flex w-full scale-95 justify-center opacity-0"
+          as={Fragment}
+          enter="ease-out duration-300"
+          enterFrom="translate-y-full"
+          enterTo="translate-y-0"
+          leave="ease-in duration-200"
+          leaveFrom="translate-y-0"
+          leaveTo="translate-y-full"
         >
-          <Dialog.Panel className="z-20 w-[92vw] max-w-lg rounded-lg bg-white p-6 opacity-90 sm:p-10">
-            {/* Progress indicator */}
-            {initialTotal > 1 && (
-              <div className="mb-4">
-                <div className="flex items-center justify-between text-xs text-gray-500">
-                  <span>{completedCount + 1} of {initialTotal}</span>
-                  <span>{progress}%</span>
-                </div>
-                <div className="mt-1 h-1.5 w-full rounded-full bg-gray-200">
-                  <div
-                    className="h-1.5 rounded-full bg-black transition-all"
-                    style={{ width: `${progress}%` }}
+          <Dialog.Panel className="fixed inset-0 flex flex-col bg-gray-50 dark:bg-gray-900">
+            {/* Header */}
+            <div className="flex items-center justify-between border-b border-black/5 bg-white/60 px-4 py-4 backdrop-blur-xl dark:border-white/10 dark:bg-black/60">
+              <button
+                onClick={onClose}
+                className="flex h-10 w-10 items-center justify-center rounded-full bg-black/5 dark:bg-white/10"
+              >
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  strokeWidth={2}
+                  stroke="currentColor"
+                  className="h-5 w-5 text-black/70 dark:text-white/70"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    d="M15.75 19.5L8.25 12l7.5-7.5"
                   />
+                </svg>
+              </button>
+              <Dialog.Title className="text-base font-semibold text-black/80 dark:text-white/80">
+                Usage Quiz
+              </Dialog.Title>
+              <button
+                onClick={handleDoneClick}
+                className="rounded-full bg-black px-4 py-2 text-sm font-medium text-white dark:bg-white dark:text-black"
+              >
+                Done
+              </button>
+            </div>
+
+            {/* Content */}
+            <div className="flex-1 overflow-y-auto px-4 py-6">
+              {/* Progress */}
+              {initialTotal > 1 && (
+                <div className="mb-6 rounded-2xl bg-white/40 p-4 backdrop-blur-sm dark:bg-white/10">
+                  <div className="flex items-center justify-between text-xs text-black/50 dark:text-white/50">
+                    <span>Progress</span>
+                    <span>
+                      {completedCount}/{initialTotal}
+                    </span>
+                  </div>
+                  <div className="mt-2 h-2 overflow-hidden rounded-full bg-black/10 dark:bg-white/10">
+                    <div
+                      className="h-full rounded-full bg-green-500 transition-all"
+                      style={{ width: `${progress}%` }}
+                    />
+                  </div>
                 </div>
-              </div>
-            )}
+              )}
 
-            <Dialog.Title
-              as="h3"
-              className="text-lg font-medium leading-6 text-gray-900"
-            >
-              How often do you use{" "}
-              <span className="font-bold">
-                {currentNotification?.subscriptionId?.name || "this subscription"}
-              </span>
-              ?
-            </Dialog.Title>
+              {/* Current subscription */}
+              {currentNotification?.subscriptionId ? (
+                <>
+                  <div className="mb-6 rounded-2xl bg-white/40 p-5 backdrop-blur-sm dark:bg-white/10">
+                    <p className="text-center text-lg font-semibold text-black/80 dark:text-white/80">
+                      {currentNotification.subscriptionId.name}
+                    </p>
+                    {currentNotification.subscriptionId.price && (
+                      <p className="mt-1 text-center text-sm text-black/50 dark:text-white/50">
+                        €{currentNotification.subscriptionId.price}/
+                        {currentNotification.subscriptionId.interval || "month"}
+                      </p>
+                    )}
+                  </div>
 
-            <div className="mt-2">
-              {!currentNotification?.subscriptionId ? (
-                <div className="py-8 text-center">
-                  <p className="text-sm text-gray-500">
-                    No subscriptions to rate. Add some subscriptions first!
+                  <p className="mb-4 text-center text-sm text-black/50 dark:text-white/50">
+                    How often do you use this?
+                  </p>
+
+                  {/* Rating options */}
+                  <RadioGroup
+                    value={selectedScore}
+                    onChange={setSelectedScore}
+                    className="space-y-3"
+                  >
+                    <RadioGroup.Option
+                      value="5"
+                      className={({ checked }) =>
+                        `cursor-pointer rounded-2xl p-4 transition-all active:scale-[0.98] ${
+                          checked
+                            ? "bg-green-500 text-white"
+                            : "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400"
+                        }`
+                      }
+                    >
+                      {({ checked }) => (
+                        <div className="flex items-center justify-between">
+                          <span className="font-semibold">Often</span>
+                          <span className="text-sm opacity-70">Daily or weekly</span>
+                        </div>
+                      )}
+                    </RadioGroup.Option>
+
+                    <RadioGroup.Option
+                      value="3"
+                      className={({ checked }) =>
+                        `cursor-pointer rounded-2xl p-4 transition-all active:scale-[0.98] ${
+                          checked
+                            ? "bg-orange-500 text-white"
+                            : "bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-400"
+                        }`
+                      }
+                    >
+                      {({ checked }) => (
+                        <div className="flex items-center justify-between">
+                          <span className="font-semibold">Sometimes</span>
+                          <span className="text-sm opacity-70">Monthly</span>
+                        </div>
+                      )}
+                    </RadioGroup.Option>
+
+                    <RadioGroup.Option
+                      value="1"
+                      className={({ checked }) =>
+                        `cursor-pointer rounded-2xl p-4 transition-all active:scale-[0.98] ${
+                          checked
+                            ? "bg-red-500 text-white"
+                            : "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400"
+                        }`
+                      }
+                    >
+                      {({ checked }) => (
+                        <div className="flex items-center justify-between">
+                          <span className="font-semibold">Rarely</span>
+                          <span className="text-sm opacity-70">Almost never</span>
+                        </div>
+                      )}
+                    </RadioGroup.Option>
+                  </RadioGroup>
+
+                  {/* Skip button */}
+                  {unratedNotifications?.length > 1 && (
+                    <button
+                      onClick={() => handleChangeSubscriptionClick(1)}
+                      className="mt-4 w-full rounded-2xl bg-black/5 py-3 text-sm font-medium text-black/60 transition-all active:scale-[0.98] dark:bg-white/10 dark:text-white/60"
+                    >
+                      Skip for now
+                    </button>
+                  )}
+                </>
+              ) : (
+                <div className="flex flex-col items-center justify-center rounded-2xl bg-white/40 py-12 backdrop-blur-sm dark:bg-white/10">
+                  <p className="text-sm text-black/50 dark:text-white/50">
+                    No subscriptions to rate
                   </p>
                   <button
                     onClick={onClose}
-                    className="mt-4 rounded bg-black px-4 py-2 font-bold text-white hover:bg-gray-800"
+                    className="mt-4 rounded-full bg-black px-6 py-2 text-sm font-medium text-white dark:bg-white dark:text-black"
                   >
                     Close
                   </button>
                 </div>
-              ) : (
-              <>
-              <p className="text-sm text-gray-500">
-                Don&apos;t think, just select!
-              </p>
-              <RadioGroup
-                onChange={(event) => setSelectedScore(event)}
-                className="mt-4"
-                value={selectedScore}
-              >
-                <RadioGroup.Option
-                  value="5"
-                  className={({ checked }) =>
-                    `bg-green-300 ${checked ? "ring-2 ring-sky-500" : ""}
-                    mb-4 relative px-4 py-3 shadow focus:outline-none cursor-pointer flex w-full flex-row items-center justify-start gap-4 rounded-lg p-4 hover:opacity-75 outline-none focus:ring-2  transform active:scale-90 transition-transform`
-                  }
-                >
-                  {({ checked }) => (
-                    <RadioGroup.Label
-                      className={
-                        (checked ? "text-white" : "text-gray-900") +
-                        " cursor-pointer font-bold"
-                      }
-                    >
-                      Often
-                    </RadioGroup.Label>
-                  )}
-                </RadioGroup.Option>
-                <RadioGroup.Option
-                  value="3"
-                  className={({ checked }) =>
-                    `bg-orange-300 ${checked ? "ring-2 ring-sky-500" : ""}
-                    mb-4 relative px-4 py-3 shadow focus:outline-none cursor-pointer flex w-full flex-row items-center justify-start gap-4 rounded-lg p-4 hover:opacity-75 outline-none focus:ring-2  transform active:scale-90 transition-transform`
-                  }
-                >
-                  {({ checked }) => (
-                    <RadioGroup.Label
-                      className={
-                        (checked ? "text-white" : "text-gray-900") +
-                        " cursor-pointer font-bold"
-                      }
-                    >
-                      Sometimes
-                    </RadioGroup.Label>
-                  )}
-                </RadioGroup.Option>
-                <RadioGroup.Option
-                  value="1"
-                  className={({ checked }) =>
-                    `bg-red-300 ${checked ? "ring-2 ring-sky-500" : ""}
-                    mb-4 relative px-4 py-3 shadow focus:outline-none cursor-pointer flex w-full flex-row items-center justify-start gap-4 rounded-lg p-4 hover:opacity-75 outline-none focus:ring-2  transform active:scale-90 transition-transform`
-                  }
-                >
-                  {({ checked }) => (
-                    <RadioGroup.Label
-                      className={
-                        (checked ? "text-white" : "text-gray-900") +
-                        " cursor-pointer font-bold"
-                      }
-                    >
-                      Rarely
-                    </RadioGroup.Label>
-                  )}
-                </RadioGroup.Option>
-              </RadioGroup>
-              <div className="flex w-full flex-row items-center justify-between">
-                <div className="flex gap-2">
-                  <button
-                    onClick={handleDoneClick}
-                    className="mt-4 rounded bg-gray-500 px-4 py-2 font-bold text-white hover:bg-gray-700"
-                  >
-                    Done
-                  </button>
-                  {unratedNotifications?.length > 1 && (
-                    <button
-                      onClick={() => handleChangeSubscriptionClick(1)}
-                      className="mt-4 rounded border border-gray-300 bg-white px-4 py-2 font-bold text-gray-600 hover:bg-gray-100"
-                    >
-                      Skip
-                    </button>
-                  )}
-                </div>
-                {unratedNotifications?.length > 1 && (
-                  <div className="flex flex-row justify-end gap-2">
-                    <button
-                      onClick={() => handleChangeSubscriptionClick(-1)}
-                      className="mt-4 flex items-center justify-center gap-1 rounded bg-gray-500 px-4 py-2 font-bold text-white hover:bg-gray-700"
-                    >
-                      <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        fill="none"
-                        viewBox="0 0 24 24"
-                        strokeWidth={1.5}
-                        stroke="currentColor"
-                        className="h-6 w-6"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          d="M10.5 19.5L3 12m0 0l7.5-7.5M3 12h18"
-                        />
-                      </svg>
-                    </button>
-                    <button
-                      onClick={() => handleChangeSubscriptionClick(1)}
-                      className="mt-4 flex items-center justify-center gap-1 rounded bg-gray-500 px-4 py-2 font-bold text-white hover:bg-gray-700"
-                    >
-                      <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        fill="none"
-                        viewBox="0 0 24 24"
-                        strokeWidth={1.5}
-                        stroke="currentColor"
-                        className="h-6 w-6"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3"
-                        />
-                      </svg>
-                    </button>
-                  </div>
-                )}
-              </div>
-              </>
               )}
             </div>
+
+            {/* Safe area */}
+            <div className="h-[env(safe-area-inset-bottom)]" />
           </Dialog.Panel>
         </Transition.Child>
       </Dialog>
