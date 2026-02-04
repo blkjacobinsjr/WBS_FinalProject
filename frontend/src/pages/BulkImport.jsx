@@ -171,6 +171,50 @@ function detectInterval(line) {
   return "month";
 }
 
+const AMOUNT_TOKEN_REGEX =
+  /\(?[-–—]?\$?\d{1,3}(?:[.,]\d{3})*[.,]\d{2}\)?-?/g;
+
+function parseSignedAmountToken(token) {
+  if (!token) return null;
+  let negative = false;
+  let cleaned = token.trim();
+  if (cleaned.startsWith("(") && cleaned.endsWith(")")) {
+    negative = true;
+    cleaned = cleaned.slice(1, -1);
+  }
+  if (cleaned.endsWith("-")) {
+    negative = true;
+    cleaned = cleaned.slice(0, -1);
+  }
+  if (/^[-–—]/.test(cleaned)) {
+    negative = true;
+    cleaned = cleaned.replace(/^[-–—]\s*/, "");
+  }
+
+  const amount = parseAmount(cleaned);
+  if (!Number.isFinite(amount)) return null;
+  return { amount, negative };
+}
+
+function extractSignedAmount(line) {
+  if (!line) return null;
+  const matches = Array.from(line.matchAll(AMOUNT_TOKEN_REGEX));
+  if (matches.length === 0) return null;
+
+  for (const match of matches) {
+    const token = match[0];
+    const parsed = parseSignedAmountToken(token);
+    if (parsed?.negative) {
+      return {
+        amount: parsed.amount,
+        index: match.index ?? 0,
+      };
+    }
+  }
+
+  return null;
+}
+
 function isStatementHeader(line) {
   return (
     /date\s*\(utc\)/i.test(line) ||
@@ -188,17 +232,13 @@ function parseStatementLine(line) {
   if (isStatementHeader(line)) return null;
 
   const rest = line.replace(MONTH_PREFIX, "").trim();
-  const signedAmountMatch = rest.match(
-    /[-–—]\s*\$?\d{1,3}(?:,\d{3})*(?:\.\d{2})/,
-  );
-  if (!signedAmountMatch) return null;
+  const signedAmount = extractSignedAmount(rest);
+  if (!signedAmount) return null;
 
-  const amount = parseAmount(signedAmountMatch[0]);
+  const amount = signedAmount.amount;
   if (!amount) return null;
 
-  const merchantRaw = rest
-    .slice(0, signedAmountMatch.index ?? 0)
-    .trim();
+  const merchantRaw = rest.slice(0, signedAmount.index).trim();
   const cleaned = strictMerchantName(merchantRaw);
   if (!isLikelyMerchant(cleaned)) return null;
   if (isBlockedLine(cleaned) || isBlockedLine(line)) return null;
@@ -207,8 +247,8 @@ function parseStatementLine(line) {
 
   return {
     name: cleaned,
-      amount,
-      interval,
+    amount,
+    interval,
     source: "statement",
     rawLine: line,
   };
@@ -278,7 +318,7 @@ function summarizeCandidates(candidates) {
     const cancel = resolveCancelLink(bestName);
     const shouldKeep = group.count >= 2 || hasHint || cancel?.url;
 
-    if (group.count >= 3 && !hasHint && !cancel?.url) {
+    if (group.count >= 2 && !hasHint && !cancel?.url) {
       const avg =
         group.amountList.reduce((sum, value) => sum + value, 0) /
         group.amountList.length;
@@ -288,7 +328,7 @@ function summarizeCandidates(candidates) {
           0,
         ) / group.amountList.length;
       const std = Math.sqrt(variance);
-      if (avg > 0 && std / avg > 0.25) {
+      if (avg > 0 && std / avg > 0.15) {
         continue;
       }
     }
@@ -357,8 +397,13 @@ function detectFromPdfText(text) {
     .map((line) => line.trim())
     .filter(Boolean);
 
+  const statementMode = lines.some((line) => MONTH_PREFIX.test(line));
   const forcedCandidates = dedupeCandidates(collectForcedCandidates(lines));
   const statementCandidates = detectFromStatementLines(lines);
+
+  if (statementMode) {
+    return summarizeCandidates([...forcedCandidates, ...statementCandidates]);
+  }
 
   const candidates = [];
 
@@ -395,11 +440,7 @@ function detectFromPdfText(text) {
     });
   }
 
-  const merged = [
-    ...forcedCandidates,
-    ...statementCandidates,
-    ...dedupeCandidates(candidates),
-  ];
+  const merged = [...forcedCandidates, ...dedupeCandidates(candidates)];
 
   return summarizeCandidates(merged);
 }
@@ -643,6 +684,7 @@ export default function BulkImport() {
     const fingerprintsToStore = [];
     const skippedFiles = [];
     const aiLines = [];
+    let statementModeDetected = false;
 
     try {
       const latestSubscriptions = await getAllSubscriptions(
@@ -681,6 +723,9 @@ export default function BulkImport() {
             .map((line) => line.trim())
             .filter(Boolean);
           aiLines.push(...textLines);
+          if (textLines.some((line) => MONTH_PREFIX.test(line))) {
+            statementModeDetected = true;
+          }
           let pdfCandidates = detectFromPdfText(text);
           if (pdfCandidates.length === 0) {
             const ocrText = await extractPdfTextWithOcr(buffer);
@@ -690,6 +735,9 @@ export default function BulkImport() {
                 .map((line) => line.trim())
                 .filter(Boolean);
               aiLines.push(...ocrLines);
+              if (ocrLines.some((line) => MONTH_PREFIX.test(line))) {
+                statementModeDetected = true;
+              }
               pdfCandidates = detectFromPdfText(ocrText);
             }
           }
@@ -708,8 +756,9 @@ export default function BulkImport() {
     }
 
     if (
+      !statementModeDetected &&
       aiLines.length > 0 &&
-      (candidates.length === 0 || candidates.length > 80)
+      candidates.length === 0
     ) {
       const uniqueLines = Array.from(new Set(aiLines)).slice(0, 200);
       try {
