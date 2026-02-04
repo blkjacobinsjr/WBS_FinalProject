@@ -237,6 +237,45 @@ function Dashboard() {
       // invalidates all notifications associated with a single subscription
     }
 
+    // Optimistic delete with undo - stores pending delete timeouts
+    const pendingDeletes = new Map();
+
+    function deleteSubscriptionCallback(subscription) {
+      // 1. Optimistically remove from UI immediately
+      setSubscriptions((prev) => prev.filter((s) => s._id !== subscription._id));
+
+      // 2. Set up delayed actual deletion (5 seconds)
+      const timeoutId = setTimeout(async () => {
+        pendingDeletes.delete(subscription._id);
+        try {
+          await deleteSubscription(subscription._id, abortController);
+          sneakyDataRefetch(); // Refresh all data after actual delete
+        } catch (error) {
+          // If delete fails, restore the subscription
+          setSubscriptions((prev) => [...prev, subscription]);
+          toast.error("Failed to delete subscription");
+        }
+      }, 5000);
+
+      pendingDeletes.set(subscription._id, { timeoutId, subscription });
+
+      // 3. Show toast with Undo button
+      toast("Subscription deleted", {
+        action: {
+          label: "Undo",
+          onClick: () => {
+            const pending = pendingDeletes.get(subscription._id);
+            if (pending) {
+              clearTimeout(pending.timeoutId);
+              pendingDeletes.delete(subscription._id);
+              setSubscriptions((prev) => [...prev, subscription]);
+            }
+          },
+        },
+        duration: 5000,
+      });
+    }
+
     // register event listeners
     eventEmitter.on("refetchData", refetchCallback);
     eventEmitter.on("openSubscriptionForm", openSubscriptionFormCallback);
@@ -245,10 +284,13 @@ function Dashboard() {
     eventEmitter.on("notificationClicked", notificationClickedCallback);
     eventEmitter.on("useScoreSelected", usageScoreSelectedCallback);
     eventEmitter.on("openUsageQuiz", openUsageQuizCallback);
+    eventEmitter.on("deleteSubscription", deleteSubscriptionCallback);
 
     return () => {
       abortController.abort();
       notificationAbortController.abort();
+      // Clear any pending deletes on unmount
+      pendingDeletes.forEach(({ timeoutId }) => clearTimeout(timeoutId));
       eventEmitter.off("refetchData", refetchCallback);
       eventEmitter.off("openSubscriptionForm", openSubscriptionFormCallback);
       eventEmitter.off("changeFormMode", switchFormModeCallback);
@@ -256,6 +298,7 @@ function Dashboard() {
       eventEmitter.off("notificationClicked", notificationClickedCallback);
       eventEmitter.off("useScoreSelected", usageScoreSelectedCallback);
       eventEmitter.off("openUsageQuiz", openUsageQuizCallback);
+      eventEmitter.off("deleteSubscription", deleteSubscriptionCallback);
     };
   }, []);
 

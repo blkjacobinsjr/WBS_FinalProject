@@ -6,13 +6,41 @@ export default function SubscriptionCard({ subscription }) {
     eventEmitter.emit("openSubscriptionForm", subscription, "show");
   }
 
+  function handleDelete(e) {
+    e.stopPropagation();
+    eventEmitter.emit("deleteSubscription", subscription);
+  }
+
   return (
     <>
-      <button
-        className="flex items-center justify-center rounded-lg bg-gray-100 p-4 overflow-hidden ml-2 mt-2 mr-2" // Added margin-bottom (mb-4) to create a horizontal gap between the cards
-        onClick={openSubscriptionForm}
-        style={{ width: '200px' }} 
-      >
+      <div className="group relative ml-2 mr-2 mt-2">
+        {/* Delete button - shown on hover */}
+        <button
+          onClick={handleDelete}
+          className="absolute -right-1 -top-1 z-10 flex h-6 w-6 items-center justify-center rounded-full bg-red-500 text-white opacity-0 shadow-md transition-opacity hover:bg-red-600 group-hover:opacity-100"
+          title="Delete subscription"
+        >
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            fill="none"
+            viewBox="0 0 24 24"
+            strokeWidth={2.5}
+            stroke="currentColor"
+            className="h-3.5 w-3.5"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              d="M6 18L18 6M6 6l12 12"
+            />
+          </svg>
+        </button>
+
+        <button
+          className="flex items-center justify-center rounded-lg bg-gray-100 p-4 overflow-hidden"
+          onClick={openSubscriptionForm}
+          style={{ width: '200px' }}
+        >
         {/* Adjusted ml-10 to ml-6 to decrease the gap next to each card by 20px */}
         <div className="self-center">
           {/* This div will create a grey circle around the icon */}
@@ -39,7 +67,8 @@ export default function SubscriptionCard({ subscription }) {
           </p>
           <p className="text-lg font-semibold overflow-ellipsis overflow-hidden whitespace-nowrap">EUR {subscription?.price}</p>
         </div>
-      </button>
+        </button>
+      </div>
     </>
   );
 }
