@@ -117,7 +117,7 @@ export default function SubscriptionLogo({ subscriptionName }) {
   const normalizedName = useMemo(() => {
     return (subscriptionName || "")
       .toLowerCase()
-      .replace(/[^a-z0-9\s]/g, " ")
+      .replace(/[^\p{L}\p{N}\s]+/gu, " ")
       .replace(/\s+/g, " ")
       .trim();
   }, [subscriptionName]);

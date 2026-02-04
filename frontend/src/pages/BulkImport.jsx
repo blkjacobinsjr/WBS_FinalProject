@@ -30,6 +30,11 @@ const BLOCKLIST = [
   /payment|account payment|credit account|cashback|deposit|refund|reversal/i,
   /transfer|wire|ach|payout|interest|fee|fees|chargeback/i,
   /credit\s+card|card\s+payment|card\s+purchase/i,
+  /erstellt\s+am/i,
+  /wertstellung/i,
+  /ausgehende\s+transaktionen/i,
+  /einkommende\s+transaktionen/i,
+  /transaktionen/i,
 ];
 
 GlobalWorkerOptions.workerSrc = workerUrl;
@@ -37,7 +42,7 @@ GlobalWorkerOptions.workerSrc = workerUrl;
 function normalizeName(value) {
   return value
     .toLowerCase()
-    .replace(/[^a-z0-9]+/g, " ")
+    .replace(/[^\p{L}\p{N}]+/gu, " ")
     .replace(/\b\d{2,4}\b$/g, "")
     .trim();
 }
@@ -45,7 +50,7 @@ function normalizeName(value) {
 function strictMerchantName(value) {
   if (!value) return "";
   let cleaned = cleanMerchant(value);
-  cleaned = cleaned.replace(/[^a-zA-Z\s]+/g, " ");
+  cleaned = cleaned.replace(/[^\p{L}\s]+/gu, " ");
   cleaned = cleaned.replace(/\s+/g, " ").trim();
   return cleaned;
 }
@@ -170,7 +175,11 @@ function isStatementHeader(line) {
   return (
     /date\s*\(utc\)/i.test(line) ||
     /description/i.test(line) ||
-    /end of day balance/i.test(line)
+    /end of day balance/i.test(line) ||
+    /erstellt\s+am/i.test(line) ||
+    /wertstellung/i.test(line) ||
+    /ausgehende\s+transaktionen/i.test(line) ||
+    /einkommende\s+transaktionen/i.test(line)
   );
 }
 

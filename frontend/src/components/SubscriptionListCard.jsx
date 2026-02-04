@@ -8,7 +8,7 @@ export default function SubscriptionListCard({
 }) {
   const displayName =
     subscription?.name
-      ?.replace(/[^a-zA-Z\s]+/g, " ")
+      ?.replace(/[^\p{L}\s]+/gu, " ")
       .replace(/\s+/g, " ")
       .trim() || subscription?.name;
 
@@ -18,7 +18,7 @@ export default function SubscriptionListCard({
       key={subscription?._id}
       onClick={clickHandler}
     >
-      <div className="flex h-9 w-9 items-center justify-center rounded-2xl border border-black/10 bg-white/70 shadow-inner">
+      <div className="flex h-9 w-9 items-center justify-center rounded-xl border border-black/15 bg-white/80 shadow-sm">
         <SubscriptionLogo subscriptionName={subscription.name} />
       </div>
       <div className="min-w-0">
