@@ -322,7 +322,7 @@ function Dashboard() {
                   {getGreeting(firstName)}
                 </div>
 
-                <div className="flex items-center gap-3">
+                <div className="flex flex-wrap items-center justify-end gap-2">
                   <LoadingButton
                     onClick={handleResetData}
                     isLoading={isResettingData}
@@ -361,7 +361,7 @@ function Dashboard() {
                 </div>
 
                 {/* Main Content */}
-                <div className="w-full flex-1 rounded-br-lg bg-white/25 p-3 sm:p-4">
+                <div className="min-w-0 w-full flex-1 rounded-br-lg bg-white/25 p-3 sm:p-4">
                   {/* Main Dashboard View */}
                     {!pageId && (
                       <div className="grid h-full grid-rows-[max-content_max-content_1fr] gap-4">

@@ -35,11 +35,11 @@ export default function SubscriptionList({
   }
 
   return (
-    <div className="flex h-full flex-col justify-between">
-      <div className="flex flex-col gap-2">
+    <div className="flex h-full min-w-0 flex-col justify-between">
+      <div className="flex min-w-0 flex-col gap-2">
         {currentSubscriptions?.map((subscription, index) => (
           <SubscriptionListCard
-            key={index}
+            key={subscription?._id || `${subscription?.name}-${index}`}
             subscription={subscription}
             showCategory={categoryId ? false : true}
             clickHandler={() =>

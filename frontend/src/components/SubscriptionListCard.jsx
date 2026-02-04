@@ -8,29 +8,31 @@ export default function SubscriptionListCard({
 }) {
   return (
     <div
-      className="grid cursor-pointer grid-cols-[max-content_1fr_3rem] items-center rounded-md border border-white/50 bg-white/25 p-2 hover:bg-white/50"
+      className="grid w-full min-w-0 cursor-pointer grid-cols-[2.5rem_minmax(0,1fr)_auto] items-center gap-3 rounded-md border border-white/50 bg-white/25 p-2 hover:bg-white/50"
       key={subscription?._id}
       onClick={clickHandler}
     >
       <div className="flex h-9 w-9 items-center justify-center rounded-full border border-black/25 bg-gray-300/50">
         <SubscriptionLogo subscriptionName={subscription.name} />
       </div>
-      <div className="ml-[10px] flex flex-grow items-center justify-between">
+      <div className="min-w-0">
         <div className="flex flex-col">
-          <div className="text-sm font-medium leading-none">
+          <div className="truncate text-sm font-medium leading-none">
             {subscription.name}
           </div>
           {showCategory && (
-            <div className="flex items-center justify-start gap-2 pt-1 text-xs text-gray-500">
+            <div className="flex min-w-0 items-center justify-start gap-2 pt-1 text-xs text-gray-500">
               {/* {subscription.active ? "Active" : "Inactive"} */}
               <CategoryIcon icon={subscription?.category?.icon} iconSize={4} />
-              <div>{subscription?.category?.name || "Uncategorized"}</div>
+              <div className="truncate">
+                {subscription?.category?.name || "Uncategorized"}
+              </div>
             </div>
           )}
         </div>
       </div>
-      <div>
-        <div className="relative">
+      <div className="text-right">
+        <div className="relative whitespace-nowrap">
           <p className="font-medium">€{subscription.price}</p>
           <p className="text-xs text-gray-500">
             {subscription.interval === "month" ? "Monthly " : "Yearly"}

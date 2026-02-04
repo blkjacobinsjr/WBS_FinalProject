@@ -8,6 +8,7 @@ import useSubscription from "../hooks/useSubscription";
 import useDashboard from "../hooks/useDashboard";
 import useCategory from "../hooks/useCategory";
 import useOcr from "../hooks/useOcr";
+import useAiCleaner from "../hooks/useAiCleaner";
 import { createSubscriptionBody } from "../utils/schemaBuilder";
 import { resolveCancelLink } from "../utils/cancelProviders";
 import eventEmitter from "../utils/EventEmitter";
@@ -25,6 +26,10 @@ const BLOCKLIST = [
   /lastschrift|sepa|dauerauftrag|ueberweisung|überweisung/i,
   /bargeld|atm|cash|withdrawal/i,
   /gebuhr|gebühr|fee|entgelt|zins|steuer|charge/i,
+  /statement|balance|end of day balance|available balance/i,
+  /payment|account payment|credit account|cashback|deposit|refund|reversal/i,
+  /transfer|wire|ach|payout|interest|fee|fees|chargeback/i,
+  /credit\s+card|card\s+payment|card\s+purchase/i,
 ];
 
 GlobalWorkerOptions.workerSrc = workerUrl;
@@ -33,6 +38,7 @@ function normalizeName(value) {
   return value
     .toLowerCase()
     .replace(/[^a-z0-9]+/g, " ")
+    .replace(/\b\d{2,4}\b$/g, "")
     .trim();
 }
 
@@ -89,13 +95,13 @@ function parseAmount(value) {
 function extractAmount(line) {
   if (!line) return null;
   const withCurrency = line.match(
-    /(-?\d{1,3}(?:[.,]\d{3})*[.,]\d{2})\s*(EUR|€)\b/i,
+    /([\-–—]?\d{1,3}(?:[.,]\d{3})*[.,]\d{2})\s*(EUR|€)\b/i,
   );
   if (withCurrency) {
     return parseAmount(withCurrency[1] || withCurrency[0]);
   }
 
-  const fallback = line.match(/-?\d{1,3}(?:[.,]\d{3})*[.,]\d{2}\b/);
+  const fallback = line.match(/[-–—]?\d{1,3}(?:[.,]\d{3})*[.,]\d{2}\b/);
   if (fallback) {
     return parseAmount(fallback[0]);
   }
@@ -110,12 +116,18 @@ function isBlockedLine(line) {
 function cleanMerchant(line) {
   if (!line) return "";
   let cleaned = line;
+  cleaned = cleaned.replace(
+    /^(jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)\s+\d{1,2}\b/i,
+    "",
+  );
   cleaned = cleaned.replace(/\b\d{2}[./-]\d{2}[./-]\d{2,4}\b/g, "");
   cleaned = cleaned.replace(/\b\d{4}-\d{2}-\d{2}\b/g, "");
   cleaned = cleaned.replace(/\b[A-Z]{2}\d{2}[A-Z0-9]{11,30}\b/g, "");
+  cleaned = cleaned.replace(/•+\s*\d{2,4}/g, "");
   cleaned = cleaned.replace(/\b(EUR|€)\b/gi, "");
   cleaned = cleaned.replace(/-?\d{1,3}(?:[.,]\d{3})*[.,]\d{2}/g, "");
   cleaned = cleaned.replace(/[|•]/g, " ");
+  cleaned = cleaned.replace(/\b\d{2,4}\b$/g, "");
   cleaned = cleaned.replace(/\s+/g, " ").trim();
   return cleaned;
 }
@@ -132,6 +144,148 @@ function isLikelyMerchant(name) {
   const wordCount = cleaned.split(/\s+/).length;
   if (wordCount > 6) return false;
   return true;
+}
+
+const MONTH_PREFIX =
+  /^(jan|feb|mar|apr|may|jun|jul|aug|sep|sept|oct|nov|dec)\s+\d{1,2}\b/i;
+const SUBSCRIPTION_HINTS =
+  /subscription|membership|member|plan|premium|pro|plus|monthly|annual|yearly|renewal|recurring|billing/i;
+
+function detectInterval(line) {
+  if (!line) return "month";
+  if (/annual|yearly|per year|year\s+plan|jahr/i.test(line)) return "year";
+  if (/monthly|per month|monat/i.test(line)) return "month";
+  return "month";
+}
+
+function isStatementHeader(line) {
+  return (
+    /date\s*\(utc\)/i.test(line) ||
+    /description/i.test(line) ||
+    /end of day balance/i.test(line)
+  );
+}
+
+function parseStatementLine(line) {
+  if (!line || !MONTH_PREFIX.test(line)) return null;
+  if (isStatementHeader(line)) return null;
+
+  const rest = line.replace(MONTH_PREFIX, "").trim();
+  const signedAmountMatch = rest.match(
+    /[-–—]\s*\$?\d{1,3}(?:,\d{3})*(?:\.\d{2})/,
+  );
+  if (!signedAmountMatch) return null;
+
+  const amount = parseAmount(signedAmountMatch[0]);
+  if (!amount) return null;
+
+  const merchantRaw = rest
+    .slice(0, signedAmountMatch.index ?? 0)
+    .trim();
+  const cleaned = cleanMerchant(merchantRaw);
+  if (!isLikelyMerchant(cleaned)) return null;
+  if (isBlockedLine(cleaned) || isBlockedLine(line)) return null;
+
+  const interval = detectInterval(line);
+
+  return {
+      name: cleaned,
+      amount,
+      interval,
+    source: "statement",
+    rawLine: line,
+  };
+}
+
+function detectFromStatementLines(lines) {
+  const candidates = [];
+  for (const line of lines) {
+    const parsed = parseStatementLine(line);
+    if (parsed) candidates.push(parsed);
+  }
+  return candidates;
+}
+
+function pickMostCommon(map) {
+  let bestKey = null;
+  let bestCount = -1;
+  for (const [key, count] of map.entries()) {
+    if (count > bestCount) {
+      bestKey = key;
+      bestCount = count;
+    }
+  }
+  return bestKey;
+}
+
+function summarizeCandidates(candidates) {
+  const groups = new Map();
+
+  for (const candidate of candidates) {
+    if (!candidate?.name || !candidate?.amount) continue;
+    const key = normalizeName(candidate.name);
+    if (!key) continue;
+
+    if (!groups.has(key)) {
+      groups.set(key, {
+        names: new Map(),
+        amounts: new Map(),
+        amountList: [],
+        rawLines: [],
+        sources: new Set(),
+        count: 0,
+      });
+    }
+
+    const group = groups.get(key);
+    group.count += 1;
+    group.sources.add(candidate.source);
+    group.rawLines.push(candidate.rawLine || candidate.name);
+
+    const nameCount = group.names.get(candidate.name) || 0;
+    group.names.set(candidate.name, nameCount + 1);
+
+    const amountKey = candidate.amount.toFixed(2);
+    const amountCount = group.amounts.get(amountKey) || 0;
+    group.amounts.set(amountKey, amountCount + 1);
+    group.amountList.push(candidate.amount);
+  }
+
+  const results = [];
+
+  for (const [key, group] of groups.entries()) {
+    const bestName = pickMostCommon(group.names) || key;
+    const bestAmount = pickMostCommon(group.amounts);
+    const hasHint = group.rawLines.some((line) => SUBSCRIPTION_HINTS.test(line));
+    const cancel = resolveCancelLink(bestName);
+    const shouldKeep = group.count >= 2 || hasHint || cancel?.url;
+
+    if (group.count >= 3 && !hasHint && !cancel?.url) {
+      const avg =
+        group.amountList.reduce((sum, value) => sum + value, 0) /
+        group.amountList.length;
+      const variance =
+        group.amountList.reduce(
+          (sum, value) => sum + Math.pow(value - avg, 2),
+          0,
+        ) / group.amountList.length;
+      const std = Math.sqrt(variance);
+      if (avg > 0 && std / avg > 0.25) {
+        continue;
+      }
+    }
+
+    if (!shouldKeep || !bestAmount) continue;
+
+    results.push({
+      name: bestName,
+      amount: Number.parseFloat(bestAmount),
+      interval: "month",
+      source: Array.from(group.sources).join(","),
+    });
+  }
+
+  return results;
 }
 
 function resolveForcedMerchant(line) {
@@ -160,6 +314,7 @@ function collectForcedCandidates(lines) {
       amount: forcedAmount,
       interval: "month",
       source: "pdf",
+      rawLine: line,
     });
   }
 
@@ -185,9 +340,7 @@ function detectFromPdfText(text) {
     .filter(Boolean);
 
   const forcedCandidates = dedupeCandidates(collectForcedCandidates(lines));
-  if (forcedCandidates.length > 0) {
-    return forcedCandidates;
-  }
+  const statementCandidates = detectFromStatementLines(lines);
 
   const candidates = [];
 
@@ -218,12 +371,19 @@ function detectFromPdfText(text) {
     candidates.push({
       name: override || name,
       amount,
-      interval: "month",
+      interval: detectInterval(line),
       source: "pdf",
+      rawLine: line,
     });
   }
 
-  return dedupeCandidates(candidates);
+  const merged = [
+    ...forcedCandidates,
+    ...statementCandidates,
+    ...dedupeCandidates(candidates),
+  ];
+
+  return summarizeCandidates(merged);
 }
 
 function detectFromCsvText(text) {
@@ -317,6 +477,7 @@ export default function BulkImport() {
   const { getDashboardData } = useDashboard();
   const { getUsedCategories } = useCategory();
   const { processOcr } = useOcr();
+  const { cleanTransactions } = useAiCleaner();
 
   const [files, setFiles] = useState([]);
   const [dragActive, setDragActive] = useState(false);
@@ -466,6 +627,7 @@ export default function BulkImport() {
     let baseSubscriptions = subscriptions || [];
     const fingerprintsToStore = [];
     const skippedFiles = [];
+    const aiLines = [];
 
     try {
       const latestSubscriptions = await getAllSubscriptions(
@@ -499,10 +661,20 @@ export default function BulkImport() {
 
         if (extension === "pdf") {
           const text = await extractPdfText(buffer);
+          const textLines = text
+            .split(/\r?\n/)
+            .map((line) => line.trim())
+            .filter(Boolean);
+          aiLines.push(...textLines);
           let pdfCandidates = detectFromPdfText(text);
           if (pdfCandidates.length === 0) {
             const ocrText = await extractPdfTextWithOcr(buffer);
             if (ocrText) {
+              const ocrLines = ocrText
+                .split(/\r?\n/)
+                .map((line) => line.trim())
+                .filter(Boolean);
+              aiLines.push(...ocrLines);
               pdfCandidates = detectFromPdfText(ocrText);
             }
           }
@@ -520,6 +692,32 @@ export default function BulkImport() {
       return;
     }
 
+    if (
+      aiLines.length > 0 &&
+      (candidates.length === 0 || candidates.length > 80)
+    ) {
+      const uniqueLines = Array.from(new Set(aiLines)).slice(0, 200);
+      try {
+        const aiResult = await cleanTransactions(
+          uniqueLines,
+          new AbortController(),
+        );
+        const aiItems = Array.isArray(aiResult?.items) ? aiResult.items : [];
+        if (aiItems.length > 0) {
+          candidates = aiItems
+            .map((item) => ({
+              name: cleanMerchant(item.name || ""),
+              amount: Number.parseFloat(item.amount),
+              interval: item.interval === "year" ? "year" : "month",
+              source: "ai",
+            }))
+            .filter((item) => item.name && Number.isFinite(item.amount));
+        }
+      } catch (error) {
+        // ignore AI failures
+      }
+    }
+
     if (candidates.length === 0) {
       toast.error("No subscriptions found");
       setStage("idle");
@@ -535,7 +733,7 @@ export default function BulkImport() {
     }
 
     const existingKeys = new Set(
-      baseSubscriptions.map((sub) => normalizeKey(sub.name, sub.price)),
+      baseSubscriptions.map((sub) => normalizeName(sub.name)),
     );
 
     let createdCount = 0;
@@ -544,7 +742,7 @@ export default function BulkImport() {
     setStage("creating");
 
     for (const candidate of candidates) {
-      const candidateKey = normalizeKey(candidate.name, candidate.amount);
+      const candidateKey = normalizeName(candidate.name);
       if (existingKeys.has(candidateKey)) {
         skippedCount += 1;
         continue;

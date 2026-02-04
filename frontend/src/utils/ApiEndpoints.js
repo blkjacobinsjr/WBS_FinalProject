@@ -21,6 +21,7 @@ export default class ApiEndpoints {
       dashboard: `${baseUrl.href}/dashboard`,
       search: `${baseUrl.href}/search`,
       ocr: `${baseUrl.href}/ocr`,
+      ai: `${baseUrl.href}/ai`,
       notifications: `${baseUrl}/notifications`,
     };
   }
@@ -82,6 +83,10 @@ export default class ApiEndpoints {
     return this.endpoints.ocr;
   }
 
+  static get ai() {
+    return this.endpoints.ai;
+  }
+
   // ---- API endpoints with params ----
   static subscription(id) {
     return `${this.subscriptions}/${id}`;
@@ -105,5 +110,9 @@ export default class ApiEndpoints {
 
   static notificationById(id) {
     return `${this.notifications}/${id}`;
+  }
+
+  static aiCleanTransactions() {
+    return `${this.ai}/clean-transactions`;
   }
 }

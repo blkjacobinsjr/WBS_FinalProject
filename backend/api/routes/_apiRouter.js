@@ -6,6 +6,7 @@ import dashboardDataRouter from "./_dashboardDataRouter.js";
 import searchRouter from "./_searchRouter.js";
 import notificationRouter from "./_notificatonRouter.js";
 import ocrRouter from "./_ocrRouter.js";
+import aiRouter from "./_aiRouter.js";
 
 import { Router } from "express";
 
@@ -34,5 +35,8 @@ apiRouter.use("/notifications", notificationRouter);
 
 // ---- ROUTE: /ocr
 apiRouter.use("/ocr", ocrRouter);
+
+// ---- ROUTE: /ai
+apiRouter.use("/ai", aiRouter);
 
 export default apiRouter;
