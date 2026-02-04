@@ -1,5 +1,5 @@
 import { Dialog, RadioGroup, Transition } from "@headlessui/react";
-import { Fragment, useEffect, useState } from "react";
+import { Fragment, useEffect, useRef, useState } from "react";
 import { useDataContext } from "../contexts/dataContext"; // Context for data
 import eventEmitter from "../utils/EventEmitter"; // Event emitter for handling events
 
@@ -17,14 +17,16 @@ export default function UsageModal({
   const [selectedScore, setSelectedScore] = useState(null);
   const [currentNotification, setCurrentNotification] = useState(null);
   const [unratedNotifications, setUnratedNotifications] = useState([]);
+  const [initialTotal, setInitialTotal] = useState(0);
+  const [completedCount, setCompletedCount] = useState(0);
 
   // ---- DERIVED STATE ----
   const currentIndex = unratedNotifications?.findIndex(
     (n) => n?._id === currentNotification?._id,
   );
   const totalCount = unratedNotifications?.length || 0;
-  const progress = totalCount > 0
-    ? Math.round(((currentIndex + 1) / totalCount) * 100)
+  const progress = initialTotal > 0
+    ? Math.round((completedCount / initialTotal) * 100)
     : 0;
 
   // ---- USE EFFECT ----
@@ -37,6 +39,8 @@ export default function UsageModal({
       }));
       setCurrentNotification(manualList[0]);
       setUnratedNotifications(manualList);
+      setInitialTotal(manualList.length);
+      setCompletedCount(0);
       return;
     }
 
@@ -64,17 +68,40 @@ export default function UsageModal({
 
       setCurrentNotification(initialNotification);
       setUnratedNotifications(initialUnratedNotificatons);
+      setInitialTotal(initialUnratedNotificatons.length);
+      setCompletedCount(0);
     } else {
       // if the notification we initially opened the modal with is gone, just use the first
       // notification and the array itself
       setCurrentNotification(notifications?.at(0));
       setUnratedNotifications(notifications);
+      setInitialTotal(notifications?.length || 0);
+      setCompletedCount(0);
     }
   }, [notificationId, notifications, manualSubscriptions]);
+
+  // Auto-advance when user selects a score
+  const autoAdvanceRef = useRef(null);
+  useEffect(() => {
+    if (selectedScore && unratedNotifications.length > 0) {
+      // Clear any pending auto-advance
+      if (autoAdvanceRef.current) clearTimeout(autoAdvanceRef.current);
+
+      // Auto-advance after brief visual feedback
+      autoAdvanceRef.current = setTimeout(() => {
+        handleChangeSubscriptionClick(1);
+      }, 350);
+    }
+    return () => {
+      if (autoAdvanceRef.current) clearTimeout(autoAdvanceRef.current);
+    };
+  }, [selectedScore]);
 
   // go throug all notifications currently active
   function handleChangeSubscriptionClick(direction) {
     if (direction !== 1 && direction !== -1) return;
+
+    let remainingAfterSubmit = unratedNotifications.length;
 
     if (selectedScore) {
       const selectedSubscriptionId =
@@ -88,30 +115,43 @@ export default function UsageModal({
       );
 
       // remove from unrated subscription
-      setUnratedNotifications((prev) =>
-        prev.filter((n) => n._id !== currentNotification._id),
+      const filtered = unratedNotifications.filter(
+        (n) => n._id !== currentNotification._id,
       );
+      setUnratedNotifications(filtered);
+      remainingAfterSubmit = filtered.length;
+
+      // increment completed count for progress bar
+      setCompletedCount((prev) => prev + 1);
+
+      // if this was the last one, close modal
+      if (filtered.length === 0) {
+        setTimeout(() => onClose(), 300);
+        return;
+      }
+
+      // move to next item in the filtered list
+      const nextIndex = Math.min(currentIndex, filtered.length - 1);
+      setCurrentNotification(filtered[nextIndex]);
+      setSelectedScore(null);
+      return;
     }
 
-    // just move to next or previous if nothing is selected
+    // just move to next or previous if nothing is selected (skip)
     if (unratedNotifications.length > 1) {
       // direction can be +/- 1 so check both edges
       const newIndex = currentIndex + direction;
 
       if (newIndex > unratedNotifications.length - 1) {
-        // setCurrentIndex(0);
         setCurrentNotification(unratedNotifications[0]);
       } else if (newIndex < 0) {
-        // setCurrentIndex(unratedNotifications.length - 1);
         setCurrentNotification(
           unratedNotifications[unratedNotifications.length - 1],
         );
       } else {
-        // setCurrentIndex(newIndex);
         setCurrentNotification(unratedNotifications[newIndex]);
       }
 
-      // IF we move selected score needs to be reset
       setSelectedScore(null);
     }
   }
@@ -168,10 +208,10 @@ export default function UsageModal({
         >
           <Dialog.Panel className="z-20 w-[92vw] max-w-lg rounded-lg bg-white p-6 opacity-90 sm:p-10">
             {/* Progress indicator */}
-            {totalCount > 1 && (
+            {initialTotal > 1 && (
               <div className="mb-4">
                 <div className="flex items-center justify-between text-xs text-gray-500">
-                  <span>{currentIndex + 1} of {totalCount}</span>
+                  <span>{completedCount + 1} of {initialTotal}</span>
                   <span>{progress}%</span>
                 </div>
                 <div className="mt-1 h-1.5 w-full rounded-full bg-gray-200">
