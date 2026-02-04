@@ -7,6 +7,7 @@ import useSubscription from "../hooks/useSubscription";
 import eventEmitter from "../utils/EventEmitter";
 import { resolveCancelLink } from "../utils/cancelProviders";
 import LoadingButton from "./LoadingButton";
+import BulkImport from "../pages/BulkImport";
 
 export default function FinancialResetFlow({ open, onClose }) {
   const navigate = useNavigate();
@@ -133,6 +134,7 @@ export default function FinancialResetFlow({ open, onClose }) {
   const current = steps[Math.min(step, steps.length - 1)];
   const progress = Math.min(100, Math.round((step / 3) * 100));
   const stepLabel = Math.min(step, 3);
+  const isUploadStep = step === 1;
 
   if (!open) return null;
 
@@ -202,14 +204,26 @@ export default function FinancialResetFlow({ open, onClose }) {
             </div>
           </div>
 
-          <LoadingButton
-            onClick={current.action}
-            isLoading={isWorking}
-            loadingText="Working..."
-            className="mt-4 w-full max-w-sm rounded-full bg-white px-6 py-3 text-sm font-semibold text-slate-900 shadow-xl shadow-black/30"
-          >
-            {current.cta}
-          </LoadingButton>
+          {isUploadStep ? (
+            <div className="w-full max-w-[640px] rounded-2xl border border-white/15 bg-white/10 p-4 text-left shadow-xl shadow-black/30 backdrop-blur">
+              <div className="max-h-[55vh] overflow-y-auto">
+                <BulkImport
+                  embedded
+                  redirectOnComplete={false}
+                  onComplete={() => setStep(2)}
+                />
+              </div>
+            </div>
+          ) : (
+            <LoadingButton
+              onClick={current.action}
+              isLoading={isWorking}
+              loadingText="Working..."
+              className="mt-4 w-full max-w-sm rounded-full bg-white px-6 py-3 text-sm font-semibold text-slate-900 shadow-xl shadow-black/30"
+            >
+              {current.cta}
+            </LoadingButton>
+          )}
 
           {candidate && step === 2 && (
             <div className="text-xs text-white/60">

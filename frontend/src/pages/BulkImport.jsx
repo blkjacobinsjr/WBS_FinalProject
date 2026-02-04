@@ -602,7 +602,11 @@ function bufferToBase64(buffer) {
   return btoa(binary);
 }
 
-export default function BulkImport() {
+export default function BulkImport({
+  embedded = false,
+  redirectOnComplete = true,
+  onComplete,
+}) {
   const {
     subscriptions,
     setSubscriptions,
@@ -975,7 +979,18 @@ export default function BulkImport() {
       "bulkImport:justImported",
       JSON.stringify({ count: createdCount, ts: Date.now() }),
     );
-    navigate("/dashboard");
+
+    if (onComplete) {
+      onComplete({
+        created: createdCount,
+        skipped: skippedCount,
+        detected: enriched,
+      });
+    }
+
+    if (redirectOnComplete) {
+      navigate("/dashboard");
+    }
   }
 
   async function handleDecision(action) {
@@ -1025,7 +1040,11 @@ export default function BulkImport() {
   }
 
   return (
-    <div className="flex w-full flex-col gap-4">
+    <div
+      className={`flex w-full flex-col gap-4 ${
+        embedded ? "max-w-none" : ""
+      }`}
+    >
       <div className="rounded-lg border border-black/10 bg-white/60 p-4">
         <h2 className="text-lg font-semibold">Bulk Import and Cancel</h2>
         <p className="text-sm text-gray-600">
