@@ -22,6 +22,10 @@ export default function UsageModal({
   const currentIndex = unratedNotifications?.findIndex(
     (n) => n?._id === currentNotification?._id,
   );
+  const totalCount = unratedNotifications?.length || 0;
+  const progress = totalCount > 0
+    ? Math.round(((currentIndex + 1) / totalCount) * 100)
+    : 0;
 
   // ---- USE EFFECT ----
   // we need to rerender based on whether property and notifications are available
@@ -163,18 +167,48 @@ export default function UsageModal({
           leaveTo="flex w-full scale-95 justify-center opacity-0"
         >
           <Dialog.Panel className="z-20 w-[92vw] max-w-lg rounded-lg bg-white p-6 opacity-90 sm:p-10">
+            {/* Progress indicator */}
+            {totalCount > 1 && (
+              <div className="mb-4">
+                <div className="flex items-center justify-between text-xs text-gray-500">
+                  <span>{currentIndex + 1} of {totalCount}</span>
+                  <span>{progress}%</span>
+                </div>
+                <div className="mt-1 h-1.5 w-full rounded-full bg-gray-200">
+                  <div
+                    className="h-1.5 rounded-full bg-black transition-all"
+                    style={{ width: `${progress}%` }}
+                  />
+                </div>
+              </div>
+            )}
+
             <Dialog.Title
               as="h3"
               className="text-lg font-medium leading-6 text-gray-900"
             >
               How often do you use{" "}
               <span className="font-bold">
-                {currentNotification?.subscriptionId.name}
+                {currentNotification?.subscriptionId?.name || "this subscription"}
               </span>
               ?
             </Dialog.Title>
 
             <div className="mt-2">
+              {!currentNotification?.subscriptionId ? (
+                <div className="py-8 text-center">
+                  <p className="text-sm text-gray-500">
+                    No subscriptions to rate. Add some subscriptions first!
+                  </p>
+                  <button
+                    onClick={onClose}
+                    className="mt-4 rounded bg-black px-4 py-2 font-bold text-white hover:bg-gray-800"
+                  >
+                    Close
+                  </button>
+                </div>
+              ) : (
+              <>
               <p className="text-sm text-gray-500">
                 Don&apos;t think, just select!
               </p>
@@ -239,12 +273,22 @@ export default function UsageModal({
                 </RadioGroup.Option>
               </RadioGroup>
               <div className="flex w-full flex-row items-center justify-between">
-                <button
-                  onClick={handleDoneClick}
-                  className="mt-4 rounded bg-gray-500 px-4 py-2 font-bold text-white hover:bg-gray-700"
-                >
-                  Done
-                </button>
+                <div className="flex gap-2">
+                  <button
+                    onClick={handleDoneClick}
+                    className="mt-4 rounded bg-gray-500 px-4 py-2 font-bold text-white hover:bg-gray-700"
+                  >
+                    Done
+                  </button>
+                  {unratedNotifications?.length > 1 && (
+                    <button
+                      onClick={() => handleChangeSubscriptionClick(1)}
+                      className="mt-4 rounded border border-gray-300 bg-white px-4 py-2 font-bold text-gray-600 hover:bg-gray-100"
+                    >
+                      Skip
+                    </button>
+                  )}
+                </div>
                 {unratedNotifications?.length > 1 && (
                   <div className="flex flex-row justify-end gap-2">
                     <button
@@ -288,6 +332,8 @@ export default function UsageModal({
                   </div>
                 )}
               </div>
+              </>
+              )}
             </div>
           </Dialog.Panel>
         </Transition.Child>

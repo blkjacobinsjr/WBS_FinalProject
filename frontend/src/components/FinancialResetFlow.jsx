@@ -210,6 +210,7 @@ export default function FinancialResetFlow({ open, onClose }) {
                 <BulkImport
                   embedded
                   redirectOnComplete={false}
+                  deferCompleteUntilReview
                   onComplete={() => setStep(2)}
                 />
               </div>

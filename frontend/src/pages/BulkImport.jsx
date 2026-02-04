@@ -96,6 +96,27 @@ function storeFingerprint(hash) {
 
 function parseAmount(value) {
   if (!value) return null;
+
+  const trimmed = value.trim();
+
+  // Reject full date patterns (DD.MM.YYYY or DD.MM.YY)
+  if (/^\d{1,2}[./-]\d{1,2}[./-]\d{2,4}$/.test(trimmed)) {
+    return null;
+  }
+
+  // For short patterns like DD.MM (could be date or amount), apply heuristics:
+  // - Dates use dots (01.01), amounts in European format use commas (23,90)
+  // - If it uses a dot and looks like a valid date (day 01-31, month 01-12), reject it
+  const shortPattern = trimmed.match(/^(\d{1,2})\.(\d{1,2})$/);
+  if (shortPattern) {
+    const first = parseInt(shortPattern[1], 10);
+    const second = parseInt(shortPattern[2], 10);
+    // If both parts are in valid day/month range, likely a date
+    if (first >= 1 && first <= 31 && second >= 1 && second <= 12) {
+      return null;
+    }
+  }
+
   const cleaned = value
     .replace(/[^0-9,.-]/g, "")
     .replace(/\.(?=\d{3}(\D|$))/g, "")
@@ -108,18 +129,44 @@ function parseAmount(value) {
 
 function extractAmount(line) {
   if (!line) return null;
+
+  // Prefer amounts with explicit currency symbols - most reliable
   const withCurrency = line.match(
     /([\-–—]?\d{1,3}(?:[.,]\d{3})*[.,]\d{2})\s*(EUR|€)\b/i,
   );
   if (withCurrency) {
-    return parseAmount(withCurrency[1] || withCurrency[0]);
+    const amount = parseAmount(withCurrency[1] || withCurrency[0]);
+    if (amount !== null) return amount;
   }
 
+  // Check for Euro amounts at end of line (common in German statements: -23,90€)
+  const euroAtEnd = line.match(/[-–—]?\d{1,3}(?:[.,]\d{3})*[.,]\d{2}\s*€\s*$/);
+  if (euroAtEnd) {
+    const amount = parseAmount(euroAtEnd[0]);
+    if (amount !== null) return amount;
+  }
+
+  // Fallback: look for amount-like numbers, but be strict about rejecting dates
   const fallbackMatches = Array.from(
     line.matchAll(/[-–—]?\d{1,3}(?:[.,]\d{3})*[.,]\d{2}\b/g),
   );
   for (const match of fallbackMatches) {
     const token = match[0];
+    const matchIndex = match.index ?? 0;
+
+    // Check if this token is part of a date by looking at surrounding context
+    const before = line.slice(Math.max(0, matchIndex - 3), matchIndex);
+    const after = line.slice(matchIndex + token.length, matchIndex + token.length + 6);
+
+    // Skip if followed by date continuation (like .2026)
+    if (/^[./-]\d{2,4}/.test(after)) {
+      continue;
+    }
+    // Skip if preceded by date parts
+    if (/\d{2}[./-]$/.test(before)) {
+      continue;
+    }
+
     if (
       DATE_DMY.test(token) ||
       DATE_DMY_SHORT.test(token) ||
@@ -127,7 +174,9 @@ function extractAmount(line) {
     ) {
       continue;
     }
-    return parseAmount(token);
+
+    const amount = parseAmount(token);
+    if (amount !== null) return amount;
   }
 
   return null;
@@ -198,6 +247,8 @@ function parseSignedAmountToken(token) {
   if (!token) return null;
   let negative = false;
   let cleaned = token.trim();
+
+  // Strict date rejection - check before any processing
   if (
     DATE_DMY.test(cleaned) ||
     DATE_DMY_SHORT.test(cleaned) ||
@@ -205,6 +256,7 @@ function parseSignedAmountToken(token) {
   ) {
     return null;
   }
+
   if (cleaned.startsWith("(") && cleaned.endsWith(")")) {
     negative = true;
     cleaned = cleaned.slice(1, -1);
@@ -702,6 +754,7 @@ export default function BulkImport({
   embedded = false,
   redirectOnComplete = true,
   onComplete,
+  deferCompleteUntilReview = false,
 }) {
   const {
     subscriptions,
@@ -731,6 +784,7 @@ export default function BulkImport({
   const [cancelAllLoading, setCancelAllLoading] = useState(false);
   const [wipeLoading, setWipeLoading] = useState(false);
   const [replaceExisting, setReplaceExisting] = useState(true);
+  const [pendingComplete, setPendingComplete] = useState(null);
   const navigate = useNavigate();
 
   const current = detected[currentIndex];
@@ -739,6 +793,20 @@ export default function BulkImport({
     if (detected.length === 0) return 0;
     return Math.min(100, Math.round((currentIndex / detected.length) * 100));
   }, [currentIndex, detected.length]);
+
+  // Call onComplete when review is finished (all items reviewed)
+  useEffect(() => {
+    if (
+      deferCompleteUntilReview &&
+      pendingComplete &&
+      detected.length > 0 &&
+      currentIndex >= detected.length &&
+      onComplete
+    ) {
+      onComplete(pendingComplete);
+      setPendingComplete(null);
+    }
+  }, [currentIndex, detected.length, deferCompleteUntilReview, pendingComplete, onComplete]);
 
   function fileKey(file) {
     return `${file.name}|${file.size}|${file.lastModified}`;
@@ -1105,12 +1173,16 @@ export default function BulkImport({
       JSON.stringify({ count: createdCount, ts: Date.now() }),
     );
 
-    if (onComplete) {
-      onComplete({
-        created: createdCount,
-        skipped: skippedCount,
-        detected: enriched,
-      });
+    const completeData = {
+      created: createdCount,
+      skipped: skippedCount,
+      detected: enriched,
+    };
+
+    if (onComplete && !deferCompleteUntilReview) {
+      onComplete(completeData);
+    } else if (deferCompleteUntilReview) {
+      setPendingComplete(completeData);
     }
 
     if (redirectOnComplete) {
@@ -1164,47 +1236,90 @@ export default function BulkImport({
     toast.success("Canceled all detected subscriptions");
   }
 
+  // Theme-aware class names for embedded (dark) vs normal (light) mode
+  const theme = {
+    container: embedded
+      ? "border-white/20 bg-transparent"
+      : "border-black/10 bg-white/60",
+    title: embedded ? "text-white" : "text-gray-900",
+    subtitle: embedded ? "text-white/70" : "text-gray-600",
+    checkbox: embedded
+      ? "border-white/30 bg-white/10 text-white/80"
+      : "border-black/10 bg-white/70",
+    checkboxAccent: embedded ? "accent-white" : "accent-black",
+    dropzone: dragActive
+      ? embedded
+        ? "border-white bg-white/10"
+        : "border-black bg-black/5"
+      : embedded
+        ? "border-white/30 bg-white/5"
+        : "border-black/20 bg-white/60",
+    dropzoneText: embedded ? "text-white" : "text-gray-900",
+    dropzoneSubtext: embedded ? "text-white/60" : "text-gray-600",
+    fileChip: embedded
+      ? "border-white/20 bg-white/10 text-white/80"
+      : "border-black/10 bg-white/80",
+    clearBtn: embedded ? "text-white/70" : "text-black/70",
+    processBtn: embedded
+      ? "bg-white text-black"
+      : "bg-black text-white",
+    wipeBtn: embedded
+      ? "border-white/30 text-white/80"
+      : "border-black/20",
+    summaryText: embedded ? "text-white/60" : "text-gray-600",
+    cardBg: embedded
+      ? "border-white/20 bg-white/10"
+      : "border-black/10 bg-white",
+    cardTitle: embedded ? "text-white" : "text-gray-900",
+    cardSubtitle: embedded ? "text-white/70" : "text-gray-600",
+    cardMeta: embedded ? "text-white/50" : "text-gray-500",
+    keepBtn: embedded
+      ? "border-white/30 text-white"
+      : "border-black/20",
+    cancelBtn: embedded
+      ? "bg-white text-black"
+      : "bg-black text-white",
+    progressBg: embedded ? "bg-white/20" : "bg-gray-200",
+    progressFill: embedded ? "bg-white" : "bg-black",
+  };
+
   return (
     <div
       className={`flex w-full flex-col gap-4 ${
         embedded ? "max-w-none" : ""
       }`}
     >
-      <div className="rounded-lg border border-black/10 bg-white/60 p-4">
-        <h2 className="text-lg font-semibold">Bulk Import and Cancel</h2>
-        <p className="text-sm text-gray-600">
+      <div className={`rounded-lg border p-4 ${theme.container}`}>
+        <h2 className={`text-lg font-semibold ${theme.title}`}>Bulk Import and Cancel</h2>
+        <p className={`text-sm ${theme.subtitle}`}>
           Upload PDF, CSV, or Excel files. Subscriptions are auto added. Then
           decide keep or cancel.
         </p>
 
-        <div className="mt-4 flex flex-wrap items-center gap-3 text-xs text-gray-600">
-          <label className="flex items-center gap-2 rounded-full border border-black/10 bg-white/70 px-3 py-2">
+        <div className={`mt-4 flex flex-wrap items-center gap-3 text-xs ${theme.subtitle}`}>
+          <label className={`flex items-center gap-2 rounded-full border px-3 py-2 ${theme.checkbox}`}>
             <input
               type="checkbox"
-              className="h-4 w-4 accent-black"
+              className={`h-4 w-4 ${theme.checkboxAccent}`}
               checked={replaceExisting}
               onChange={(event) => setReplaceExisting(event.target.checked)}
             />
             Replace existing on import
           </label>
-          <span className="text-xs text-gray-500">
+          <span className={`text-xs ${theme.cardMeta}`}>
             Wipes current subscriptions before adding new ones.
           </span>
           <LoadingButton
             onClick={() => wipeAllSubscriptions()}
             isLoading={wipeLoading}
-            className="rounded-full border border-black/20 px-3 py-2 text-xs font-semibold"
+            className={`rounded-full border px-3 py-2 text-xs font-semibold ${theme.wipeBtn}`}
           >
             Wipe all subscriptions
           </LoadingButton>
         </div>
 
         <div
-          className={`mt-4 rounded-xl border-2 border-dashed px-4 py-4 text-sm transition ${
-            dragActive
-              ? "border-black bg-black/5"
-              : "border-black/20 bg-white/60"
-          }`}
+          className={`mt-4 rounded-xl border-2 border-dashed px-4 py-4 text-sm transition ${theme.dropzone}`}
           onDragOver={(event) => {
             event.preventDefault();
             setDragActive(true);
@@ -1218,14 +1333,14 @@ export default function BulkImport({
         >
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <div>
-              <div className="text-sm font-semibold">
+              <div className={`text-sm font-semibold ${theme.dropzoneText}`}>
                 Drop files here or select
               </div>
-              <div className="text-xs text-gray-600">
+              <div className={`text-xs ${theme.dropzoneSubtext}`}>
                 PDF, CSV, XLSX, XLS
               </div>
             </div>
-            <label className="inline-flex cursor-pointer items-center justify-center rounded-full border border-black/20 bg-white px-4 py-2 text-xs font-semibold">
+            <label className={`inline-flex cursor-pointer items-center justify-center rounded-full border px-4 py-2 text-xs font-semibold ${embedded ? "border-white/30 bg-white/10 text-white" : "border-black/20 bg-white"}`}>
               Choose files
               <input
                 ref={fileInputRef}
@@ -1241,7 +1356,7 @@ export default function BulkImport({
           </div>
 
           {files.length > 0 && (
-            <div className="mt-3 flex flex-col gap-1 text-xs text-gray-600">
+            <div className={`mt-3 flex flex-col gap-1 text-xs ${theme.dropzoneSubtext}`}>
               <div>
                 Selected: {files.length} file{files.length > 1 ? "s" : ""}
               </div>
@@ -1249,7 +1364,7 @@ export default function BulkImport({
                 {files.map((item) => (
                   <span
                     key={fileKey(item)}
-                    className="rounded-full border border-black/10 bg-white/80 px-3 py-1"
+                    className={`rounded-full border px-3 py-1 ${theme.fileChip}`}
                   >
                     {item.name}
                   </span>
@@ -1258,7 +1373,7 @@ export default function BulkImport({
               <button
                 type="button"
                 onClick={clearFiles}
-                className="mt-1 text-left text-xs font-semibold text-black/70"
+                className={`mt-1 text-left text-xs font-semibold ${theme.clearBtn}`}
               >
                 Clear selection
               </button>
@@ -1272,66 +1387,66 @@ export default function BulkImport({
             isLoading={stage === "parsing" || stage === "creating"}
             disabled={!files.length || stage === "parsing" || stage === "creating"}
             loadingText="Processing"
-            className="rounded-lg bg-black px-4 py-2 text-sm font-semibold text-white disabled:opacity-50"
+            className={`rounded-lg px-4 py-2 text-sm font-semibold disabled:opacity-50 ${theme.processBtn}`}
           >
             Process files
           </LoadingButton>
         </div>
 
         {summary.created + summary.skipped > 0 && (
-          <div className="mt-3 text-xs text-gray-600">
+          <div className={`mt-3 text-xs ${theme.summaryText}`}>
             Created: {summary.created} | Skipped: {summary.skipped}
           </div>
         )}
       </div>
 
       {detected.length > 0 && (
-        <div className="rounded-lg border border-black/10 bg-white/60 p-4">
-          <div className="flex items-center justify-between text-sm text-gray-600">
+        <div className={`rounded-lg border p-4 ${theme.container}`}>
+          <div className={`flex items-center justify-between text-sm ${theme.subtitle}`}>
             <span>
               {Math.min(currentIndex + 1, detected.length)} of {detected.length}
             </span>
             <span>{progress}%</span>
           </div>
-          <div className="mt-2 h-2 w-full rounded-full bg-gray-200">
+          <div className={`mt-2 h-2 w-full rounded-full ${theme.progressBg}`}>
             <div
-              className="h-2 rounded-full bg-black"
+              className={`h-2 rounded-full ${theme.progressFill}`}
               style={{ width: `${progress}%` }}
             ></div>
           </div>
 
           {current ? (
-            <div className="mt-4 rounded-xl border border-black/10 bg-white p-4 shadow-sm">
-              <div className="text-lg font-semibold">{current.name}</div>
-              <div className="text-sm text-gray-600">
+            <div className={`mt-4 rounded-xl border p-4 shadow-sm ${theme.cardBg}`}>
+              <div className={`text-lg font-semibold ${theme.cardTitle}`}>{current.name}</div>
+              <div className={`text-sm ${theme.cardSubtitle}`}>
                 {current.amount.toFixed(2)} EUR per {current.interval}
               </div>
-              <div className="mt-2 text-xs text-gray-500">
+              <div className={`mt-2 text-xs ${theme.cardMeta}`}>
                 Source: {current.source}
               </div>
-              <div className="mt-2 text-xs text-gray-500">
-                Cancel: {current.cancel.label}
+              <div className={`mt-2 text-xs ${theme.cardMeta}`}>
+                Cancel: {current.cancel?.label || "Unknown"}
               </div>
 
               <div className="mt-4 grid grid-cols-2 gap-3">
                 <LoadingButton
                   onClick={() => handleDecision("keep")}
                   isLoading={decisionLoading === "keep"}
-                  className="rounded-lg border border-black/20 px-3 py-2 text-sm font-semibold"
+                  className={`rounded-lg border px-3 py-2 text-sm font-semibold ${theme.keepBtn}`}
                 >
                   Keep
                 </LoadingButton>
                 <LoadingButton
                   onClick={() => handleDecision("cancel")}
                   isLoading={decisionLoading === "cancel"}
-                  className="rounded-lg bg-black px-3 py-2 text-sm font-semibold text-white"
+                  className={`rounded-lg px-3 py-2 text-sm font-semibold ${theme.cancelBtn}`}
                 >
                   Cancel
                 </LoadingButton>
               </div>
             </div>
           ) : (
-            <div className="mt-4 text-center text-sm text-gray-600">
+            <div className={`mt-4 text-center text-sm ${theme.subtitle}`}>
               Done.
             </div>
           )}
@@ -1340,7 +1455,7 @@ export default function BulkImport({
             <LoadingButton
               onClick={handleCancelAll}
               isLoading={cancelAllLoading}
-              className="rounded-lg border border-black/20 px-3 py-2 text-xs font-semibold"
+              className={`rounded-lg border px-3 py-2 text-xs font-semibold ${theme.wipeBtn}`}
             >
               Cancel All
             </LoadingButton>

@@ -15,6 +15,15 @@ export default function UsagePage() {
   // populate the usage page... math!
   const totalSubscriptions = subscriptions?.length;
 
+  // Count subscriptions that haven't been rated yet (no score or score is default)
+  const unratedCount = subscriptions?.filter(
+    (s) => s.score === undefined || s.score === null || s.score === 0
+  ).length || 0;
+  const ratedCount = totalSubscriptions - unratedCount;
+  const ratingProgress = totalSubscriptions > 0
+    ? Math.round((ratedCount / totalSubscriptions) * 100)
+    : 0;
+
   // We need to do these calculations / lookups as dashboardData does not contain
   // all relevant information (e.g. monthly price)
   const mostUsed = subscriptions?.find(
@@ -65,22 +74,43 @@ export default function UsagePage() {
 
   return (
     <>
-      <div className="mb-3 rounded-lg border border-white/80 bg-white/40 p-3">
-        <div className="flex flex-col items-start justify-between gap-3 sm:flex-row sm:items-center">
-          <div>
-            <div className="text-sm font-semibold text-gray-800">
-              Usage Quiz
+      <div className="mb-3 rounded-lg border border-white/80 bg-gradient-to-r from-white/60 to-white/40 p-4 shadow-sm">
+        <div className="flex flex-col gap-3">
+          <div className="flex flex-col items-start justify-between gap-3 sm:flex-row sm:items-center">
+            <div>
+              <div className="text-sm font-semibold text-gray-800">
+                Usage Quiz
+              </div>
+              <div className="text-xs text-gray-600">
+                Rate how often you use each subscription. This updates Most Used, Potential Savings, and helps identify subscriptions to cancel.
+              </div>
             </div>
-            <div className="text-xs text-gray-600">
-              Rate subscriptions any time. Updates Most Used and Savings.
-            </div>
+            <button
+              className="rounded-full bg-black px-4 py-2 text-xs font-semibold text-white transition hover:bg-gray-800"
+              onClick={() => eventEmitter.emit("openUsageQuiz")}
+              disabled={totalSubscriptions === 0}
+            >
+              {unratedCount > 0 ? `Rate ${unratedCount} Subscriptions` : "Review Ratings"}
+            </button>
           </div>
-          <button
-            className="rounded-full border border-black/20 bg-white px-4 py-2 text-xs font-semibold text-gray-800"
-            onClick={() => eventEmitter.emit("openUsageQuiz")}
-          >
-            Start Usage Quiz
-          </button>
+          {totalSubscriptions > 0 && (
+            <div className="flex items-center gap-3">
+              <div className="h-2 flex-1 rounded-full bg-gray-200">
+                <div
+                  className="h-2 rounded-full bg-green-500 transition-all"
+                  style={{ width: `${ratingProgress}%` }}
+                />
+              </div>
+              <span className="text-xs text-gray-600">
+                {ratedCount}/{totalSubscriptions} rated
+              </span>
+            </div>
+          )}
+          {totalSubscriptions === 0 && (
+            <div className="text-xs text-gray-500">
+              Add subscriptions to start rating them.
+            </div>
+          )}
         </div>
       </div>
 
