@@ -216,17 +216,22 @@ function Dashboard() {
       }
     }
 
+    // Debounce refetch to avoid multiple rapid calls during quiz
+    let refetchTimeout = null;
+    function debouncedRefetch() {
+      if (refetchTimeout) clearTimeout(refetchTimeout);
+      refetchTimeout = setTimeout(() => {
+        sneakyDataRefetch();
+      }, 500);
+    }
+
     // Create new usage Data and mark notification this feedback came from as read
-    function usageScoreSelectedCallback(subscriptionId, score) {
-      // create usage data
-      createUsageData(subscriptionId, score);
+    async function usageScoreSelectedCallback(subscriptionId, score) {
+      // create usage data - await to ensure it's saved before any refetch
+      await createUsageData(subscriptionId, score);
 
-      // unfortunately we also need to refetch all subscriptions this way as otherwise
-      // we sit on stale usage data for our just updated subscription
-      sneakyDataRefetch();
-
-      // refetch notifications
-      // refetchNotifications();
+      // Debounced refetch - only fires 500ms after last score submission
+      debouncedRefetch();
 
       // NOTE: We don't need to mark a notification as read here, as every posted usage data
       // invalidates all notifications associated with a single subscription
