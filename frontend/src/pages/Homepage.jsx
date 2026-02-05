@@ -18,7 +18,7 @@ export default function Homepage() {
   return (
     <div className="relative min-h-screen">
       <div className="fixed inset-0 -z-10">
-        <Grainient color1="#a855f7" color2="#ec4899" color3="#ddd6fe" />
+        <Grainient />
       </div>
       {/* Nav */}
       <nav className="sticky top-0 z-50 border-b border-white/20 bg-white/40 backdrop-blur-md">
