@@ -202,52 +202,42 @@ export default function UsageModal({
             </div>
 
             {/* Content */}
-            <div className="flex-1 overflow-y-auto px-4 py-6">
+            <div className="flex-1 overflow-y-auto px-4 py-4">
               {/* Intro text - only show at start */}
               {completedCount === 0 && initialTotal > 0 && (
-                <div className="mb-6 rounded-2xl bg-gradient-to-br from-purple-50 to-pink-50 p-4 dark:from-purple-900/20 dark:to-pink-900/20">
+                <div className="mb-4 rounded-xl bg-gradient-to-br from-purple-50 to-pink-50 px-4 py-3 dark:from-purple-900/20 dark:to-pink-900/20">
                   <p className="text-center text-xs text-purple-900/70 dark:text-purple-100/70">
-                    "Spend lavishly on what brings you joy.
-                    <br />
-                    Cut ruthlessly on what doesn't."
+                    "Spend lavishly on what brings you joy. Cut ruthlessly on what doesn't."
                   </p>
-                </div>
-              )}
-
-              {/* Progress */}
-              {initialTotal > 1 && (
-                <div className="mb-6 rounded-2xl bg-white/40 p-4 backdrop-blur-sm dark:bg-white/10">
-                  <div className="flex items-center justify-between text-xs text-black/50 dark:text-white/50">
-                    <span>Progress</span>
-                    <span>
-                      {completedCount}/{initialTotal}
-                    </span>
-                  </div>
-                  <div className="mt-2 h-2 overflow-hidden rounded-full bg-black/10 dark:bg-white/10">
-                    <div
-                      className="h-full rounded-full bg-gradient-to-r from-purple-500 to-pink-500 transition-all"
-                      style={{ width: `${progress}%` }}
-                    />
-                  </div>
                 </div>
               )}
 
               {/* Current subscription */}
               {currentNotification?.subscriptionId ? (
                 <>
-                  <div className="mb-6 rounded-2xl bg-white/40 p-6 backdrop-blur-sm dark:bg-white/10">
-                    <p className="text-center text-xl font-bold text-black/80 dark:text-white/80">
+                  {/* Progress bar as divider */}
+                  {initialTotal > 1 && (
+                    <div className="mb-4 h-1 overflow-hidden rounded-full bg-black/10 dark:bg-white/10">
+                      <div
+                        className="h-full rounded-full bg-gradient-to-r from-purple-500 to-pink-500 transition-all"
+                        style={{ width: `${progress}%` }}
+                      />
+                    </div>
+                  )}
+
+                  <div className="mb-4 py-4">
+                    <p className="text-center text-lg font-bold text-black/80 dark:text-white/80">
                       {currentNotification.subscriptionId.name}
                     </p>
                     {currentNotification.subscriptionId.price && (
-                      <p className="mt-2 text-center text-sm text-black/50 dark:text-white/50">
+                      <p className="mt-1 text-center text-sm text-black/50 dark:text-white/50">
                         €{currentNotification.subscriptionId.price}/
                         {currentNotification.subscriptionId.interval || "month"}
                       </p>
                     )}
                   </div>
 
-                  <p className="mb-4 text-center text-sm font-medium text-black/60 dark:text-white/60">
+                  <p className="mb-3 text-center text-sm text-black/60 dark:text-white/60">
                     Does this bring you joy?
                   </p>
 
@@ -255,13 +245,13 @@ export default function UsageModal({
                   <RadioGroup
                     value={selectedScore}
                     onChange={(val) => setSelectedScore(Number(val))}
-                    className="space-y-3"
+                    className="space-y-2"
                   >
                     {/* Love it - Keep & maximize */}
                     <RadioGroup.Option
                       value={5}
                       className={({ checked }) =>
-                        `cursor-pointer rounded-2xl p-5 transition-all active:scale-[0.98] ${
+                        `cursor-pointer rounded-xl px-4 py-3 transition-all active:scale-[0.98] ${
                           checked
                             ? "bg-gradient-to-r from-green-500 to-emerald-500 text-white shadow-lg"
                             : "bg-green-50 text-green-900 dark:bg-green-900/30 dark:text-green-300"
@@ -269,15 +259,15 @@ export default function UsageModal({
                       }
                     >
                       {({ checked }) => (
-                        <div className="flex items-center gap-4">
-                          <div className={`text-2xl ${checked ? "" : "grayscale"}`}>
+                        <div className="flex items-center gap-3">
+                          <div className={`text-lg ${checked ? "" : "grayscale"}`}>
                             ✨
                           </div>
                           <div className="flex-1">
-                            <span className="font-bold">Love it</span>
-                            <p className={`mt-0.5 text-xs ${checked ? "text-white/80" : "opacity-60"}`}>
-                              Brings genuine joy — keep & maximize
-                            </p>
+                            <span className="text-sm font-semibold">Love it</span>
+                            <span className={`ml-2 text-xs ${checked ? "text-white/80" : "opacity-60"}`}>
+                              keep & maximize
+                            </span>
                           </div>
                         </div>
                       )}
@@ -287,7 +277,7 @@ export default function UsageModal({
                     <RadioGroup.Option
                       value={3}
                       className={({ checked }) =>
-                        `cursor-pointer rounded-2xl p-5 transition-all active:scale-[0.98] ${
+                        `cursor-pointer rounded-xl px-4 py-3 transition-all active:scale-[0.98] ${
                           checked
                             ? "bg-gradient-to-r from-amber-500 to-orange-500 text-white shadow-lg"
                             : "bg-amber-50 text-amber-900 dark:bg-amber-900/30 dark:text-amber-300"
@@ -295,15 +285,15 @@ export default function UsageModal({
                       }
                     >
                       {({ checked }) => (
-                        <div className="flex items-center gap-4">
-                          <div className={`text-2xl ${checked ? "" : "grayscale"}`}>
+                        <div className="flex items-center gap-3">
+                          <div className={`text-lg ${checked ? "" : "grayscale"}`}>
                             🤷
                           </div>
                           <div className="flex-1">
-                            <span className="font-bold">It's fine</span>
-                            <p className={`mt-0.5 text-xs ${checked ? "text-white/80" : "opacity-60"}`}>
-                              Functional, not exciting — review later
-                            </p>
+                            <span className="text-sm font-semibold">It's fine</span>
+                            <span className={`ml-2 text-xs ${checked ? "text-white/80" : "opacity-60"}`}>
+                              review later
+                            </span>
                           </div>
                         </div>
                       )}
@@ -313,7 +303,7 @@ export default function UsageModal({
                     <RadioGroup.Option
                       value={1}
                       className={({ checked }) =>
-                        `cursor-pointer rounded-2xl p-5 transition-all active:scale-[0.98] ${
+                        `cursor-pointer rounded-xl px-4 py-3 transition-all active:scale-[0.98] ${
                           checked
                             ? "bg-gradient-to-r from-red-500 to-rose-500 text-white shadow-lg"
                             : "bg-red-50 text-red-900 dark:bg-red-900/30 dark:text-red-300"
@@ -321,15 +311,15 @@ export default function UsageModal({
                       }
                     >
                       {({ checked }) => (
-                        <div className="flex items-center gap-4">
-                          <div className={`text-2xl ${checked ? "" : "grayscale"}`}>
+                        <div className="flex items-center gap-3">
+                          <div className={`text-lg ${checked ? "" : "grayscale"}`}>
                             🗑️
                           </div>
                           <div className="flex-1">
-                            <span className="font-bold">Could live without</span>
-                            <p className={`mt-0.5 text-xs ${checked ? "text-white/80" : "opacity-60"}`}>
-                              No joy here — cut ruthlessly
-                            </p>
+                            <span className="text-sm font-semibold">Could live without</span>
+                            <span className={`ml-2 text-xs ${checked ? "text-white/80" : "opacity-60"}`}>
+                              cut it
+                            </span>
                           </div>
                         </div>
                       )}

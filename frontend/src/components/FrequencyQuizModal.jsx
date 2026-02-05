@@ -210,52 +210,42 @@ export default function FrequencyQuizModal({
             </div>
 
             {/* Content */}
-            <div className="flex-1 overflow-y-auto px-4 py-6">
+            <div className="flex-1 overflow-y-auto px-4 py-4">
               {/* Intro text - only show at start */}
               {completedCount === 0 && initialTotal > 0 && (
-                <div className="mb-6 rounded-2xl bg-gradient-to-br from-blue-50 to-cyan-50 p-4 dark:from-blue-900/20 dark:to-cyan-900/20">
+                <div className="mb-4 rounded-xl bg-gradient-to-br from-blue-50 to-cyan-50 px-4 py-3 dark:from-blue-900/20 dark:to-cyan-900/20">
                   <p className="text-center text-xs text-blue-900/70 dark:text-blue-100/70">
                     Rate how often you actually use each subscription.
-                    <br />
-                    This helps identify what to keep vs. cancel.
                   </p>
-                </div>
-              )}
-
-              {/* Progress */}
-              {initialTotal > 1 && (
-                <div className="mb-6 rounded-2xl bg-white/40 p-4 backdrop-blur-sm dark:bg-white/10">
-                  <div className="flex items-center justify-between text-xs text-black/50 dark:text-white/50">
-                    <span>Progress</span>
-                    <span>
-                      {completedCount}/{initialTotal}
-                    </span>
-                  </div>
-                  <div className="mt-2 h-2 overflow-hidden rounded-full bg-black/10 dark:bg-white/10">
-                    <div
-                      className="h-full rounded-full bg-gradient-to-r from-blue-500 to-cyan-500 transition-all"
-                      style={{ width: `${progress}%` }}
-                    />
-                  </div>
                 </div>
               )}
 
               {/* Current subscription */}
               {currentNotification?.subscriptionId ? (
                 <>
-                  <div className="mb-6 rounded-2xl bg-white/40 p-6 backdrop-blur-sm dark:bg-white/10">
-                    <p className="text-center text-xl font-bold text-black/80 dark:text-white/80">
+                  {/* Progress bar as divider */}
+                  {initialTotal > 1 && (
+                    <div className="mb-4 h-1 overflow-hidden rounded-full bg-black/10 dark:bg-white/10">
+                      <div
+                        className="h-full rounded-full bg-gradient-to-r from-blue-500 to-cyan-500 transition-all"
+                        style={{ width: `${progress}%` }}
+                      />
+                    </div>
+                  )}
+
+                  <div className="mb-4 py-4">
+                    <p className="text-center text-lg font-bold text-black/80 dark:text-white/80">
                       {currentNotification.subscriptionId.name}
                     </p>
                     {currentNotification.subscriptionId.price && (
-                      <p className="mt-2 text-center text-sm text-black/50 dark:text-white/50">
+                      <p className="mt-1 text-center text-sm text-black/50 dark:text-white/50">
                         €{currentNotification.subscriptionId.price}/
                         {currentNotification.subscriptionId.interval || "month"}
                       </p>
                     )}
                   </div>
 
-                  <p className="mb-4 text-center text-sm font-medium text-black/60 dark:text-white/60">
+                  <p className="mb-3 text-center text-sm text-black/60 dark:text-white/60">
                     How often do you use this?
                   </p>
 
@@ -270,7 +260,7 @@ export default function FrequencyQuizModal({
                         key={option.value}
                         value={option.value}
                         className={({ checked }) =>
-                          `cursor-pointer rounded-2xl p-4 transition-all active:scale-[0.98] ${
+                          `cursor-pointer rounded-xl px-4 py-3 transition-all active:scale-[0.98] ${
                             checked
                               ? "bg-gradient-to-r from-blue-500 to-cyan-500 text-white shadow-lg"
                               : "bg-blue-50 text-blue-900 dark:bg-blue-900/30 dark:text-blue-300"
@@ -279,14 +269,14 @@ export default function FrequencyQuizModal({
                       >
                         {({ checked }) => (
                           <div className="flex items-center gap-3">
-                            <div className={`text-xl ${checked ? "" : "grayscale"}`}>
+                            <div className={`text-lg ${checked ? "" : "grayscale"}`}>
                               {option.emoji}
                             </div>
                             <div className="flex-1">
-                              <span className="font-bold">{option.label}</span>
-                              <p className={`mt-0.5 text-xs ${checked ? "text-white/80" : "opacity-60"}`}>
+                              <span className="text-sm font-semibold">{option.label}</span>
+                              <span className={`ml-2 text-xs ${checked ? "text-white/80" : "opacity-60"}`}>
                                 {option.desc}
-                              </p>
+                              </span>
                             </div>
                           </div>
                         )}
