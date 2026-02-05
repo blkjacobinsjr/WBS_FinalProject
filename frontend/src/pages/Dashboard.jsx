@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { useUser } from "@clerk/clerk-react";
 import { toast } from "sonner";
@@ -59,6 +59,13 @@ function Dashboard() {
   const [isDark, setIsDark] = useState(() => {
     return document.documentElement.classList.contains("dark");
   });
+
+  // ---- REFS ----
+  // Keep a ref to subscriptions so callbacks in useEffect can access latest value
+  const subscriptionsRef = useRef(subscriptions);
+  useEffect(() => {
+    subscriptionsRef.current = subscriptions;
+  }, [subscriptions]);
 
   // ---- CUSTOM HOOKS ----
   const { loading, error, errorMessage, refetchData } = useDataFetching();
@@ -192,11 +199,11 @@ function Dashboard() {
     }
 
     function openUsageQuizCallback() {
-      // Open immediately with current subscriptions - no delay
+      // Open immediately with current subscriptions - use ref to get latest value
       setUsageModalState({
         showForm: true,
         notificationId: null,
-        manualSubscriptions: subscriptions || [],
+        manualSubscriptions: subscriptionsRef.current || [],
       });
     }
 
