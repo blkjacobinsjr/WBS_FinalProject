@@ -62,36 +62,36 @@ export default function InsightsTab() {
 
   return (
     <div className="flex flex-col gap-4 pb-24">
-      {/* Usage Quiz Card */}
-      <div className="rounded-2xl bg-gradient-to-br from-green-50 to-emerald-50 p-5 dark:from-green-900/20 dark:to-emerald-900/20">
+      {/* Joy Check Card */}
+      <div className="rounded-2xl bg-gradient-to-br from-purple-50 via-pink-50 to-rose-50 p-5 dark:from-purple-900/20 dark:via-pink-900/20 dark:to-rose-900/20">
         <div className="flex items-start justify-between">
           <div>
-            <p className="text-xs font-medium uppercase tracking-wider text-green-800/60 dark:text-green-200/60">
-              Usage Quiz
+            <p className="text-xs font-medium uppercase tracking-wider text-purple-800/60 dark:text-purple-200/60">
+              Joy Check
             </p>
-            <p className="mt-1 text-sm text-green-900/80 dark:text-green-100/80">
-              Rate how often you use each subscription
+            <p className="mt-1 text-sm text-purple-900/80 dark:text-purple-100/80">
+              What brings you joy? What can you cut?
             </p>
           </div>
           <button
             onClick={() => eventEmitter.emit("openUsageQuiz")}
             disabled={totalCount === 0}
-            className="shrink-0 rounded-full bg-green-900 px-4 py-2 text-xs font-medium text-white transition-all active:scale-95 disabled:opacity-50 dark:bg-green-100 dark:text-green-900"
+            className="shrink-0 rounded-full bg-purple-900 px-4 py-2 text-xs font-medium text-white transition-all active:scale-95 disabled:opacity-50 dark:bg-purple-100 dark:text-purple-900"
           >
-            {unratedCount > 0 ? `Rate ${unratedCount}` : "Review"}
+            {unratedCount > 0 ? `Check ${unratedCount}` : "Review"}
           </button>
         </div>
         {totalCount > 0 && (
           <div className="mt-4">
-            <div className="flex items-center justify-between text-xs text-green-800/60 dark:text-green-200/60">
+            <div className="flex items-center justify-between text-xs text-purple-800/60 dark:text-purple-200/60">
               <span>Progress</span>
               <span>
                 {ratedCount}/{totalCount}
               </span>
             </div>
-            <div className="mt-1 h-1.5 overflow-hidden rounded-full bg-green-900/10 dark:bg-green-100/10">
+            <div className="mt-1 h-1.5 overflow-hidden rounded-full bg-purple-900/10 dark:bg-purple-100/10">
               <div
-                className="h-full rounded-full bg-green-600 transition-all dark:bg-green-400"
+                className="h-full rounded-full bg-gradient-to-r from-purple-500 to-pink-500 transition-all"
                 style={{ width: `${ratingProgress}%` }}
               />
             </div>
@@ -102,33 +102,20 @@ export default function InsightsTab() {
       {/* Wealth Builder Card */}
       <WealthBuilderCard />
 
-      {/* Recommendations Section */}
+      {/* Cut Ruthlessly Section */}
       {(dashboardData?.barelyUsedMostExpensive?.name || leastUsedSubs?.length > 0) && (
         <div className="rounded-2xl bg-gradient-to-br from-red-50 to-orange-50 p-5 dark:from-red-900/20 dark:to-orange-900/20">
           <p className="mb-3 text-xs font-medium uppercase tracking-wider text-red-800/60 dark:text-red-200/60">
-            Recommendations
+            Cut Ruthlessly
           </p>
 
-          {/* Expensive & Barely Used */}
+          {/* No Joy, High Cost */}
           {dashboardData?.barelyUsedMostExpensive?.name && (
             <div className="mb-3 rounded-xl bg-white/50 p-3 dark:bg-black/20">
               <div className="flex items-center gap-2">
-                <div className="rounded-full bg-red-100 p-1.5 dark:bg-red-800/30">
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    viewBox="0 0 20 20"
-                    fill="currentColor"
-                    className="h-4 w-4 text-red-600 dark:text-red-400"
-                  >
-                    <path
-                      fillRule="evenodd"
-                      d="M14.78 5.22a.75.75 0 00-1.06 0L6.5 12.44V6.75a.75.75 0 00-1.5 0v7.5c0 .414.336.75.75.75h7.5a.75.75 0 000-1.5H7.56l7.22-7.22a.75.75 0 000-1.06z"
-                      clipRule="evenodd"
-                    />
-                  </svg>
-                </div>
+                <div className="text-xl">🗑️</div>
                 <p className="text-xs font-medium text-red-800/70 dark:text-red-200/70">
-                  Expensive & Barely Used
+                  No Joy, High Cost
                 </p>
               </div>
               <p className="mt-2 text-sm text-red-900/80 dark:text-red-100/80">
@@ -136,31 +123,18 @@ export default function InsightsTab() {
                   {dashboardData.barelyUsedMostExpensive.name}
                 </span>{" "}
                 costs €{dashboardData.barelyUsedMostExpensive.monthlyPrice?.toFixed(2) || "0"}/mo
-                but you rarely use it. Consider cancelling.
+                but brings no joy. Cancel it.
               </p>
             </div>
           )}
 
-          {/* Top 3 Least Used */}
+          {/* Candidates for Cutting */}
           {leastUsedSubs?.length > 0 && (
             <div className="rounded-xl bg-white/50 p-3 dark:bg-black/20">
               <div className="flex items-center gap-2">
-                <div className="rounded-full bg-orange-100 p-1.5 dark:bg-orange-800/30">
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    viewBox="0 0 20 20"
-                    fill="currentColor"
-                    className="h-4 w-4 text-orange-600 dark:text-orange-400"
-                  >
-                    <path
-                      fillRule="evenodd"
-                      d="M1.22 5.222a.75.75 0 011.06 0L7 9.942l3.768-3.769a.75.75 0 011.113.058 20.908 20.908 0 013.813 7.254l1.574-2.727a.75.75 0 011.3.75l-2.475 4.286a.75.75 0 01-1.025.275l-4.287-2.475a.75.75 0 01.75-1.3l2.71 1.565a19.422 19.422 0 00-3.013-6.024L7.53 11.533a.75.75 0 01-1.06 0l-5.25-5.25a.75.75 0 010-1.06z"
-                      clipRule="evenodd"
-                    />
-                  </svg>
-                </div>
+                <div className="text-xl">✂️</div>
                 <p className="text-xs font-medium text-orange-800/70 dark:text-orange-200/70">
-                  Least Used Subscriptions
+                  Review These
                 </p>
               </div>
               <div className="mt-2 space-y-1">
@@ -173,7 +147,7 @@ export default function InsightsTab() {
                       {index + 1}. {sub.name}
                     </span>
                     <span className="text-xs text-orange-700/60 dark:text-orange-300/60">
-                      Score: {sub.score?.toFixed(1) || "0"}
+                      {sub.score >= 4 ? "✨ Keep" : sub.score >= 2 ? "🤷 Maybe" : "🗑️ Cut"}
                     </span>
                   </div>
                 ))}
