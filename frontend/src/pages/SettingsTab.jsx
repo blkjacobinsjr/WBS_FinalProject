@@ -1,9 +1,20 @@
 import { useState, useEffect } from "react";
 import { UserButton, useUser } from "@clerk/clerk-react";
+import eventEmitter from "../utils/EventEmitter";
+
+const COLOR_PRESETS = [
+  { id: "rose", color: "#fb7185", label: "Rose" },
+  { id: "lavender", color: "#a78bfa", label: "Lavender" },
+  { id: "sage", color: "#6ee7b7", label: "Sage" },
+  { id: "peach", color: "#fdba74", label: "Peach" },
+  { id: "ocean", color: "#38bdf8", label: "Ocean" },
+];
 
 export default function SettingsTab({ onResetData, isResettingData }) {
   const { user } = useUser();
   const [isDark, setIsDark] = useState(false);
+  const [colorPreset, setColorPreset] = useState("lavender");
+  const [grainEnabled, setGrainEnabled] = useState(true);
 
   // Check system preference and localStorage on mount
   useEffect(() => {
@@ -13,6 +24,8 @@ export default function SettingsTab({ onResetData, isResettingData }) {
     } else {
       setIsDark(window.matchMedia("(prefers-color-scheme: dark)").matches);
     }
+    setColorPreset(localStorage.getItem("colorPreset") || "lavender");
+    setGrainEnabled(localStorage.getItem("grain") !== "false");
   }, []);
 
   // Apply theme changes
@@ -24,7 +37,18 @@ export default function SettingsTab({ onResetData, isResettingData }) {
       document.documentElement.classList.remove("dark");
       localStorage.setItem("theme", "light");
     }
+    eventEmitter.emit("themeChanged");
   }, [isDark]);
+
+  useEffect(() => {
+    localStorage.setItem("colorPreset", colorPreset);
+    eventEmitter.emit("themeChanged");
+  }, [colorPreset]);
+
+  useEffect(() => {
+    localStorage.setItem("grain", grainEnabled);
+    eventEmitter.emit("themeChanged");
+  }, [grainEnabled]);
 
   return (
     <div className="flex flex-col gap-4 pb-24">
@@ -57,7 +81,31 @@ export default function SettingsTab({ onResetData, isResettingData }) {
         <p className="mb-4 text-xs font-medium uppercase tracking-wider text-black/40 dark:text-white/40">
           Appearance
         </p>
-        <div className="flex items-center justify-between">
+
+        {/* Color Preset Swatches */}
+        <div className="mb-5">
+          <p className="mb-3 text-sm font-medium text-black/80 dark:text-white/80">
+            Theme Color
+          </p>
+          <div className="flex gap-3">
+            {COLOR_PRESETS.map((preset) => (
+              <button
+                key={preset.id}
+                onClick={() => setColorPreset(preset.id)}
+                className={`h-10 w-10 rounded-full transition-all ${
+                  colorPreset === preset.id
+                    ? "ring-2 ring-offset-2 ring-black/30 dark:ring-white/50 scale-110"
+                    : "hover:scale-105"
+                }`}
+                style={{ backgroundColor: preset.color }}
+                aria-label={preset.label}
+              />
+            ))}
+          </div>
+        </div>
+
+        {/* Dark Mode Toggle */}
+        <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-3">
             <div className="rounded-full bg-black/5 p-2 dark:bg-white/10">
               {isDark ? (
@@ -92,14 +140,9 @@ export default function SettingsTab({ onResetData, isResettingData }) {
                 </svg>
               )}
             </div>
-            <div>
-              <p className="text-sm font-medium text-black/80 dark:text-white/80">
-                Dark Mode
-              </p>
-              <p className="text-xs text-black/40 dark:text-white/40">
-                {isDark ? "On" : "Off"}
-              </p>
-            </div>
+            <p className="text-sm font-medium text-black/80 dark:text-white/80">
+              Dark Mode
+            </p>
           </div>
           <button
             onClick={() => setIsDark(!isDark)}
@@ -110,6 +153,43 @@ export default function SettingsTab({ onResetData, isResettingData }) {
             <div
               className={`absolute top-1 h-5 w-5 rounded-full bg-white shadow-sm transition-transform ${
                 isDark ? "left-6" : "left-1"
+              }`}
+            />
+          </button>
+        </div>
+
+        {/* Grain Toggle */}
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="rounded-full bg-black/5 p-2 dark:bg-white/10">
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                fill="none"
+                viewBox="0 0 24 24"
+                strokeWidth={1.5}
+                stroke="currentColor"
+                className="h-5 w-5 text-black/60 dark:text-white/60"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M9.53 16.122a3 3 0 00-5.78 1.128 2.25 2.25 0 01-2.4 2.245 4.5 4.5 0 008.4-2.245c0-.399-.078-.78-.22-1.128zm0 0a15.998 15.998 0 003.388-1.62m-5.043-.025a15.994 15.994 0 011.622-3.395m3.42 3.42a15.995 15.995 0 004.764-4.648l3.876-5.814a1.151 1.151 0 00-1.597-1.597L14.146 6.32a15.996 15.996 0 00-4.649 4.763m3.42 3.42a6.776 6.776 0 00-3.42-3.42"
+                />
+              </svg>
+            </div>
+            <p className="text-sm font-medium text-black/80 dark:text-white/80">
+              Texture
+            </p>
+          </div>
+          <button
+            onClick={() => setGrainEnabled(!grainEnabled)}
+            className={`relative h-7 w-12 rounded-full transition-colors ${
+              grainEnabled ? "bg-green-600" : "bg-black/20 dark:bg-white/20"
+            }`}
+          >
+            <div
+              className={`absolute top-1 h-5 w-5 rounded-full bg-white shadow-sm transition-transform ${
+                grainEnabled ? "left-6" : "left-1"
               }`}
             />
           </button>
