@@ -7,9 +7,9 @@ export default function Grainient() {
   useEffect(() => {
     if (!containerRef.current) return;
 
-    const canvas = document.createElement('canvas');
-    const gl = canvas.getContext('webgl2') || canvas.getContext('webgl');
-    if (!gl) { setFallback(true); return; }
+    const testCanvas = document.createElement('canvas');
+    const testGl = testCanvas.getContext('webgl2') || testCanvas.getContext('webgl');
+    if (!testGl) { setFallback(true); return; }
 
     let renderer, program, mesh, raf, ro;
 
@@ -19,13 +19,13 @@ export default function Grainient() {
         const container = containerRef.current;
         if (!container) return;
 
-        // Full resolution for crisp grain
         renderer = new Renderer({ webgl: 2, alpha: false, antialias: false, dpr: 1 });
-        const glCtx = renderer.gl;
-        glCtx.canvas.style.cssText = 'width:100%;height:100%;display:block';
-        container.appendChild(glCtx.canvas);
+        const gl = renderer.gl;
+        gl.canvas.style.cssText = 'width:100%;height:100%;display:block';
+        container.appendChild(gl.canvas);
 
-        program = new Program(glCtx, {
+        // Based on ReactBits Grainient with adjusted colors
+        program = new Program(gl, {
           vertex: `#version 300 es
             in vec2 position;
             void main() { gl_Position = vec4(position, 0.0, 1.0); }`,
@@ -35,31 +35,57 @@ export default function Grainient() {
             uniform float iTime;
             out vec4 fragColor;
 
+            mat2 Rot(float a) { float s=sin(a), c=cos(a); return mat2(c,-s,s,c); }
+
+            vec2 hash(vec2 p) {
+              p = vec2(dot(p,vec2(127.1,311.7)), dot(p,vec2(269.5,183.3)));
+              return fract(sin(p)*43758.5453);
+            }
+
+            float noise(vec2 p) {
+              vec2 i = floor(p), f = fract(p);
+              vec2 u = f*f*(3.0-2.0*f);
+              return mix(
+                mix(dot(-1.0+2.0*hash(i), f), dot(-1.0+2.0*hash(i+vec2(1,0)), f-vec2(1,0)), u.x),
+                mix(dot(-1.0+2.0*hash(i+vec2(0,1)), f-vec2(0,1)), dot(-1.0+2.0*hash(i+vec2(1,1)), f-vec2(1,1)), u.x),
+                u.y
+              ) * 0.5 + 0.5;
+            }
+
             void main() {
               vec2 uv = gl_FragCoord.xy / iResolution.xy;
-              vec2 p = uv - 0.5;
-              float t = iTime * 0.05;
+              float ratio = iResolution.x / iResolution.y;
+              vec2 tuv = uv - 0.5;
+              float t = iTime * 0.06;
 
-              // Gentle warp
-              p.x += sin(p.y * 2.5 + t) * 0.02;
-              p.y += cos(p.x * 2.5 + t) * 0.02;
+              // Rotation based on noise
+              float degree = noise(vec2(t*0.1, tuv.x*tuv.y) * 2.0);
+              tuv.y *= 1.0/ratio;
+              tuv *= Rot(radians((degree-0.5)*400.0 + 180.0));
+              tuv.y *= ratio;
 
-              // Soft purple-lavender palette (less pink)
-              vec3 c1 = vec3(0.92, 0.90, 0.98);  // soft lavender white
-              vec3 c2 = vec3(0.76, 0.68, 0.90);  // muted purple
-              vec3 c3 = vec3(0.60, 0.50, 0.78);  // deeper purple
+              // Warp
+              tuv.x += sin(tuv.y * 4.0 + t) / 50.0;
+              tuv.y += sin(tuv.x * 6.0 + t) / 25.0;
 
-              // Blend - more purple, less pink
-              float blend = smoothstep(-0.4, 0.4, p.x + p.y * 0.5);
-              vec3 col = mix(c1, mix(c2, c3, smoothstep(-0.2, 0.3, p.y)), blend);
+              // Colors: lavender, soft purple, baby blue
+              vec3 colLav = vec3(0.94, 0.92, 0.98);   // soft lavender
+              vec3 colPurple = vec3(0.68, 0.58, 0.84); // muted purple
+              vec3 colBlue = vec3(0.72, 0.85, 0.96);   // baby blue
 
-              // Fine film grain (high frequency, low amplitude)
-              vec2 grainUV = gl_FragCoord.xy;
-              float grain = fract(sin(dot(grainUV, vec2(12.9898, 78.233))) * 43758.5453);
-              grain = (grain - 0.5) * 0.035;  // subtle
-              col += grain;
+              // Three-way blend
+              vec3 layer1 = mix(colBlue, colPurple, smoothstep(-0.3, 0.2, tuv.x));
+              vec3 layer2 = mix(colPurple, colLav, smoothstep(-0.3, 0.2, tuv.x));
+              vec3 col = mix(layer1, layer2, smoothstep(0.2, -0.3, tuv.y));
 
-              fragColor = vec4(col, 1.0);
+              // Fine film grain
+              float grain = fract(sin(dot(gl_FragCoord.xy, vec2(12.9898,78.233))) * 43758.5453);
+              col += (grain - 0.5) * 0.04;
+
+              // Slight contrast boost
+              col = (col - 0.5) * 1.1 + 0.5;
+
+              fragColor = vec4(clamp(col, 0.0, 1.0), 1.0);
             }`,
           uniforms: {
             iTime: { value: 0 },
@@ -67,12 +93,12 @@ export default function Grainient() {
           }
         });
 
-        mesh = new Mesh(glCtx, { geometry: new Triangle(glCtx), program });
+        mesh = new Mesh(gl, { geometry: new Triangle(gl), program });
 
         const resize = () => {
           const { width, height } = container.getBoundingClientRect();
           renderer.setSize(width, height);
-          program.uniforms.iResolution.value.set([glCtx.drawingBufferWidth, glCtx.drawingBufferHeight]);
+          program.uniforms.iResolution.value.set([gl.drawingBufferWidth, gl.drawingBufferHeight]);
         };
 
         ro = new ResizeObserver(resize);
@@ -83,13 +109,14 @@ export default function Grainient() {
         let lastFrame = 0;
         const loop = t => {
           raf = requestAnimationFrame(loop);
-          if (t - lastFrame < 50) return; // 20fps - slow dreamy movement
+          if (t - lastFrame < 50) return; // 20fps
           lastFrame = t;
           program.uniforms.iTime.value = (t - t0) * 0.001;
           renderer.render({ scene: mesh });
         };
         raf = requestAnimationFrame(loop);
       } catch (e) {
+        console.warn('Grainient fallback:', e);
         setFallback(true);
       }
     };
@@ -105,7 +132,7 @@ export default function Grainient() {
   if (fallback) {
     return (
       <div className="absolute inset-0" style={{
-        background: 'linear-gradient(135deg, #ebe8f4 0%, #c4b5e0 50%, #9987c4 100%)'
+        background: 'linear-gradient(135deg, #b8d4eb 0%, #c4b5e0 50%, #ebe8f4 100%)'
       }} />
     );
   }
