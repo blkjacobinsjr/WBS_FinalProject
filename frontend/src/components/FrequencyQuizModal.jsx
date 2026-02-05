@@ -3,7 +3,7 @@ import { Fragment, useEffect, useRef, useState } from "react";
 import { useDataContext } from "../contexts/dataContext";
 import eventEmitter from "../utils/EventEmitter";
 
-export default function UsageModal({
+export default function FrequencyQuizModal({
   opened,
   onClose,
   notificationId,
@@ -142,6 +142,14 @@ export default function UsageModal({
     onClose();
   }
 
+  const frequencyOptions = [
+    { value: 5, label: "Daily", desc: "Use it every day", emoji: "🔥" },
+    { value: 4, label: "Weekly", desc: "A few times a week", emoji: "📅" },
+    { value: 3, label: "Monthly", desc: "A few times a month", emoji: "📆" },
+    { value: 2, label: "Rarely", desc: "Once in a while", emoji: "🌙" },
+    { value: 1, label: "Never", desc: "Haven't used it", emoji: "❄️" },
+  ];
+
   return (
     <Transition show={opened} as={Fragment}>
       <Dialog as="div" className="relative z-50" onClose={onClose}>
@@ -191,7 +199,7 @@ export default function UsageModal({
                 </svg>
               </button>
               <Dialog.Title className="text-base font-semibold text-black/80 dark:text-white/80">
-                Joy Check
+                Usage Quiz
               </Dialog.Title>
               <button
                 onClick={handleDoneClick}
@@ -205,11 +213,11 @@ export default function UsageModal({
             <div className="flex-1 overflow-y-auto px-4 py-6">
               {/* Intro text - only show at start */}
               {completedCount === 0 && initialTotal > 0 && (
-                <div className="mb-6 rounded-2xl bg-gradient-to-br from-purple-50 to-pink-50 p-4 dark:from-purple-900/20 dark:to-pink-900/20">
-                  <p className="text-center text-xs text-purple-900/70 dark:text-purple-100/70">
-                    "Spend lavishly on what brings you joy.
+                <div className="mb-6 rounded-2xl bg-gradient-to-br from-blue-50 to-cyan-50 p-4 dark:from-blue-900/20 dark:to-cyan-900/20">
+                  <p className="text-center text-xs text-blue-900/70 dark:text-blue-100/70">
+                    Rate how often you actually use each subscription.
                     <br />
-                    Cut ruthlessly on what doesn't."
+                    This helps identify what to keep vs. cancel.
                   </p>
                 </div>
               )}
@@ -225,7 +233,7 @@ export default function UsageModal({
                   </div>
                   <div className="mt-2 h-2 overflow-hidden rounded-full bg-black/10 dark:bg-white/10">
                     <div
-                      className="h-full rounded-full bg-gradient-to-r from-purple-500 to-pink-500 transition-all"
+                      className="h-full rounded-full bg-gradient-to-r from-blue-500 to-cyan-500 transition-all"
                       style={{ width: `${progress}%` }}
                     />
                   </div>
@@ -248,92 +256,42 @@ export default function UsageModal({
                   </div>
 
                   <p className="mb-4 text-center text-sm font-medium text-black/60 dark:text-white/60">
-                    Does this bring you joy?
+                    How often do you use this?
                   </p>
 
-                  {/* Rating options - Joy-based */}
+                  {/* Rating options - Frequency-based */}
                   <RadioGroup
                     value={selectedScore}
                     onChange={(val) => setSelectedScore(Number(val))}
-                    className="space-y-3"
+                    className="space-y-2"
                   >
-                    {/* Love it - Keep & maximize */}
-                    <RadioGroup.Option
-                      value={5}
-                      className={({ checked }) =>
-                        `cursor-pointer rounded-2xl p-5 transition-all active:scale-[0.98] ${
-                          checked
-                            ? "bg-gradient-to-r from-green-500 to-emerald-500 text-white shadow-lg"
-                            : "bg-green-50 text-green-900 dark:bg-green-900/30 dark:text-green-300"
-                        }`
-                      }
-                    >
-                      {({ checked }) => (
-                        <div className="flex items-center gap-4">
-                          <div className={`text-2xl ${checked ? "" : "grayscale"}`}>
-                            ✨
+                    {frequencyOptions.map((option) => (
+                      <RadioGroup.Option
+                        key={option.value}
+                        value={option.value}
+                        className={({ checked }) =>
+                          `cursor-pointer rounded-2xl p-4 transition-all active:scale-[0.98] ${
+                            checked
+                              ? "bg-gradient-to-r from-blue-500 to-cyan-500 text-white shadow-lg"
+                              : "bg-blue-50 text-blue-900 dark:bg-blue-900/30 dark:text-blue-300"
+                          }`
+                        }
+                      >
+                        {({ checked }) => (
+                          <div className="flex items-center gap-3">
+                            <div className={`text-xl ${checked ? "" : "grayscale"}`}>
+                              {option.emoji}
+                            </div>
+                            <div className="flex-1">
+                              <span className="font-bold">{option.label}</span>
+                              <p className={`mt-0.5 text-xs ${checked ? "text-white/80" : "opacity-60"}`}>
+                                {option.desc}
+                              </p>
+                            </div>
                           </div>
-                          <div className="flex-1">
-                            <span className="font-bold">Love it</span>
-                            <p className={`mt-0.5 text-xs ${checked ? "text-white/80" : "opacity-60"}`}>
-                              Brings genuine joy — keep & maximize
-                            </p>
-                          </div>
-                        </div>
-                      )}
-                    </RadioGroup.Option>
-
-                    {/* It's fine - Functional */}
-                    <RadioGroup.Option
-                      value={3}
-                      className={({ checked }) =>
-                        `cursor-pointer rounded-2xl p-5 transition-all active:scale-[0.98] ${
-                          checked
-                            ? "bg-gradient-to-r from-amber-500 to-orange-500 text-white shadow-lg"
-                            : "bg-amber-50 text-amber-900 dark:bg-amber-900/30 dark:text-amber-300"
-                        }`
-                      }
-                    >
-                      {({ checked }) => (
-                        <div className="flex items-center gap-4">
-                          <div className={`text-2xl ${checked ? "" : "grayscale"}`}>
-                            🤷
-                          </div>
-                          <div className="flex-1">
-                            <span className="font-bold">It's fine</span>
-                            <p className={`mt-0.5 text-xs ${checked ? "text-white/80" : "opacity-60"}`}>
-                              Functional, not exciting — review later
-                            </p>
-                          </div>
-                        </div>
-                      )}
-                    </RadioGroup.Option>
-
-                    {/* Could live without - Cut ruthlessly */}
-                    <RadioGroup.Option
-                      value={1}
-                      className={({ checked }) =>
-                        `cursor-pointer rounded-2xl p-5 transition-all active:scale-[0.98] ${
-                          checked
-                            ? "bg-gradient-to-r from-red-500 to-rose-500 text-white shadow-lg"
-                            : "bg-red-50 text-red-900 dark:bg-red-900/30 dark:text-red-300"
-                        }`
-                      }
-                    >
-                      {({ checked }) => (
-                        <div className="flex items-center gap-4">
-                          <div className={`text-2xl ${checked ? "" : "grayscale"}`}>
-                            🗑️
-                          </div>
-                          <div className="flex-1">
-                            <span className="font-bold">Could live without</span>
-                            <p className={`mt-0.5 text-xs ${checked ? "text-white/80" : "opacity-60"}`}>
-                              No joy here — cut ruthlessly
-                            </p>
-                          </div>
-                        </div>
-                      )}
-                    </RadioGroup.Option>
+                        )}
+                      </RadioGroup.Option>
+                    ))}
                   </RadioGroup>
 
                   {/* Skip button */}
@@ -353,7 +311,7 @@ export default function UsageModal({
                     All done!
                   </p>
                   <p className="mt-1 text-xs text-black/50 dark:text-white/50">
-                    Check Insights for your recommendations
+                    Check Insights to see your results
                   </p>
                   <button
                     onClick={onClose}

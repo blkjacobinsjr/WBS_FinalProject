@@ -7,6 +7,7 @@ import ErrorDisplay from "../components/ErrorDisplay";
 import Loading from "../components/Loading";
 import SubscriptionForm from "../components/SubscriptionForm";
 import UsageModal from "../components/UsageModal";
+import FrequencyQuizModal from "../components/FrequencyQuizModal";
 import BottomTabBar from "../components/BottomTabBar";
 import { BackgroundGradientAnimation } from "../components/ui/background-gradient-animation";
 import HomeTab from "./HomeTab";
@@ -52,6 +53,11 @@ function Dashboard() {
   });
   const [isResettingData, setIsResettingData] = useState(false);
   const [usageModalState, setUsageModalState] = useState({
+    showForm: false,
+    notificationId: null,
+    manualSubscriptions: null,
+  });
+  const [frequencyQuizState, setFrequencyQuizState] = useState({
     showForm: false,
     notificationId: null,
     manualSubscriptions: null,
@@ -199,8 +205,17 @@ function Dashboard() {
     }
 
     function openUsageQuizCallback() {
-      // Open immediately with current subscriptions - use ref to get latest value
+      // Open immediately with current subscriptions - use ref to get latest value (Joy Check)
       setUsageModalState({
+        showForm: true,
+        notificationId: null,
+        manualSubscriptions: subscriptionsRef.current || [],
+      });
+    }
+
+    function openFrequencyQuizCallback() {
+      // Open frequency quiz with current subscriptions
+      setFrequencyQuizState({
         showForm: true,
         notificationId: null,
         manualSubscriptions: subscriptionsRef.current || [],
@@ -286,6 +301,7 @@ function Dashboard() {
     eventEmitter.on("notificationClicked", notificationClickedCallback);
     eventEmitter.on("useScoreSelected", usageScoreSelectedCallback);
     eventEmitter.on("openUsageQuiz", openUsageQuizCallback);
+    eventEmitter.on("openFrequencyQuiz", openFrequencyQuizCallback);
     eventEmitter.on("deleteSubscription", deleteSubscriptionCallback);
     eventEmitter.on("switchTab", switchTabCallback);
 
@@ -302,6 +318,7 @@ function Dashboard() {
       eventEmitter.off("notificationClicked", notificationClickedCallback);
       eventEmitter.off("useScoreSelected", usageScoreSelectedCallback);
       eventEmitter.off("openUsageQuiz", openUsageQuizCallback);
+      eventEmitter.off("openFrequencyQuiz", openFrequencyQuizCallback);
       eventEmitter.off("deleteSubscription", deleteSubscriptionCallback);
       eventEmitter.off("switchTab", switchTabCallback);
     };
@@ -471,13 +488,25 @@ function Dashboard() {
           />
         )}
 
-        {/* Usage Modal */}
+        {/* Usage Modal (Joy Check) */}
         <UsageModal
           opened={usageModalState.showForm}
           notificationId={usageModalState.notificationId}
           manualSubscriptions={usageModalState.manualSubscriptions}
           onClose={() =>
             setUsageModalState((prev) => {
+              return { ...prev, showForm: false };
+            })
+          }
+        />
+
+        {/* Frequency Quiz Modal */}
+        <FrequencyQuizModal
+          opened={frequencyQuizState.showForm}
+          notificationId={frequencyQuizState.notificationId}
+          manualSubscriptions={frequencyQuizState.manualSubscriptions}
+          onClose={() =>
+            setFrequencyQuizState((prev) => {
               return { ...prev, showForm: false };
             })
           }

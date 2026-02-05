@@ -62,7 +62,44 @@ export default function InsightsTab() {
 
   return (
     <div className="flex flex-col gap-4 pb-24">
-      {/* Joy Check Card */}
+      {/* Usage Quiz Card (Original - Frequency-based) */}
+      <div className="rounded-2xl bg-gradient-to-br from-blue-50 via-cyan-50 to-teal-50 p-5 dark:from-blue-900/20 dark:via-cyan-900/20 dark:to-teal-900/20">
+        <div className="flex items-start justify-between">
+          <div>
+            <p className="text-xs font-medium uppercase tracking-wider text-blue-800/60 dark:text-blue-200/60">
+              Usage Quiz
+            </p>
+            <p className="mt-1 text-sm text-blue-900/80 dark:text-blue-100/80">
+              Rate how often you use each subscription
+            </p>
+          </div>
+          <button
+            onClick={() => eventEmitter.emit("openFrequencyQuiz")}
+            disabled={totalCount === 0}
+            className="shrink-0 rounded-full bg-blue-900 px-4 py-2 text-xs font-medium text-white transition-all active:scale-95 disabled:opacity-50 dark:bg-blue-100 dark:text-blue-900"
+          >
+            {unratedCount > 0 ? `Rate ${unratedCount}` : "Review"}
+          </button>
+        </div>
+        {totalCount > 0 && (
+          <div className="mt-4">
+            <div className="flex items-center justify-between text-xs text-blue-800/60 dark:text-blue-200/60">
+              <span>Progress</span>
+              <span>
+                {ratedCount}/{totalCount}
+              </span>
+            </div>
+            <div className="mt-1 h-1.5 overflow-hidden rounded-full bg-blue-900/10 dark:bg-blue-100/10">
+              <div
+                className="h-full rounded-full bg-gradient-to-r from-blue-500 to-cyan-500 transition-all"
+                style={{ width: `${ratingProgress}%` }}
+              />
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* Joy Check Card (Ramit's Philosophy) */}
       <div className="rounded-2xl bg-gradient-to-br from-purple-50 via-pink-50 to-rose-50 p-5 dark:from-purple-900/20 dark:via-pink-900/20 dark:to-rose-900/20">
         <div className="flex items-start justify-between">
           <div>
@@ -70,7 +107,7 @@ export default function InsightsTab() {
               Joy Check
             </p>
             <p className="mt-1 text-sm text-purple-900/80 dark:text-purple-100/80">
-              What brings you joy? What can you cut?
+              Does this bring you joy? Cut ruthlessly what doesn't.
             </p>
           </div>
           <button
