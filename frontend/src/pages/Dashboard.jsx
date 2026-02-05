@@ -8,6 +8,7 @@ import Loading from "../components/Loading";
 import SubscriptionForm from "../components/SubscriptionForm";
 import UsageModal from "../components/UsageModal";
 import BottomTabBar from "../components/BottomTabBar";
+import { BackgroundGradientAnimation } from "../components/ui/background-gradient-animation";
 import HomeTab from "./HomeTab";
 import SubscriptionsTab from "./SubscriptionsTab";
 import InsightsTab from "./InsightsTab";
@@ -372,67 +373,80 @@ function Dashboard() {
 
   // Main return block for the Dashboard component
   return (
-    <div className="apple-bg min-h-screen w-full">
-      {loading && <Loading />}
+    <BackgroundGradientAnimation
+      gradientBackgroundStart="rgb(233, 213, 255)"
+      gradientBackgroundEnd="rgb(191, 219, 254)"
+      firstColor="168, 85, 247"
+      secondColor="236, 72, 153"
+      thirdColor="96, 165, 250"
+      fourthColor="192, 132, 252"
+      fifthColor="244, 114, 182"
+      pointerColor="168, 85, 247"
+      interactive={false}
+      containerClassName="!fixed !inset-0"
+    >
+      <div className="relative z-10 min-h-screen w-full">
+        {loading && <Loading />}
 
-      {!loading && error && <ErrorDisplay message={errorMessage} />}
+        {!loading && error && <ErrorDisplay message={errorMessage} />}
 
-      {!loading && !error && checkDataLoadingSuccessful() && (
-        <div className="mx-auto flex min-h-screen max-w-lg flex-col">
-          {/* Header */}
-          <header className="sticky top-0 z-40 border-b border-black/10 bg-white/60 px-4 py-3 backdrop-blur-xl dark:border-white/10 dark:bg-black/60">
-            <div className="flex items-center justify-between">
-              <Link to="/dashboard" className="flex items-center gap-2">
-                <img
-                  src="/subzero_logo_icon.png"
-                  className="h-7 w-7"
-                  alt="Logo"
-                />
-                <span className="text-sm font-semibold text-black/80 dark:text-white/80">
-                  Subzero
-                </span>
-              </Link>
-            </div>
-          </header>
+        {!loading && !error && checkDataLoadingSuccessful() && (
+          <div className="mx-auto flex min-h-screen max-w-lg flex-col">
+            {/* Header */}
+            <header className="sticky top-0 z-40 border-b border-black/10 bg-white/60 px-4 py-3 backdrop-blur-xl dark:border-white/10 dark:bg-black/60">
+              <div className="flex items-center justify-between">
+                <Link to="/dashboard" className="flex items-center gap-2">
+                  <img
+                    src="/subzero_logo_icon.png"
+                    className="h-7 w-7"
+                    alt="Logo"
+                  />
+                  <span className="text-sm font-semibold text-black/80 dark:text-white/80">
+                    Subzero
+                  </span>
+                </Link>
+              </div>
+            </header>
 
-          {/* Main Content */}
-          <main className="flex-1 overflow-y-auto px-4 py-4">
-            {renderTabContent()}
-          </main>
+            {/* Main Content */}
+            <main className="flex-1 overflow-y-auto px-4 py-4">
+              {renderTabContent()}
+            </main>
 
-          {/* Bottom Tab Bar */}
-          {!showBulkImport && (
-            <BottomTabBar activeTab={activeTab} onTabChange={setActiveTab} />
-          )}
-        </div>
-      )}
+            {/* Bottom Tab Bar */}
+            {!showBulkImport && (
+              <BottomTabBar activeTab={activeTab} onTabChange={setActiveTab} />
+            )}
+          </div>
+        )}
 
-      {/* Subscription Add Form */}
-      {!loading && !error && checkDataLoadingSuccessful() && (
-        <SubscriptionForm
-          mode={subscriptionFormState.mode}
-          subscription={subscriptionFormState.subscription}
-          opened={subscriptionFormState.showForm}
+        {/* Subscription Add Form */}
+        {!loading && !error && checkDataLoadingSuccessful() && (
+          <SubscriptionForm
+            mode={subscriptionFormState.mode}
+            subscription={subscriptionFormState.subscription}
+            opened={subscriptionFormState.showForm}
+            onClose={() =>
+              setSubscriptionFormState((prev) => {
+                return { ...prev, showForm: false };
+              })
+            }
+          />
+        )}
+
+        {/* Usage Modal */}
+        <UsageModal
+          opened={usageModalState.showForm}
+          notificationId={usageModalState.notificationId}
+          manualSubscriptions={usageModalState.manualSubscriptions}
           onClose={() =>
-            setSubscriptionFormState((prev) => {
+            setUsageModalState((prev) => {
               return { ...prev, showForm: false };
             })
           }
         />
-      )}
-
-      {/* Usage Modal */}
-      <UsageModal
-        opened={usageModalState.showForm}
-        notificationId={usageModalState.notificationId}
-        manualSubscriptions={usageModalState.manualSubscriptions}
-        onClose={() =>
-          setUsageModalState((prev) => {
-            return { ...prev, showForm: false };
-          })
-        }
-      />
-    </div>
+      </div>
+    </BackgroundGradientAnimation>
   );
 }
 

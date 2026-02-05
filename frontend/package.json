@@ -16,7 +16,7 @@
     "@radix-ui/react-icons": "^1.3.0",
     "axios": "^1.5.0",
     "class-variance-authority": "^0.7.0",
-    "clsx": "^2.0.0",
+    "clsx": "^2.1.1",
     "framer-motion": "^10.16.4",
     "pdfjs-dist": "^4.10.38",
     "react": "^18.2.0",
