@@ -56,6 +56,9 @@ function Dashboard() {
     notificationId: null,
     manualSubscriptions: null,
   });
+  const [isDark, setIsDark] = useState(() => {
+    return document.documentElement.classList.contains("dark");
+  });
 
   // ---- CUSTOM HOOKS ----
   const { loading, error, errorMessage, refetchData } = useDataFetching();
@@ -263,6 +266,12 @@ function Dashboard() {
       setActiveTab(tabId);
     }
 
+    // Watch for dark mode changes
+    const observer = new MutationObserver(() => {
+      setIsDark(document.documentElement.classList.contains("dark"));
+    });
+    observer.observe(document.documentElement, { attributes: true, attributeFilter: ["class"] });
+
     eventEmitter.on("refetchData", refetchCallback);
     eventEmitter.on("openSubscriptionForm", openSubscriptionFormCallback);
     eventEmitter.on("changeFormMode", switchFormModeCallback);
@@ -274,6 +283,7 @@ function Dashboard() {
     eventEmitter.on("switchTab", switchTabCallback);
 
     return () => {
+      observer.disconnect();
       abortController.abort();
       notificationAbortController.abort();
       // Clear any pending deletes on unmount
@@ -372,16 +382,36 @@ function Dashboard() {
   }
 
   // Main return block for the Dashboard component
+  const gradientColors = isDark
+    ? {
+        start: "rgb(15, 23, 42)",
+        end: "rgb(30, 27, 75)",
+        c1: "88, 28, 135",
+        c2: "67, 56, 202",
+        c3: "79, 70, 229",
+        c4: "109, 40, 217",
+        c5: "99, 102, 241",
+      }
+    : {
+        start: "rgb(233, 213, 255)",
+        end: "rgb(191, 219, 254)",
+        c1: "168, 85, 247",
+        c2: "236, 72, 153",
+        c3: "96, 165, 250",
+        c4: "192, 132, 252",
+        c5: "244, 114, 182",
+      };
+
   return (
     <BackgroundGradientAnimation
-      gradientBackgroundStart="rgb(233, 213, 255)"
-      gradientBackgroundEnd="rgb(191, 219, 254)"
-      firstColor="168, 85, 247"
-      secondColor="236, 72, 153"
-      thirdColor="96, 165, 250"
-      fourthColor="192, 132, 252"
-      fifthColor="244, 114, 182"
-      pointerColor="168, 85, 247"
+      gradientBackgroundStart={gradientColors.start}
+      gradientBackgroundEnd={gradientColors.end}
+      firstColor={gradientColors.c1}
+      secondColor={gradientColors.c2}
+      thirdColor={gradientColors.c3}
+      fourthColor={gradientColors.c4}
+      fifthColor={gradientColors.c5}
+      pointerColor={gradientColors.c1}
       interactive={false}
       containerClassName="!fixed !inset-0"
     >
