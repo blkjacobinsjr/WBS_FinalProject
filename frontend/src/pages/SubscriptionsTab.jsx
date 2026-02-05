@@ -49,7 +49,7 @@ export default function SubscriptionsTab({ onOpenBulkImport }) {
           placeholder="Search subscriptions..."
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
-          className="w-full rounded-xl border-0 bg-white/40 py-3 pl-10 pr-4 text-sm placeholder-black/30 backdrop-blur-sm focus:outline-none focus:ring-2 focus:ring-black/10 dark:bg-white/10 dark:placeholder-white/30 dark:focus:ring-white/20"
+          className="w-full rounded-xl border-0 bg-white/40 py-3 pl-10 pr-4 text-sm text-black/80 placeholder-black/30 backdrop-blur-sm focus:outline-none focus:ring-2 focus:ring-black/10 dark:bg-white/10 dark:text-white dark:placeholder-white/30 dark:focus:ring-purple-500/30"
         />
       </div>
 
@@ -59,7 +59,7 @@ export default function SubscriptionsTab({ onOpenBulkImport }) {
           onClick={() => setSelectedCategory("all")}
           className={`shrink-0 rounded-full px-4 py-1.5 text-xs font-medium transition-all active:scale-95 ${
             selectedCategory === "all"
-              ? "bg-black text-white dark:bg-white dark:text-black"
+              ? "bg-black text-white dark:bg-purple-500 dark:text-white"
               : "bg-black/5 text-black/60 hover:bg-black/10 dark:bg-white/10 dark:text-white/60 dark:hover:bg-white/20"
           }`}
         >
@@ -71,7 +71,7 @@ export default function SubscriptionsTab({ onOpenBulkImport }) {
             onClick={() => setSelectedCategory(cat._id)}
             className={`shrink-0 rounded-full px-4 py-1.5 text-xs font-medium transition-all active:scale-95 ${
               selectedCategory === cat._id
-                ? "bg-black text-white dark:bg-white dark:text-black"
+                ? "bg-black text-white dark:bg-purple-500 dark:text-white"
                 : "bg-black/5 text-black/60 hover:bg-black/10 dark:bg-white/10 dark:text-white/60 dark:hover:bg-white/20"
             }`}
           >
@@ -83,7 +83,7 @@ export default function SubscriptionsTab({ onOpenBulkImport }) {
       {/* Add Subscription Button */}
       <button
         onClick={handleAddSubscription}
-        className="flex items-center justify-center gap-2 rounded-xl bg-black py-3 font-medium text-white transition-all active:scale-[0.98] dark:bg-white dark:text-black"
+        className="flex items-center justify-center gap-2 rounded-xl bg-black py-3 font-medium text-white transition-all active:scale-[0.98] dark:bg-gradient-to-r dark:from-purple-600 dark:to-pink-600 dark:text-white"
       >
         <svg
           xmlns="http://www.w3.org/2000/svg"
