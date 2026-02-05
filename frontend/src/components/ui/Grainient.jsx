@@ -137,5 +137,5 @@ export default function Grainient() {
     );
   }
 
-  return <div ref={containerRef} className="absolute inset-0" />;
+  return <div ref={containerRef} className="absolute inset-0 bg-[#e8e4f0]" style={{ transform: 'translateZ(0)' }} />;
 }
