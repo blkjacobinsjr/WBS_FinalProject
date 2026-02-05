@@ -15,29 +15,6 @@ import InsightsTab from "./InsightsTab";
 import SettingsTab from "./SettingsTab";
 import BulkImport from "./BulkImport";
 
-const THEME_COLORS = {
-  rose: {
-    light: { start: "rgb(255, 228, 230)", end: "rgb(254, 205, 211)", colors: ["251,113,133", "244,63,94", "253,164,175", "254,205,211", "251,113,133"] },
-    dark: { start: "rgb(30, 20, 40)", end: "rgb(20, 25, 50)", colors: ["127,29,29", "159,18,57", "136,19,55", "88,28,35", "127,29,29"] },
-  },
-  lavender: {
-    light: { start: "rgb(233, 213, 255)", end: "rgb(221, 214, 254)", colors: ["168,85,247", "192,132,252", "139,92,246", "167,139,250", "196,181,253"] },
-    dark: { start: "rgb(25, 20, 45)", end: "rgb(20, 25, 55)", colors: ["88,28,135", "107,33,168", "76,29,149", "91,33,182", "109,40,217"] },
-  },
-  sage: {
-    light: { start: "rgb(209, 250, 229)", end: "rgb(167, 243, 208)", colors: ["52,211,153", "110,231,183", "16,185,129", "5,150,105", "110,231,183"] },
-    dark: { start: "rgb(20, 30, 30)", end: "rgb(15, 35, 40)", colors: ["6,78,59", "4,120,87", "6,95,70", "20,83,45", "22,101,52"] },
-  },
-  peach: {
-    light: { start: "rgb(255, 237, 213)", end: "rgb(254, 215, 170)", colors: ["251,146,60", "253,186,116", "249,115,22", "253,164,175", "254,215,170"] },
-    dark: { start: "rgb(35, 25, 25)", end: "rgb(40, 25, 35)", colors: ["124,45,18", "154,52,18", "180,83,9", "146,64,14", "120,53,15"] },
-  },
-  ocean: {
-    light: { start: "rgb(186, 230, 253)", end: "rgb(165, 243, 252)", colors: ["56,189,248", "14,165,233", "125,211,252", "103,232,249", "34,211,238"] },
-    dark: { start: "rgb(15, 25, 45)", end: "rgb(20, 30, 55)", colors: ["12,74,110", "3,105,161", "7,89,133", "14,116,144", "8,145,178"] },
-  },
-};
-
 import { useDataContext } from "../contexts/dataContext";
 import useCategory from "../hooks/useCategory";
 import useDashboard from "../hooks/useDashboard";
@@ -78,12 +55,6 @@ function Dashboard() {
     showForm: false,
     notificationId: null,
     manualSubscriptions: null,
-  });
-  const [themeConfig, setThemeConfig] = useState(() => {
-    const preset = localStorage.getItem("colorPreset") || "lavender";
-    const isDark = localStorage.getItem("theme") === "dark";
-    const grain = localStorage.getItem("grain") !== "false";
-    return { preset, isDark, grain };
   });
 
   // ---- CUSTOM HOOKS ----
@@ -292,13 +263,6 @@ function Dashboard() {
       setActiveTab(tabId);
     }
 
-    function themeChangedCallback() {
-      const preset = localStorage.getItem("colorPreset") || "lavender";
-      const isDark = localStorage.getItem("theme") === "dark";
-      const grain = localStorage.getItem("grain") !== "false";
-      setThemeConfig({ preset, isDark, grain });
-    }
-
     eventEmitter.on("refetchData", refetchCallback);
     eventEmitter.on("openSubscriptionForm", openSubscriptionFormCallback);
     eventEmitter.on("changeFormMode", switchFormModeCallback);
@@ -308,7 +272,6 @@ function Dashboard() {
     eventEmitter.on("openUsageQuiz", openUsageQuizCallback);
     eventEmitter.on("deleteSubscription", deleteSubscriptionCallback);
     eventEmitter.on("switchTab", switchTabCallback);
-    eventEmitter.on("themeChanged", themeChangedCallback);
 
     return () => {
       abortController.abort();
@@ -324,7 +287,6 @@ function Dashboard() {
       eventEmitter.off("openUsageQuiz", openUsageQuizCallback);
       eventEmitter.off("deleteSubscription", deleteSubscriptionCallback);
       eventEmitter.off("switchTab", switchTabCallback);
-      eventEmitter.off("themeChanged", themeChangedCallback);
     };
   }, []);
 
@@ -410,23 +372,19 @@ function Dashboard() {
   }
 
   // Main return block for the Dashboard component
-  const colors = THEME_COLORS[themeConfig.preset]?.[themeConfig.isDark ? "dark" : "light"] || THEME_COLORS.lavender.light;
-  const [c1, c2, c3, c4, c5] = colors.colors;
-
   return (
     <BackgroundGradientAnimation
-      gradientBackgroundStart={colors.start}
-      gradientBackgroundEnd={colors.end}
-      firstColor={c1}
-      secondColor={c2}
-      thirdColor={c3}
-      fourthColor={c4}
-      fifthColor={c5}
-      pointerColor={c1}
+      gradientBackgroundStart="rgb(233, 213, 255)"
+      gradientBackgroundEnd="rgb(191, 219, 254)"
+      firstColor="168, 85, 247"
+      secondColor="236, 72, 153"
+      thirdColor="96, 165, 250"
+      fourthColor="192, 132, 252"
+      fifthColor="244, 114, 182"
+      pointerColor="168, 85, 247"
       interactive={false}
       containerClassName="!fixed !inset-0"
     >
-      {themeConfig.grain && <div className="grain-overlay" />}
       <div className="relative z-10 min-h-screen w-full">
         {loading && <Loading />}
 
