@@ -1,59 +1,36 @@
-import { useRef, useEffect, useState } from "react";
-import { motion } from "framer-motion";
+import { useRef, useEffect, useState } from 'react';
 
-export default function FadeIn({
-  children,
-  className = "",
-  delay = 0,
-  duration = 0.6,
-  direction = "up", // 'up', 'down', 'left', 'right', 'none'
-  distance = 24,
-  threshold = 0.1,
-  once = true,
-}) {
+export default function FadeIn({ children, className = '', delay = 0, direction = 'up' }) {
   const [inView, setInView] = useState(false);
   const ref = useRef(null);
 
-  const getInitialPosition = () => {
-    switch (direction) {
-      case "up": return { y: distance };
-      case "down": return { y: -distance };
-      case "left": return { x: distance };
-      case "right": return { x: -distance };
-      default: return {};
-    }
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    const obs = new IntersectionObserver(([e]) => { if (e.isIntersecting) { setInView(true); obs.disconnect(); } }, { threshold: 0.1 });
+    obs.observe(el);
+    return () => obs.disconnect();
+  }, []);
+
+  const transforms = {
+    up: 'translateY(20px)',
+    down: 'translateY(-20px)',
+    left: 'translateX(20px)',
+    right: 'translateX(-20px)',
+    none: 'none'
   };
 
-  useEffect(() => {
-    const observer = new IntersectionObserver(
-      ([entry]) => {
-        if (entry.isIntersecting) {
-          setInView(true);
-          if (once) observer.disconnect();
-        } else if (!once) {
-          setInView(false);
-        }
-      },
-      { threshold }
-    );
-
-    if (ref.current) observer.observe(ref.current);
-    return () => observer.disconnect();
-  }, [threshold, once]);
-
   return (
-    <motion.div
+    <div
       ref={ref}
       className={className}
-      initial={{ opacity: 0, ...getInitialPosition() }}
-      animate={inView ? { opacity: 1, x: 0, y: 0 } : { opacity: 0, ...getInitialPosition() }}
-      transition={{
-        duration,
-        delay,
-        ease: [0.25, 0.4, 0.25, 1],
+      style={{
+        opacity: inView ? 1 : 0,
+        transform: inView ? 'none' : transforms[direction],
+        transition: `opacity 0.6s ease ${delay}s, transform 0.6s ease ${delay}s`,
       }}
     >
       {children}
-    </motion.div>
+    </div>
   );
 }

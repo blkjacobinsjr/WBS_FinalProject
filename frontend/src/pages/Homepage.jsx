@@ -1,6 +1,8 @@
 import { Link } from "react-router-dom";
 import { SignedIn, SignedOut, UserButton } from "@clerk/clerk-react";
 import Grainient from "../components/ui/Grainient";
+import BlurText from "../components/ui/BlurText";
+import FadeIn from "../components/ui/FadeIn";
 
 export default function Homepage() {
   const features = [
@@ -43,34 +45,44 @@ export default function Homepage() {
       {/* Hero */}
       <section className="flex min-h-[85vh] flex-col items-center justify-center px-4 pt-8">
         <div className="mx-auto max-w-3xl text-center">
-          <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-white/40 bg-white/50 px-4 py-1.5 backdrop-blur-sm">
-            <span className="text-xs">❄️</span>
-            <span className="text-xs font-medium text-purple-900">Smart women know where their money goes</span>
-          </div>
-
-          <h1 className="mb-4 text-4xl font-bold tracking-tight text-black/90 sm:text-5xl md:text-6xl">
-            Zero in on What Matters
-          </h1>
-
-          <p className="mx-auto mb-8 max-w-xl text-lg text-black/70">
-            Elevate essentials. Freeze out the waste.<br className="hidden sm:block" />
-            Take control of every subscription in one beautiful dashboard.
-          </p>
-
-          <div className="flex flex-col items-center gap-4 sm:flex-row sm:justify-center">
-            <Link to="/signup" className="rounded-full bg-gradient-to-r from-purple-600 to-pink-600 px-8 py-3 text-sm font-semibold text-white shadow-lg hover:shadow-purple-500/25">
-              Start Free — No Card Needed
-            </Link>
-            <Link to="/login" className="inline-flex items-center gap-2 rounded-full border border-white/40 bg-white/50 px-6 py-3 text-sm font-medium text-black/70 backdrop-blur-sm">
-              I have an account →
-            </Link>
-          </div>
-
-          <div className="relative mt-12">
-            <div className="overflow-hidden rounded-2xl border border-white/30 bg-white/30 p-2 shadow-2xl backdrop-blur-sm">
-              <img src="/Dashboardbgbrowsertilt.png" alt="Subzro Dashboard" className="w-full rounded-xl" />
+          <FadeIn delay={0}>
+            <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-white/40 bg-white/50 px-4 py-1.5 backdrop-blur-sm">
+              <span className="text-xs">❄️</span>
+              <span className="text-xs font-medium text-purple-900">Smart women know where their money goes</span>
             </div>
-          </div>
+          </FadeIn>
+
+          <BlurText
+            text="Zero in on What Matters"
+            delay={80}
+            className="mb-4 text-4xl font-bold tracking-tight text-black/90 sm:text-5xl md:text-6xl"
+          />
+
+          <FadeIn delay={0.3}>
+            <p className="mx-auto mb-8 max-w-xl text-lg text-black/70">
+              Elevate essentials. Freeze out the waste.<br className="hidden sm:block" />
+              Take control of every subscription in one beautiful dashboard.
+            </p>
+          </FadeIn>
+
+          <FadeIn delay={0.5}>
+            <div className="flex flex-col items-center gap-4 sm:flex-row sm:justify-center">
+              <Link to="/signup" className="rounded-full bg-gradient-to-r from-purple-600 to-pink-600 px-8 py-3 text-sm font-semibold text-white shadow-lg hover:shadow-purple-500/25">
+                Start Free — No Card Needed
+              </Link>
+              <Link to="/login" className="inline-flex items-center gap-2 rounded-full border border-white/40 bg-white/50 px-6 py-3 text-sm font-medium text-black/70 backdrop-blur-sm">
+                I have an account →
+              </Link>
+            </div>
+          </FadeIn>
+
+          <FadeIn delay={0.7} direction="up">
+            <div className="relative mt-12">
+              <div className="overflow-hidden rounded-2xl border border-white/30 bg-white/30 p-2 shadow-2xl backdrop-blur-sm">
+                <img src="/Dashboardbgbrowsertilt.png" alt="Subzro Dashboard" className="w-full rounded-xl" />
+              </div>
+            </div>
+          </FadeIn>
         </div>
       </section>
 
