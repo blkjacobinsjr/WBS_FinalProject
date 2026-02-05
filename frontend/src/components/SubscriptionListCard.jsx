@@ -126,8 +126,10 @@ export default function SubscriptionListCard({
       <div className="text-right">
         <div className="relative whitespace-nowrap">
           <p className="font-medium">€{subscription.price}</p>
-          <p className="text-xs text-gray-500">
-            {subscription.interval === "month" ? "Monthly " : "Yearly"}
+          <p className="text-[10px] text-black/40 dark:text-white/40">
+            {subscription.interval === "month"
+              ? `${Math.round(subscription.price / 5)} ☕/mo`
+              : `${Math.round(subscription.price / 5)} ☕/yr`}
           </p>
           {subscription?.validScore && (
             <div className="mt-1 flex items-center gap-2 text-xs text-gray-500 sm:absolute sm:inset-0 sm:mt-0 sm:min-w-[3rem] sm:-translate-x-16 sm:flex-col sm:items-center sm:justify-center sm:rounded sm:border sm:border-black/25 sm:p-1 sm:text-sm sm:shadow-inner">

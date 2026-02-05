@@ -215,7 +215,7 @@ export default function FrequencyQuizModal({
               {completedCount === 0 && initialTotal > 0 && (
                 <div className="mb-4 rounded-xl bg-gradient-to-br from-blue-50 to-cyan-50 px-4 py-3 dark:from-blue-900/20 dark:to-cyan-900/20">
                   <p className="text-center text-xs text-blue-900/70 dark:text-blue-100/70">
-                    Rate how often you actually use each subscription.
+                    Uncover hidden savings. Only {initialTotal} to review.
                   </p>
                 </div>
               )}

@@ -275,6 +275,13 @@ export default function SubscriptionForm({
                         /{subscription?.interval || "month"}
                       </span>
                     </p>
+                    <p className="mt-2 text-xs text-black/40 dark:text-white/40">
+                      {subscription?.interval === "year"
+                        ? `= €${(subscription.price / 12).toFixed(2)}/month`
+                        : `= €${(subscription.price * 12).toFixed(0)}/year`}
+                      {" · "}
+                      {Math.round((subscription?.interval === "year" ? subscription.price : subscription.price * 12) / 50)} dinners out
+                    </p>
                   </div>
                 )}
               </div>
@@ -393,22 +400,22 @@ export default function SubscriptionForm({
               </div>
 
               {/* Cancel Subscription - Show mode only */}
-              {cancelInfo?.link && (
+              {mode === "show" && cancelInfo?.link && (
                 <a
                   href={cancelInfo.link}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="mb-4 flex items-center justify-between rounded-2xl bg-red-50 px-4 py-4 transition-all active:scale-[0.98] dark:bg-red-900/20"
+                  className="mb-4 flex items-center justify-between rounded-2xl bg-gradient-to-r from-red-500 to-rose-500 px-4 py-4 shadow-lg transition-all active:scale-[0.98]"
                 >
                   <div className="flex items-center gap-3">
-                    <div className="rounded-full bg-red-100 p-2 dark:bg-red-800/30">
+                    <div className="rounded-full bg-white/20 p-2">
                       <svg
                         xmlns="http://www.w3.org/2000/svg"
                         fill="none"
                         viewBox="0 0 24 24"
                         strokeWidth={1.5}
                         stroke="currentColor"
-                        className="h-5 w-5 text-red-600 dark:text-red-400"
+                        className="h-5 w-5 text-white"
                       >
                         <path
                           strokeLinecap="round"
@@ -418,11 +425,11 @@ export default function SubscriptionForm({
                       </svg>
                     </div>
                     <div>
-                      <p className="text-sm font-medium text-red-700 dark:text-red-400">
-                        Cancel Subscription
+                      <p className="text-sm font-semibold text-white">
+                        Cancel & Reclaim €{subscription?.interval === "year" ? subscription?.price : (subscription?.price * 12).toFixed(0)}/yr
                       </p>
-                      <p className="text-xs text-red-600/60 dark:text-red-400/60">
-                        Opens {cancelInfo.source || subscription.name} cancel page
+                      <p className="text-xs text-white/70">
+                        Takes 2 min · {cancelInfo.source || subscription.name}
                       </p>
                     </div>
                   </div>
@@ -430,9 +437,9 @@ export default function SubscriptionForm({
                     xmlns="http://www.w3.org/2000/svg"
                     fill="none"
                     viewBox="0 0 24 24"
-                    strokeWidth={1.5}
+                    strokeWidth={2}
                     stroke="currentColor"
-                    className="h-5 w-5 text-red-400"
+                    className="h-5 w-5 text-white"
                   >
                     <path
                       strokeLinecap="round"

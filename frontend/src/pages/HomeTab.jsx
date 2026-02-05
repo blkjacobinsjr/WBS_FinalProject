@@ -4,6 +4,21 @@ import FinancialResetCard from "../components/FinancialResetCard";
 import SubscriptionListCard from "../components/SubscriptionListCard";
 import eventEmitter from "../utils/EventEmitter";
 
+// Daily rotating insights - FOMO Punch + Variable Rewards
+const dailyInsights = [
+  (spent) => `You've spent €${spent} this year on subscriptions. Worth it?`,
+  (spent) => `€${spent}/year = ${Math.round(spent / 5)} fancy coffees`,
+  (spent) => `That's €${(spent / 12).toFixed(0)}/month leaving your account quietly`,
+  (spent) => `€${spent}/year could be a weekend trip instead`,
+  (spent) => `${Math.round(spent / 15)} dinners out — or these subscriptions?`,
+];
+
+function getDailyInsight(yearlySpend) {
+  const dayOfYear = Math.floor((Date.now() - new Date(new Date().getFullYear(), 0, 0)) / 86400000);
+  const idx = dayOfYear % dailyInsights.length;
+  return dailyInsights[idx](yearlySpend.toFixed(0));
+}
+
 export default function HomeTab() {
   const { user } = useUser();
   const { subscriptions, dashboardData, notifications } = useDataContext();
@@ -13,6 +28,9 @@ export default function HomeTab() {
 
   // Get 3 most recent/upcoming subscriptions
   const recentSubs = subscriptions?.slice(0, 3) || [];
+
+  // Yearly spend for daily insight
+  const yearlySpend = (dashboardData?.totalCostPerMonth || 0) * 12;
 
   function getGreeting() {
     const hour = new Date().getHours();
@@ -67,6 +85,11 @@ export default function HomeTab() {
         <p className="mt-1 text-3xl font-bold text-black dark:text-white">
           €{dashboardData?.totalCostPerMonth?.toFixed(2) || "0.00"}
         </p>
+        {yearlySpend > 0 && (
+          <p className="mt-2 text-xs text-black/50 dark:text-white/50">
+            {getDailyInsight(yearlySpend)}
+          </p>
+        )}
       </div>
 
       {/* Quick Stats Row */}
@@ -84,7 +107,7 @@ export default function HomeTab() {
             €{dashboardData?.potentialMonthlySavings?.toFixed(0) || "0"}
           </p>
           <p className="text-[10px] font-medium text-black/50 dark:text-white/50">
-            Potential Savings
+            Yours to Claim
           </p>
         </div>
         <div className="rounded-xl bg-white/40 p-3 text-center backdrop-blur-sm dark:bg-white/10">

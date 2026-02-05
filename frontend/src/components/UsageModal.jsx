@@ -207,7 +207,7 @@ export default function UsageModal({
               {completedCount === 0 && initialTotal > 0 && (
                 <div className="mb-4 rounded-xl bg-gradient-to-br from-purple-50 to-pink-50 px-4 py-3 dark:from-purple-900/20 dark:to-pink-900/20">
                   <p className="text-center text-xs text-purple-900/70 dark:text-purple-100/70">
-                    "Spend lavishly on what brings you joy. Cut ruthlessly on what doesn't."
+                    Your money. Your joy. Only {initialTotal} left to claim.
                   </p>
                 </div>
               )}

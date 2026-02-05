@@ -214,11 +214,16 @@ export default function InsightsTab() {
         </div>
         <div className="rounded-xl bg-white/40 p-4 backdrop-blur-sm dark:bg-white/10">
           <p className="text-xs font-medium text-black/40 dark:text-white/40">
-            Potential Savings
+            You've Identified
           </p>
           <p className="mt-1 text-2xl font-bold text-green-600 dark:text-green-400">
             €{dashboardData?.potentialMonthlySavings?.toFixed(2) || "0.00"}
           </p>
+          {dashboardData?.potentialMonthlySavings > 0 && (
+            <p className="mt-0.5 text-[10px] text-green-700/60 dark:text-green-400/60">
+              in savings. Don't lose it.
+            </p>
+          )}
         </div>
         <div className="rounded-xl bg-white/40 p-4 backdrop-blur-sm dark:bg-white/10">
           <p className="text-xs font-medium text-black/40 dark:text-white/40">
