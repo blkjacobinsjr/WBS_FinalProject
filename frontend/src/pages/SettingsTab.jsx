@@ -35,6 +35,7 @@ export default function SettingsTab({ onResetData, isResettingData }) {
         </p>
         <div className="flex items-center gap-4">
           <UserButton
+            afterSignOutUrl={window.location.origin}
             appearance={{
               elements: {
                 avatarBox: "w-14 h-14",

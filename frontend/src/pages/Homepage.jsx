@@ -34,7 +34,7 @@ export default function Homepage() {
             </SignedOut>
             <SignedIn>
               <Link to="/dashboard" className="rounded-full bg-black px-4 py-2 text-sm font-medium text-white">Dashboard</Link>
-              <UserButton afterSignOutUrl="/" />
+              <UserButton afterSignOutUrl={window.location.origin} />
             </SignedIn>
           </div>
         </div>
