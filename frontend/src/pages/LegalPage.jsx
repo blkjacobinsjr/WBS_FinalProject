@@ -25,11 +25,15 @@ const content = {
       sections: [
         {
           heading: "Provider",
-          body: `${business.legalName}, ${business.brand}\n${business.street}\n${business.city}\n${business.country}`,
+          body: `${business.legalName} (sole proprietor), ${business.brand}\n${business.street}\n${business.city}\n${business.country}`,
         },
         {
           heading: "Contact",
           body: `Email: ${business.email}\nPhone: ${business.phone}`,
+        },
+        {
+          heading: "Responsible for content",
+          body: `Responsible according to Section 18 (2) MStV:\n${business.legalName}\nAddress as above.`,
         },
         {
           heading: "Business activity",
@@ -178,11 +182,15 @@ const content = {
       sections: [
         {
           heading: "Anbieter",
-          body: `${business.legalName}, ${business.brand}\n${business.street}\n${business.city}\n${business.country}`,
+          body: `${business.legalName} (Einzelunternehmer), ${business.brand}\n${business.street}\n${business.city}\n${business.country}`,
         },
         {
           heading: "Kontakt",
           body: `E-Mail: ${business.email}\nTelefon: ${business.phone}`,
+        },
+        {
+          heading: "Inhaltlich verantwortlich",
+          body: `Verantwortlich gemaess Paragraph 18 Abs. 2 MStV:\n${business.legalName}\nAnschrift wie oben.`,
         },
         {
           heading: "Taetigkeit",
