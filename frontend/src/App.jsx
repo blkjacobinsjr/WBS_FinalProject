@@ -12,6 +12,7 @@ import ApiTest from "./pages/ApiTest";
 import Dashboard from "./pages/Dashboard";
 import ErrorPage from "./pages/ErrorPage";
 import Homepage from "./pages/Homepage";
+import LegalPage from "./pages/LegalPage";
 import Login from "./pages/Login";
 import Signup from "./pages/Signup";
 
@@ -54,6 +55,21 @@ function ClerkRouteProvider() {
         />
         <Route path="/login" element={<Login />} />
         <Route path="/signup" element={<Signup />} />
+        <Route path="/terms" element={<LegalPage pageKey="terms" />} />
+        <Route
+          path="/terms-and-conditions"
+          element={<LegalPage pageKey="terms" />}
+        />
+        <Route path="/privacy" element={<LegalPage pageKey="privacy" />} />
+        <Route
+          path="/privacy-policy"
+          element={<LegalPage pageKey="privacy" />}
+        />
+        <Route path="/refund" element={<LegalPage pageKey="refund" />} />
+        <Route
+          path="/refund-policy"
+          element={<LegalPage pageKey="refund" />}
+        />
         <Route
           path="/dashboard"
           element={

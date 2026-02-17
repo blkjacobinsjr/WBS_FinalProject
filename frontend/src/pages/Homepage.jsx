@@ -155,7 +155,11 @@ export default function Homepage() {
             <img src="/subzero_logo_icon.png" alt="Subzro" className="h-5 w-5 opacity-60" />
             <span className="text-sm text-black/50">© 2025 Subzro</span>
           </div>
-          <p className="text-xs text-black/50">Made with 💜 for women who know their worth</p>
+          <div className="flex items-center gap-4 text-xs text-black/50">
+            <Link to="/terms" className="transition hover:text-black/80">Terms</Link>
+            <Link to="/privacy" className="transition hover:text-black/80">Privacy</Link>
+            <Link to="/refund" className="transition hover:text-black/80">Refunds</Link>
+          </div>
         </div>
       </footer>
     </div>
