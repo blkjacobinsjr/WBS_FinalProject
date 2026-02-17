@@ -156,6 +156,7 @@ export default function Homepage() {
             <span className="text-sm text-black/50">© 2025 Subzro</span>
           </div>
           <div className="flex items-center gap-4 text-xs text-black/50">
+            <Link to="/impressum" className="transition hover:text-black/80">Impressum</Link>
             <Link to="/terms" className="transition hover:text-black/80">Terms</Link>
             <Link to="/privacy" className="transition hover:text-black/80">Privacy</Link>
             <Link to="/refund" className="transition hover:text-black/80">Refunds</Link>

@@ -55,6 +55,8 @@ function ClerkRouteProvider() {
         />
         <Route path="/login" element={<Login />} />
         <Route path="/signup" element={<Signup />} />
+        <Route path="/impressum" element={<LegalPage pageKey="imprint" />} />
+        <Route path="/imprint" element={<LegalPage pageKey="imprint" />} />
         <Route path="/terms" element={<LegalPage pageKey="terms" />} />
         <Route
           path="/terms-and-conditions"

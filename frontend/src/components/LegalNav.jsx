@@ -4,6 +4,7 @@ import { Link, useLocation } from "react-router-dom";
 
 const labels = {
   en: {
+    imprint: "Imprint",
     terms: "Terms",
     privacy: "Privacy",
     refund: "Refunds",
@@ -14,6 +15,7 @@ const labels = {
     close: "Close menu",
   },
   de: {
+    imprint: "Impressum",
     terms: "AGB",
     privacy: "Datenschutz",
     refund: "Erstattung",
@@ -32,6 +34,7 @@ export default function LegalNav({ lang = "en", onLangChange }) {
 
   const legalLinks = useMemo(
     () => [
+      { to: "/impressum", label: t.imprint },
       { to: "/terms", label: t.terms },
       { to: "/privacy", label: t.privacy },
       { to: "/refund", label: t.refund },

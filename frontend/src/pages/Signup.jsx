@@ -16,7 +16,7 @@ export default function Signup() {
       />
       <div className="mt-6 text-center">
         <p className="text-sm text-gray-500 absolute inset-x-0 bottom-10">
-           <a href="/terms" className="underline">Terms of Use</a>, <a href="/privacy" className="underline">Privacy Policy</a>, and <a href="/refund" className="underline">Refund Policy</a>.
+           <a href="/impressum" className="underline">Impressum</a>, <a href="/terms" className="underline">Terms of Use</a>, <a href="/privacy" className="underline">Privacy Policy</a>, and <a href="/refund" className="underline">Refund Policy</a>.
         </p>
       </div>
     </div>
