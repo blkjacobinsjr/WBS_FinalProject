@@ -135,15 +135,7 @@ function Dashboard() {
         setSubscriptions(updatedSubscriptions);
         setUsedCategories(updatedUsedCategories);
         setDashboardData(updatedDashboardData);
-
-        // HACK: For some reason, all data is correctly refetched, but a single notification
-        // keeps getting stuck in context... so remove notification if all that's coming back is
-        // just one...
-        if (updatedNotifications?.length === 1) {
-          setNotifications([]);
-        } else {
-          setNotifications(updatedNotifications);
-        }
+        setNotifications(updatedNotifications || []);
       } catch (error) {
         console.error(`Error refetching subscriptions: ${errorMessage}`);
       }

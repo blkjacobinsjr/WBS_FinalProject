@@ -1,6 +1,8 @@
+import { useMemo, useCallback } from "react";
 import { useUser } from "@clerk/clerk-react";
 import { useDataContext } from "../contexts/dataContext";
 import FinancialResetCard from "../components/FinancialResetCard";
+import Notifications from "../components/Notifications";
 import SubscriptionListCard from "../components/SubscriptionListCard";
 import eventEmitter from "../utils/EventEmitter";
 
@@ -10,7 +12,8 @@ const dailyInsights = [
   (spent) => `€${spent}/year = ${Math.round(spent / 5)} fancy coffees`,
   (spent) => `That's €${(spent / 12).toFixed(0)}/month leaving your account quietly`,
   (spent) => `€${spent}/year could be a weekend trip instead`,
-  (spent) => `${Math.round(spent / 15)} dinners out — or these subscriptions?`,
+  (spent) =>
+    `About ${Math.max(1, Math.round(spent / 12 / 28))} dinners out per month at €28 each`,
 ];
 
 function getDailyInsight(yearlySpend) {
@@ -19,29 +22,39 @@ function getDailyInsight(yearlySpend) {
   return dailyInsights[idx](yearlySpend.toFixed(0));
 }
 
+function getGreeting() {
+  const hour = new Date().getHours();
+  if (hour < 12) return "Good morning";
+  if (hour < 18) return "Good afternoon";
+  return "Good evening";
+}
+
 export default function HomeTab() {
   const { user } = useUser();
   const { subscriptions, dashboardData, notifications } = useDataContext();
 
-  const greeting = getGreeting();
+  const greeting = useMemo(() => getGreeting(), []);
   const firstName = user?.firstName || "there";
 
-  // Get 3 most recent/upcoming subscriptions
-  const recentSubs = subscriptions?.slice(0, 3) || [];
+  // Memoize recent subscriptions to prevent unnecessary re-renders
+  const recentSubs = useMemo(() => subscriptions?.slice(0, 3) || [], [subscriptions]);
 
   // Yearly spend for daily insight
-  const yearlySpend = (dashboardData?.totalCostPerMonth || 0) * 12;
+  const yearlySpend = useMemo(
+    () => (dashboardData?.totalCostPerMonth || 0) * 12,
+    [dashboardData?.totalCostPerMonth]
+  );
 
-  function getGreeting() {
-    const hour = new Date().getHours();
-    if (hour < 12) return "Good morning";
-    if (hour < 18) return "Good afternoon";
-    return "Good evening";
-  }
-
-  function handleSubscriptionClick(subscription) {
+  const handleSubscriptionClick = useCallback((subscription) => {
     eventEmitter.emit("openSubscriptionForm", subscription, "show");
-  }
+  }, []);
+
+  const handleAlertsClick = useCallback(() => {
+    const firstNotificationId = notifications?.[0]?._id;
+    if (firstNotificationId) {
+      eventEmitter.emit("notificationClicked", firstNotificationId);
+    }
+  }, [notifications]);
 
   return (
     <div className="flex flex-col gap-4 pb-24">
@@ -50,74 +63,55 @@ export default function HomeTab() {
         <h1 className="text-xl font-semibold text-black/80 dark:text-white/80">
           {greeting}, {firstName}
         </h1>
-        <div className="flex items-center gap-2">
-          {notifications?.length > 0 && (
-            <div className="relative">
-              <button className="rounded-full bg-black/5 p-2 transition-colors hover:bg-black/10 dark:bg-white/10 dark:hover:bg-white/20">
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  strokeWidth={1.5}
-                  stroke="currentColor"
-                  className="h-5 w-5"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    d="M14.857 17.082a23.848 23.848 0 005.454-1.31A8.967 8.967 0 0118 9.75v-.7V9A6 6 0 006 9v.75a8.967 8.967 0 01-2.312 6.022c1.733.64 3.56 1.085 5.455 1.31m5.714 0a24.255 24.255 0 01-5.714 0m5.714 0a3 3 0 11-5.714 0"
-                  />
-                </svg>
-              </button>
-              <span className="absolute -right-1 -top-1 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-[10px] font-bold text-white">
-                {notifications.length}
-              </span>
-            </div>
-          )}
-        </div>
+        <Notifications />
       </div>
 
       {/* Hero Stat Card */}
-      <div className="rounded-2xl bg-white/40 p-5 backdrop-blur-sm dark:bg-white/10">
+      <div className="rounded-2xl bg-white/40 p-5 backdrop-blur-sm transition-all duration-150 ease-out hover:bg-white/60 dark:bg-white/10 dark:hover:bg-white/15">
         <p className="text-xs font-medium uppercase tracking-wider text-black/50 dark:text-white/50">
           Total Monthly Spend
         </p>
-        <p className="mt-1 text-3xl font-bold text-black dark:text-white">
+        <p className="mt-1 bg-gradient-to-b from-black/60 to-black bg-clip-text text-3xl font-bold text-transparent dark:from-white dark:to-white/60">
           €{dashboardData?.totalCostPerMonth?.toFixed(2) || "0.00"}
         </p>
         {yearlySpend > 0 && (
-          <p className="mt-2 text-xs text-black/50 dark:text-white/50">
+          <p className="mt-2 text-xs text-black/60 dark:text-white/60">
             {getDailyInsight(yearlySpend)}
           </p>
         )}
       </div>
 
       {/* Quick Stats Row */}
-      <div className="grid grid-cols-3 gap-2">
-        <div className="rounded-xl bg-white/40 p-3 text-center backdrop-blur-sm dark:bg-white/10">
-          <p className="text-2xl font-bold text-black dark:text-white">
+      <div className="grid grid-cols-3 gap-2" role="group" aria-label="Quick statistics">
+        <div className="rounded-xl bg-white/40 p-3 text-center backdrop-blur-sm transition-all duration-150 ease-out hover:-translate-y-0.5 hover:bg-white/60 dark:bg-white/10 dark:hover:bg-white/15">
+          <p className="bg-gradient-to-b from-black/60 to-black bg-clip-text text-2xl font-bold text-transparent dark:from-white dark:to-white/60">
             {subscriptions?.length || 0}
           </p>
           <p className="text-[10px] font-medium text-black/50 dark:text-white/50">
             Subscriptions
           </p>
         </div>
-        <div className="rounded-xl bg-white/40 p-3 text-center backdrop-blur-sm dark:bg-white/10">
-          <p className="text-2xl font-bold text-green-600 dark:text-green-400">
+        <div className="rounded-xl bg-white/40 p-3 text-center backdrop-blur-sm transition-all duration-150 ease-out hover:-translate-y-0.5 hover:bg-white/60 dark:bg-white/10 dark:hover:bg-white/15">
+          <p className="bg-gradient-to-b from-green-400 to-green-600 bg-clip-text text-2xl font-bold text-transparent dark:from-green-300 dark:to-green-500">
             €{dashboardData?.potentialMonthlySavings?.toFixed(0) || "0"}
           </p>
           <p className="text-[10px] font-medium text-black/50 dark:text-white/50">
             Yours to Claim
           </p>
         </div>
-        <div className="rounded-xl bg-white/40 p-3 text-center backdrop-blur-sm dark:bg-white/10">
-          <p className="text-2xl font-bold text-black dark:text-white">
+        <button
+          type="button"
+          onClick={handleAlertsClick}
+          disabled={!notifications?.length}
+          className="rounded-xl bg-white/40 p-3 text-center backdrop-blur-sm transition-all duration-150 ease-out hover:-translate-y-0.5 hover:bg-white/60 disabled:cursor-not-allowed disabled:opacity-70 dark:bg-white/10 dark:hover:bg-white/15"
+        >
+          <p className="bg-gradient-to-b from-black/60 to-black bg-clip-text text-2xl font-bold text-transparent dark:from-white dark:to-white/60">
             {notifications?.length || 0}
           </p>
           <p className="text-[10px] font-medium text-black/50 dark:text-white/50">
             Alerts
           </p>
-        </div>
+        </button>
       </div>
 
       {/* Financial Reset Card */}
