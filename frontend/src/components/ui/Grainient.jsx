@@ -7,6 +7,13 @@ export default function Grainient() {
   useEffect(() => {
     if (!containerRef.current) return;
 
+    // Mobile Safari can flicker/black-flash with fixed WebGL layers while scrolling.
+    // Use the static gradient fallback on small screens for stable rendering.
+    if (window.matchMedia("(max-width: 768px)").matches) {
+      setFallback(true);
+      return;
+    }
+
     const testCanvas = document.createElement('canvas');
     const testGl = testCanvas.getContext('webgl2') || testCanvas.getContext('webgl');
     if (!testGl) { setFallback(true); return; }

@@ -18,7 +18,7 @@ export default function Homepage() {
   ];
 
   return (
-    <div className="relative min-h-screen">
+    <div className="relative min-h-screen bg-[#e8e4f0]">
       <div className="fixed inset-0 -z-10">
         <Grainient />
       </div>
