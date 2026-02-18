@@ -9,6 +9,36 @@ const PADDLE_SCRIPT_ID = "paddle-js-v2";
 let paddleBootPromise = null;
 let paddleInitialized = false;
 
+function MatchaCupIcon({ className = "" }) {
+  return (
+    <svg
+      viewBox="0 0 64 64"
+      aria-hidden="true"
+      className={className}
+      fill="none"
+    >
+      <path
+        d="M16 20H44V38C44 45.732 37.732 52 30 52C22.268 52 16 45.732 16 38V20Z"
+        fill="#A7FFD6"
+        stroke="#315C4B"
+        strokeWidth="2"
+      />
+      <path
+        d="M44 24H49C53.418 24 57 27.582 57 32C57 36.418 53.418 40 49 40H44"
+        stroke="#315C4B"
+        strokeWidth="2"
+        strokeLinecap="round"
+      />
+      <path
+        d="M20 16C20 16 22 14 24 16C26 18 28 18 30 16"
+        stroke="#315C4B"
+        strokeWidth="2"
+        strokeLinecap="round"
+      />
+    </svg>
+  );
+}
+
 function loadPaddleScript() {
   if (window.Paddle) return Promise.resolve(window.Paddle);
 
@@ -207,6 +237,19 @@ export default function PricingPage() {
                   </div>
                   <div className="rounded-xl bg-gradient-to-r from-[#a7ffd6] to-[#ffe8b6] px-3 py-1.5 text-xs font-semibold text-black/70">
                     Matcha money
+                  </div>
+                </div>
+
+                <div className="mt-4 rounded-xl border border-[#d6f5e5] bg-[#f6fff9] px-3 py-2">
+                  <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-1">
+                      <MatchaCupIcon className="h-6 w-6 transition-transform duration-200 hover:scale-110" />
+                      <MatchaCupIcon className="h-6 w-6 opacity-75 transition-transform duration-200 hover:scale-110" />
+                      <MatchaCupIcon className="h-6 w-6 opacity-60 transition-transform duration-200 hover:scale-110" />
+                    </div>
+                    <p className="text-xs font-medium text-black/70 sm:text-sm">
+                      About the price of one cafe matcha each month.
+                    </p>
                   </div>
                 </div>
 
