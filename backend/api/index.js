@@ -5,6 +5,7 @@ import express from "express";
 import db from "./data/_mongodb.js";
 
 import apiRouter from "./routes/_apiRouter.js";
+import paddleWebhookRouter from "./routes/_paddleWebhookRouter.js";
 
 import { ClerkExpressRequireAuth } from "@clerk/clerk-sdk-node";
 import errorHandler from "./middleware/_errorHandler.js";
@@ -13,6 +14,14 @@ import { checkUserId } from "./middleware/_requestChecker.js";
 dotenv.config();
 
 const server = express();
+
+// Paddle signature verification requires raw request bytes.
+server.use(
+  "/webhooks/paddle",
+  express.raw({ type: "application/json" }),
+  paddleWebhookRouter,
+);
+
 server.use(express.json());
 server.use(
   cors({

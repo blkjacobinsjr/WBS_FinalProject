@@ -30,6 +30,9 @@ export default function Homepage() {
             <span className="text-lg font-semibold text-black/80">subzro</span>
           </Link>
           <div className="flex items-center gap-3">
+            <Link to="/pricing" className="rounded-full bg-white/65 px-3 py-1.5 text-xs font-semibold text-black/70">
+              Pricing
+            </Link>
             <SignedOut>
               <Link to="/login" className="px-4 py-2 text-sm font-medium text-black/70 hover:text-black">Sign in</Link>
               <Link to="/signup" className="rounded-full bg-black px-4 py-2 text-sm font-medium text-white">Get Started</Link>
@@ -156,6 +159,7 @@ export default function Homepage() {
             <span className="text-sm text-black/50">© 2025 Subzro</span>
           </div>
           <div className="flex items-center gap-4 text-xs text-black/50">
+            <Link to="/pricing" className="transition hover:text-black/80">Pricing</Link>
             <Link to="/impressum" className="transition hover:text-black/80">Impressum</Link>
             <Link to="/terms" className="transition hover:text-black/80">Terms</Link>
             <Link to="/privacy" className="transition hover:text-black/80">Privacy</Link>

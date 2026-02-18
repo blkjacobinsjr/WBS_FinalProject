@@ -14,6 +14,7 @@ import ErrorPage from "./pages/ErrorPage";
 import Homepage from "./pages/Homepage";
 import LegalPage from "./pages/LegalPage";
 import Login from "./pages/Login";
+import PricingPage from "./pages/PricingPage";
 import Signup from "./pages/Signup";
 
 // access our key
@@ -55,6 +56,7 @@ function ClerkRouteProvider() {
         />
         <Route path="/login" element={<Login />} />
         <Route path="/signup" element={<Signup />} />
+        <Route path="/pricing" element={<PricingPage />} />
         <Route path="/impressum" element={<LegalPage pageKey="imprint" />} />
         <Route path="/imprint" element={<LegalPage pageKey="imprint" />} />
         <Route path="/terms" element={<LegalPage pageKey="terms" />} />
