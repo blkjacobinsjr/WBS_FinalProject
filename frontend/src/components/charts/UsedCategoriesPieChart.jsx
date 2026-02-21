@@ -38,6 +38,9 @@ const CustomTooltip = ({ active, payload, activePie }) => {
 export default function UsedCategoriesPieChart({ pieData }) {
   const [activePie, setActivePie] = useState();
 
+  // Colors based on user's mockup (shades of blue and indigo)
+  const COLORS = ["#4f46e5", "#6366f1", "#818cf8", "#a5b4fc", "#c7d2fe", "#3b82f6", "#60a5fa", "#38bdf8"];
+
   return (
     <ResponsiveContainer width="100%" height={300} minHeight={300}>
       <PieChart>
@@ -110,7 +113,11 @@ export default function UsedCategoriesPieChart({ pieData }) {
           }}
           onMouseEnter={() => setActivePie("outer")}
           onMouseLeave={() => setActivePie(null)}
-        />
+        >
+          {pieData?.map((entry, index) => (
+            <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+          ))}
+        </Pie>
         <Tooltip content={<CustomTooltip activePie={activePie} />} />
       </PieChart>
     </ResponsiveContainer>

@@ -25,6 +25,16 @@
 .animate-fourth { animation: moveHorizontal 40s ease infinite; }
 .animate-fifth { animation: moveInCircle 20s ease infinite; }
 
+/* Orbit Animations */
+@keyframes orbit-spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+@keyframes orbit-spin-reverse {
+  from { transform: translateX(-50%) rotate(360deg); }
+  to { transform: translateX(-50%) rotate(0deg); }
+}
+
 /* Desktop */
 @media (min-width: 1024px) {
   .dashboard {

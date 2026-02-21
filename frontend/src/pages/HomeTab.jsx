@@ -4,7 +4,7 @@ import { useDataContext } from "../contexts/dataContext";
 import FinancialResetCard from "../components/FinancialResetCard";
 import Notifications from "../components/Notifications";
 import SubscriptionListCard from "../components/SubscriptionListCard";
-import UsedCategoriesPieChart from "../components/charts/UsedCategoriesPieChart";
+import HighestSpendOrbit from "../components/charts/HighestSpendOrbit";
 import Piechartwithneedle from "../components/charts/Piechartwithneedle";
 import eventEmitter from "../utils/EventEmitter";
 
@@ -131,26 +131,26 @@ export default function HomeTab() {
       </div>
 
       {/* Charts Row */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-        {usedCategories?.length > 0 && pieData.length > 0 && (
-          <div className="rounded-2xl bg-white/40 p-5 backdrop-blur-sm dark:bg-white/10 glow-xs min-w-0">
-            <p className="text-center text-sm font-semibold text-black/80 dark:text-white/80">
-              Highest Spend Categories
+      <div className="grid grid-cols-2 gap-2 sm:gap-4">
+        {subscriptions?.length > 0 && (
+          <div className="rounded-2xl bg-white/40 p-3 sm:p-5 backdrop-blur-sm dark:bg-white/10 glow-xs min-w-0 flex flex-col items-center justify-start">
+            <p className="text-center text-[11px] sm:text-sm font-bold text-black/80 dark:text-white/80">
+              Highest Spend
             </p>
-            <div className="mt-4 h-[250px] w-full">
-              <UsedCategoriesPieChart pieData={pieData} />
+            <div className="mt-2 w-full flex-grow flex items-center justify-center">
+              <HighestSpendOrbit data={subscriptions ? subscriptions.slice(0, 10).map(s => ({ ...s, value: s.price || s.monthlyPrice || 0 })).sort((a, b) => b.value - a.value) : []} />
             </div>
           </div>
         )}
         {(dashboardData?.totalCostPerMonth > 0 || subscriptions?.length > 0) && (
-          <div className="rounded-2xl bg-white/40 p-5 backdrop-blur-sm dark:bg-white/10 glow-xs min-w-0">
-            <p className="text-center text-sm font-semibold text-black/80 dark:text-white/80">
-              Subzero Spend-O-Meter
+          <div className="rounded-2xl bg-white/40 p-3 sm:p-5 backdrop-blur-sm dark:bg-white/10 glow-xs min-w-0 flex flex-col items-center justify-start">
+            <p className="text-center text-[11px] sm:text-sm font-bold text-black/80 dark:text-white/80">
+              Spend-O-Meter
             </p>
-            <p className="text-center text-xs text-black/40 dark:text-white/40">
-              Track Subscription Spend Above Average
+            <p className="text-center text-[9px] sm:text-xs text-black/40 dark:text-white/40 mt-0.5">
+              vs Average (€219)
             </p>
-            <div className="mt-4 h-[250px] w-full">
+            <div className="mt-2 w-full h-[150px] sm:h-[180px] flex-grow flex items-center justify-center">
               <Piechartwithneedle
                 maxFirstSegment={219}
                 needleValue={dashboardData?.totalCostPerMonth || 0}

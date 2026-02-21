@@ -12,7 +12,7 @@ const needle = (value, data, cx, cy, iR, oR, color) => {
   // Clamp value to total so needle doesn't break
   const clampedValue = Math.min(value, total);
   const ang = 180.0 * (1 - clampedValue / total);
-  const length = (iR + oR) / 4.5;
+  const length = Math.max(oR * 0.85, 20);
   const sin = Math.sin(-RADIAN * ang);
   const cos = Math.cos(-RADIAN * ang);
   const r = 5;
@@ -100,10 +100,15 @@ export default function PieChartWithNeedle({ maxFirstSegment, needleValue }) {
         const width = entry.target.clientWidth;
         const height = entry.target.clientHeight;
         if (width && height) {
+          // Force center to be near the bottom wrapper edge (minus few px for margin)
+          const cy = height - 15;
+          // Radius should fit within half-width or total available height
+          const maxRadius = Math.min(width * 0.45, cy * 0.9);
+
           setComputedCX(width * 0.5);
-          setComputedCY(height * 0.68);
-          setComputedIR(55);
-          setComputedOR(85);
+          setComputedCY(cy);
+          setComputedOR(maxRadius);
+          setComputedIR(maxRadius * 0.65);
         }
       }
     });
@@ -132,59 +137,56 @@ export default function PieChartWithNeedle({ maxFirstSegment, needleValue }) {
     },
   ];
 
-  const cx = "50%";
-  const cy = "68%";
-  const iR = 55;
-  const oR = 85;
-
   return (
-    <div ref={containerRef} className="h-full w-full min-h-[200px]">
-      <ResponsiveContainer width="100%" height="100%" minHeight={200}>
-        <PieChart>
-          <Pie
-            dataKey="value"
-            nameKey="name"
-            startAngle={180}
-            endAngle={0}
-            data={data}
-            cx={cx}
-            cy={cy}
-            innerRadius={iR}
-            outerRadius={oR}
-            fill="none"
-            stroke="none"
-            paddingAngle={2}
-          >
-            {data.map((entry, index) => (
-              <Cell
-                key={`cell-${index}`}
-                fill={
-                  index === 0 ? "#6366f1" : index === 1 ? "#38bdf8" : "#e2e8f0"
-                }
-                className="transition-all duration-300 hover:opacity-80"
-              />
-            ))}
-          </Pie>
-          <Tooltip
-            content={
-              <CustomTooltip
-                baseValue={maxFirstSegment}
-                userSpend={needleValue}
-              />
-            }
-          />
+    <div ref={containerRef} className="h-full w-full flex items-center justify-center">
+      {computedCX > 0 && (
+        <ResponsiveContainer width="100%" height="100%">
+          <PieChart>
+            <Pie
+              dataKey="value"
+              nameKey="name"
+              startAngle={180}
+              endAngle={0}
+              data={data}
+              cx={computedCX}
+              cy={computedCY}
+              innerRadius={computedIR}
+              outerRadius={computedOR}
+              fill="none"
+              stroke="none"
+              paddingAngle={2}
+            >
+              {data.map((entry, index) => (
+                <Cell
+                  key={`cell-${index}`}
+                  fill={
+                    index === 0 ? "#10b981" : index === 1 ? "#f59e0b" : "#ef4444"
+                  }
+                  className="transition-all duration-300 hover:opacity-80"
+                />
+              ))}
+            </Pie>
+            <Tooltip
+              content={
+                <CustomTooltip
+                  baseValue={maxFirstSegment}
+                  userSpend={needleValue}
+                />
+              }
+            />
 
-          {needle(
-            needleValue,
-            data,
-            computedCX,
-            computedCY,
-            computedIR,
-            computedOR,
-            "#475569",
-          )}
-        </PieChart>
-      </ResponsiveContainer>
+            {needle(
+              needleValue,
+              data,
+              computedCX,
+              computedCY,
+              computedIR,
+              computedOR,
+              "#475569",
+            )}
+          </PieChart>
+        </ResponsiveContainer>
+      )}
     </div>
   );
 }

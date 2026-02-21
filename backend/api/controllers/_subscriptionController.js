@@ -62,7 +62,7 @@ export async function postSubscription(req, res, next) {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          model: "google/gemini-2.5-flash",
+          model: "openai/gpt-4o-mini",
           messages: [{ role: "user", content: prompt }],
           temperature: 0,
         }),
@@ -125,6 +125,28 @@ export async function postDummySubscriptions(req, res, next) {
     // Fallback if no category found
     const defaultCat = "65085704f18207c1481e6642";
 
+    const requiredCategoryNames = ["Streaming", "Music", "Games", "eCommerce"];
+    const requiredCategories = [];
+
+    // Make sure we have the exact categories they want to show in the Pie Chart
+    for (const catName of requiredCategoryNames) {
+      let existing = categoriesDb.find(c => c.name.toLowerCase() === catName.toLowerCase());
+      if (!existing) {
+        // Create it
+        const newCat = await Category.create({
+          name: catName,
+          icon: {
+            path: "M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8z"
+          },
+          selectable: true
+        });
+        requiredCategories.push(newCat);
+        categoriesDb.push(newCat);
+      } else {
+        requiredCategories.push(existing);
+      }
+    }
+
     const popularSubs = [
       { name: "Netflix", price: 15.49, interval: "monthly" },
       { name: "Spotify Premium", price: 10.99, interval: "monthly" },
@@ -133,46 +155,22 @@ export async function postDummySubscriptions(req, res, next) {
       { name: "Disney+", price: 10.99, interval: "monthly" },
       { name: "Apple Music", price: 10.99, interval: "monthly" },
       { name: "YouTube Premium", price: 13.99, interval: "monthly" },
-      { name: "ChatGPT Plus", price: 20.00, interval: "monthly" },
-      { name: "Claude Pro", price: 20.00, interval: "monthly" },
-      { name: "Gym Membership", price: 49.99, interval: "monthly" },
-      { name: "Internet", price: 69.99, interval: "monthly" },
-      { name: "Phone Bill", price: 45.00, interval: "monthly" },
-      { name: "Water", price: 30.00, interval: "monthly" },
-      { name: "Electricity", price: 80.00, interval: "monthly" },
-      { name: "HBO Max", price: 15.99, interval: "monthly" },
-      { name: "Strava", price: 59.99, interval: "yearly" },
-      { name: "Duolingo Super", price: 83.99, interval: "yearly" },
-      { name: "Notion Plus", price: 8.00, interval: "monthly" },
-      { name: "GitHub Copilot", price: 10.00, interval: "monthly" },
       { name: "Xbox Game Pass", price: 16.99, interval: "monthly" },
       { name: "PlayStation Plus", price: 79.99, interval: "yearly" },
-      { name: "Discord Nitro", price: 9.99, interval: "monthly" },
+      { name: "Steam", price: 29.99, interval: "monthly" }
     ];
 
     const categoryMap = {
-      "Netflix": "Entertainment",
+      "Netflix": "Streaming",
+      "Hulu": "Streaming",
+      "Disney+": "Streaming",
+      "YouTube Premium": "Streaming",
       "Spotify Premium": "Music",
-      "Amazon Prime": "Shopping",
-      "Hulu": "Entertainment",
-      "Disney+": "Entertainment",
       "Apple Music": "Music",
-      "YouTube Premium": "Video",
-      "ChatGPT Plus": "Software",
-      "Claude Pro": "Software",
-      "Gym Membership": "Fitness",
-      "Internet": "Utilities",
-      "Phone Bill": "Utilities",
-      "Water": "Utilities",
-      "Electricity": "Utilities",
-      "HBO Max": "Entertainment",
-      "Strava": "Fitness",
-      "Duolingo Super": "Education",
-      "Notion Plus": "Software",
-      "GitHub Copilot": "Software",
-      "Xbox Game Pass": "Gaming",
-      "PlayStation Plus": "Gaming",
-      "Discord Nitro": "Software"
+      "Amazon Prime": "eCommerce",
+      "Xbox Game Pass": "Games",
+      "PlayStation Plus": "Games",
+      "Steam": "Games"
     };
 
     const subsToCreate = popularSubs.map(sub => {
@@ -181,28 +179,16 @@ export async function postDummySubscriptions(req, res, next) {
       d.setDate(d.getDate() - daysAgo);
 
       const targetCategoryName = categoryMap[sub.name];
-      const foundCategory = categoriesDb.find(
-        (c) => c.name.toLowerCase() === targetCategoryName.toLowerCase() ||
-          c.name.toLowerCase().includes(targetCategoryName.toLowerCase()) ||
-          targetCategoryName.toLowerCase().includes(c.name.toLowerCase())
+      const foundCategory = requiredCategories.find(
+        (c) => c.name.toLowerCase() === targetCategoryName.toLowerCase()
       );
-
-      // Fallback: if we didn't find an exact category, at least pick something colorful that exists!
-      const validCategories = categoriesDb.filter(c => c._id.toString() !== defaultCat);
-      let categoryToUse = defaultCat;
-
-      if (foundCategory) {
-        categoryToUse = foundCategory._id;
-      } else if (validCategories.length > 0) {
-        categoryToUse = validCategories[Math.floor(Math.random() * validCategories.length)]._id;
-      }
 
       return {
         userId,
         name: sub.name,
         price: sub.price,
         interval: sub.interval,
-        category: categoryToUse,
+        category: foundCategory ? foundCategory._id : defaultCat,
         billing_date: d,
         active: true,
       };

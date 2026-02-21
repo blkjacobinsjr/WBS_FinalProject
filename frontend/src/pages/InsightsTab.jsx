@@ -1,7 +1,7 @@
 import { useMemo } from "react";
 import { useDataContext } from "../contexts/dataContext";
 import UsageRadarChart from "../components/charts/UsageRadarChart";
-import UsedCategoriesPieChart from "../components/charts/UsedCategoriesPieChart";
+import HighestSpendOrbit from "../components/charts/HighestSpendOrbit";
 import CategoryPieChart from "../components/charts/CategoryPieChart";
 import Piechartwithneedle from "../components/charts/Piechartwithneedle";
 import WealthBuilderCard from "../components/WealthBuilderCard";
@@ -303,7 +303,7 @@ export default function InsightsTab() {
       </div>
 
       {/* Charts Grid - Side by Side View */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+      <div className="grid grid-cols-2 gap-2 sm:gap-4">
         {/* Spend-O-Meter */}
         <div className="rounded-2xl bg-white/40 p-5 backdrop-blur-sm dark:bg-white/10 min-w-0">
           <p className="text-center text-sm font-semibold text-black/80 dark:text-white/80">
@@ -335,17 +335,17 @@ export default function InsightsTab() {
           </div>
         )}
 
-        {/* Category Spend Pie Chart */}
-        {usedCategories?.length > 0 && pieData.length > 0 && (
-          <div className="rounded-2xl bg-white/40 p-5 backdrop-blur-sm dark:bg-white/10 min-w-0">
-            <p className="text-center text-sm font-semibold text-black/80 dark:text-white/80">
-              Spending by Category
+        {/* Highest Spend Orbit Chart */}
+        {subscriptions?.length > 0 && (
+          <div className="rounded-2xl bg-white/40 p-2 sm:p-5 backdrop-blur-sm dark:bg-white/10 min-w-0 flex flex-col items-center">
+            <p className="text-center text-[10px] sm:text-sm font-semibold text-black/80 dark:text-white/80">
+              Highest Spend
             </p>
-            <p className="text-center text-xs text-black/40 dark:text-white/40">
-              How your money is distributed
+            <p className="text-center text-[8px] sm:text-xs text-black/40 dark:text-white/40">
+              Highest Spend Overview
             </p>
-            <div className="mt-4 h-[250px] w-full">
-              <UsedCategoriesPieChart pieData={pieData} />
+            <div className="mt-2 w-full">
+              <HighestSpendOrbit data={subscriptions ? subscriptions.slice(0, 10).map(s => ({ ...s, value: s.price || s.monthlyPrice || 0 })).sort((a, b) => b.value - a.value) : []} />
             </div>
           </div>
         )}
