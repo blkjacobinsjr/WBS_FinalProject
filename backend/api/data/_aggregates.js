@@ -148,7 +148,7 @@ export function fullSubscriptionData(userId) {
               $and: [
                 "$validScore",
                 {
-                  $lte: ["$subscriptionScore", 2],
+                  $lte: ["$score", 2],
                 },
               ],
             },
@@ -638,7 +638,7 @@ export function barelyUsedMostExpensiveAggregate(userId) {
               $and: [
                 "$validScore",
                 {
-                  $lte: ["$subscriptionScore", 2],
+                  $lte: ["$score", 2],
                 },
               ],
             },
