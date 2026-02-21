@@ -99,20 +99,19 @@ function StepProgress({ step, dark }) {
               key={index}
               layout
               initial={{ opacity: 0, scale: 0.8, width: 0 }}
-              animate={{ 
-                opacity: 1, 
+              animate={{
+                opacity: 1,
                 scale: 1,
                 width: isActive ? 32 : 12,
               }}
               exit={{ opacity: 0, scale: 0.8, width: 0 }}
-              transition={{ 
-                type: "spring", 
-                stiffness: 400, 
+              transition={{
+                type: "spring",
+                stiffness: 400,
                 damping: 35,
                 mass: 0.8
               }}
-              className={`h-1.5 rounded-full ${
-                isDone
+              className={`h-1.5 rounded-full ${isDone
                   ? "bg-[#26c06f]"
                   : isActive
                     ? dark
@@ -121,7 +120,7 @@ function StepProgress({ step, dark }) {
                     : dark
                       ? "bg-white/20"
                       : "bg-black/15"
-              }`}
+                }`}
             />
           );
         })}
@@ -137,11 +136,10 @@ function OptionCard({ title, subtitle, selected, onClick, mascot }) {
       onClick={onClick}
       whileTap={{ scale: 0.985 }}
       transition={{ type: "spring", stiffness: 420, damping: 30, mass: 0.6 }}
-      className={`w-full rounded-2xl border px-4 py-4 text-left transition ${
-        selected
+      className={`w-full rounded-2xl border px-4 py-4 text-left transition ${selected
           ? "border-[#8ce0b5] bg-[#edfff6] shadow-[0_8px_24px_rgba(20,149,90,0.10)]"
           : "border-white/75 bg-white/80 hover:bg-white"
-      }`}
+        }`}
     >
       <div className="flex items-center gap-3">
         <div className="rounded-xl bg-[#eaf6ff] p-1.5">
@@ -167,9 +165,8 @@ function SlotDigit({ digit, muted = false }) {
         {Array.from({ length: 10 }).map((_, idx) => (
           <div
             key={idx}
-            className={`flex h-9 items-center justify-center font-mono text-4xl font-extrabold ${
-              muted && idx === 0 ? "text-black/25" : "text-black/90"
-            }`}
+            className={`flex h-9 items-center justify-center font-mono text-4xl font-extrabold ${muted && idx === 0 ? "text-black/25" : "text-black/90"
+              }`}
           >
             {idx}
           </div>
@@ -563,9 +560,8 @@ export default function Onboarding() {
             {INTRO_LINES.map((_, index) => (
               <span
                 key={index}
-                className={`h-1.5 rounded-full transition-all ${
-                  index <= introLine ? "w-5 bg-white/85" : "w-2 bg-white/30"
-                }`}
+                className={`h-1.5 rounded-full transition-all ${index <= introLine ? "w-5 bg-white/85" : "w-2 bg-white/30"
+                  }`}
               />
             ))}
           </div>
@@ -639,9 +635,8 @@ export default function Onboarding() {
                     key={logo.domain}
                     src={institutionLogoUrl(logo.domain)}
                     alt={logo.label}
-                    className={`h-5 w-auto object-contain drop-shadow-[0_1px_1px_rgba(0,0,0,0.45)] ${
-                      singleLogo ? "rounded-md" : ""
-                    }`}
+                    className={`h-5 w-auto object-contain drop-shadow-[0_1px_1px_rgba(0,0,0,0.45)] ${singleLogo ? "rounded-md" : ""
+                      }`}
                     loading="lazy"
                     decoding="async"
                   />
@@ -766,11 +761,10 @@ export default function Onboarding() {
                   setAuditCadence(option.value);
                   setAuditInteracted(true);
                 }}
-                className={`rounded-xl border px-3 py-3 text-sm font-semibold transition ${
-                  auditCadence === option.value
+                className={`rounded-xl border px-3 py-3 text-sm font-semibold transition ${auditCadence === option.value
                     ? "border-white/50 bg-white/20 text-white"
                     : "border-white/20 bg-white/8 text-[#dbeeff]"
-                }`}
+                  }`}
               >
                 {option.label}
               </button>
@@ -790,11 +784,10 @@ export default function Onboarding() {
             type="button"
             onClick={nextStep}
             disabled={!auditInteracted}
-            className={`rounded-full px-6 py-2 text-sm font-semibold transition ${
-              auditInteracted
+            className={`rounded-full px-6 py-2 text-sm font-semibold transition ${auditInteracted
                 ? "bg-white text-[#10223e]"
                 : "cursor-not-allowed bg-white/30 text-white/70"
-            }`}
+              }`}
           >
             Continue
           </button>
@@ -860,11 +853,10 @@ export default function Onboarding() {
             type="button"
             onClick={nextStep}
             disabled={!surpriseInteracted}
-            className={`rounded-full px-6 py-2 text-sm font-semibold transition ${
-              surpriseInteracted
+            className={`rounded-full px-6 py-2 text-sm font-semibold transition ${surpriseInteracted
                 ? "bg-white text-[#10223e]"
                 : "cursor-not-allowed bg-white/30 text-white/70"
-            }`}
+              }`}
           >
             Continue
           </button>
@@ -910,9 +902,8 @@ export default function Onboarding() {
               {[1, 2, 3].map((level) => (
                 <span
                   key={level}
-                  className={`h-2.5 rounded-full transition-all ${
-                    riskTier >= level ? "w-8 bg-[#26c06f]" : "w-5 bg-white/25"
-                  }`}
+                  className={`h-2.5 rounded-full transition-all ${riskTier >= level ? "w-8 bg-[#26c06f]" : "w-5 bg-white/25"
+                    }`}
                 />
               ))}
             </div>
@@ -986,11 +977,10 @@ export default function Onboarding() {
             type="button"
             onClick={nextStep}
             disabled={!goal}
-            className={`rounded-full px-6 py-2 text-sm font-semibold transition ${
-              goal
+            className={`rounded-full px-6 py-2 text-sm font-semibold transition ${goal
                 ? "bg-white text-[#10223e]"
                 : "cursor-not-allowed bg-white/30 text-white/70"
-            }`}
+              }`}
           >
             Continue
           </button>
@@ -1058,11 +1048,10 @@ export default function Onboarding() {
             type="button"
             onClick={nextStep}
             disabled={!countInteracted}
-            className={`rounded-full px-6 py-2 text-sm font-medium transition ${
-              countInteracted
+            className={`rounded-full px-6 py-2 text-sm font-medium transition ${countInteracted
                 ? "bg-black text-white"
                 : "cursor-not-allowed bg-black/20 text-black/45"
-            }`}
+              }`}
           >
             Continue
           </button>
@@ -1116,9 +1105,8 @@ export default function Onboarding() {
           <button
             type="button"
             onClick={revealPayoffStep}
-            className={`rounded-full px-6 py-2 text-sm font-medium text-white ${
-              priceInteracted ? "bg-black" : "animate-pulse bg-black/85"
-            }`}
+            className={`rounded-full px-6 py-2 text-sm font-medium text-white ${priceInteracted ? "bg-black" : "animate-pulse bg-black/85"
+              }`}
           >
             Reveal payoff
           </button>
@@ -1157,11 +1145,10 @@ export default function Onboarding() {
               {[0, 1, 2].map((index) => (
                 <span
                   key={index}
-                  className={`h-2.5 rounded-full transition-all duration-200 ${
-                    countdownValue <= 2 - index
+                  className={`h-2.5 rounded-full transition-all duration-200 ${countdownValue <= 2 - index
                       ? "w-8 bg-[#1ab86d]"
                       : "w-3 bg-black/20"
-                  }`}
+                    }`}
                 />
               ))}
             </div>
@@ -1266,9 +1253,8 @@ export default function Onboarding() {
                 type="button"
                 onClick={continueToCheckout}
                 disabled={!countdownDone}
-                className={`rounded-full px-6 py-2 text-sm font-medium text-white ${
-                  countdownDone ? "bg-black" : "cursor-not-allowed bg-black/35"
-                }`}
+                className={`rounded-full px-6 py-2 text-sm font-medium text-white ${countdownDone ? "bg-black" : "cursor-not-allowed bg-black/35"
+                  }`}
               >
                 Unlock savings
               </button>
@@ -1278,9 +1264,8 @@ export default function Onboarding() {
               type="button"
               onClick={continueToCheckout}
               disabled={!countdownDone}
-              className={`rounded-full px-6 py-2 text-sm font-medium text-white ${
-                countdownDone ? "bg-black" : "cursor-not-allowed bg-black/35"
-              }`}
+              className={`rounded-full px-6 py-2 text-sm font-medium text-white ${countdownDone ? "bg-black" : "cursor-not-allowed bg-black/35"
+                }`}
             >
               Unlock savings
             </button>
@@ -1304,28 +1289,29 @@ export default function Onboarding() {
     return renderPayoffStep();
   }
 
-  const stepMascot =
-    step === 0
-      ? INTRO_FRAMES[introFrame]
-      : step === 1
-        ? "/mascot-subzro/mascotwinksmile.webp"
-        : step === 2
-          ? "/mascot-subzro/mascotsitsmilewave.webp"
-        : step === 3
-            ? "/mascot-subzro/mascotsleep.webp"
-          : step === 4
-              ? "/mascot-subzro/mascotmove12.webp"
-            : step === 5
-                ? "/mascot-subzro/mascotsitsmile1.webp"
-              : step === 6
-                  ? "/mascot-subzro/mascotwinksmile.webp"
-                  : step === 7
-                    ? "/mascot-subzro/mascoteyesclosedsweat.webp"
-                    : step === 8
-                      ? "/mascot-subzro/mascotsitsmile2.webp"
-                      : step === 9
-                        ? "/mascot-subzro/mascotwink.webp"
-                      : "/mascot-subzro/mascotwave.webp";
+  const stepMascot = useMemo(() => {
+    if (step === 0) return INTRO_FRAMES[introFrame];
+    if (step === 9) {
+      if (averagePrice <= 12) return "/mascot-subzro/officiallogos/expressions/mascotexpressioncalm.png";
+      if (averagePrice <= 22) return "/mascot-subzro/officiallogos/expressions/mascotexpressionangry.png";
+      if (averagePrice <= 32) return "/mascot-subzro/officiallogos/expressions/mascotexpressioncry.png";
+      return "/mascot-subzro/officiallogos/expressions/mascotexpressionshocked.png";
+    }
+
+    const mascotMap = {
+      1: "/mascot-subzro/mascotwinksmile.webp",
+      2: "/mascot-subzro/mascotsitsmilewave.webp",
+      3: "/mascot-subzro/mascotsleep.webp",
+      4: "/mascot-subzro/mascotmove12.webp",
+      5: "/mascot-subzro/mascotsitsmile1.webp",
+      6: "/mascot-subzro/mascotwinksmile.webp",
+      7: "/mascot-subzro/mascoteyesclosedsweat.webp",
+      8: "/mascot-subzro/mascotsitsmile2.webp",
+      10: "/mascot-subzro/mascotwave.webp",
+    };
+
+    return mascotMap[step] || "/mascot-subzro/mascotwink.webp";
+  }, [step, averagePrice, introFrame]);
 
   const calibrationBackgrounds = {
     3: "from-[#355476] via-[#4f749c] to-[#7098bf]",
@@ -1365,9 +1351,8 @@ export default function Onboarding() {
       </div>
 
       <nav
-        className={`sticky top-0 z-40 border-b backdrop-blur-md ${
-          isDarkStep ? "border-white/15 bg-[#0b1a30]/35" : "border-white/30 bg-white/55"
-        }`}
+        className={`sticky top-0 z-40 border-b backdrop-blur-md ${isDarkStep ? "border-white/15 bg-[#0b1a30]/35" : "border-white/30 bg-white/55"
+          }`}
       >
         <div className="mx-auto flex h-14 max-w-5xl items-center justify-between px-4">
           <Link to="/" className="flex items-center gap-2">
@@ -1390,11 +1375,10 @@ export default function Onboarding() {
       <main className="px-4 pb-6 pt-4">
         <div className="mx-auto max-w-2xl">
           <section
-            className={`relative flex flex-col overflow-hidden rounded-3xl border p-5 shadow-xl sm:p-6 ${
-              isDarkStep
+            className={`relative flex flex-col overflow-hidden rounded-3xl border p-5 shadow-xl sm:p-6 ${isDarkStep
                 ? "border-white/20 bg-[#0b1a30]/70 text-white"
                 : "border-white/60 bg-white/78 text-black/90"
-            }`}
+              }`}
             style={{ minHeight: "calc(100vh - 168px)" }}
           >
             <div className="mb-3 flex items-center justify-between gap-4">
@@ -1402,20 +1386,30 @@ export default function Onboarding() {
                 Step {step + 1} of {TOTAL_STEPS}
               </p>
               <div className="flex items-center gap-2">
-                <img
-                  src={stepMascot}
-                  alt="Zro guide"
-                  className={`h-8 w-8 rounded-xl p-1 ${
-                    isDarkStep ? "border border-white/25 bg-white/10" : "bg-[#ecf8ff]"
-                  }`}
-                />
+                <AnimatePresence mode="wait" initial={false}>
+                  <motion.img
+                    key={stepMascot}
+                    initial={{ opacity: 0, scale: 0.8, rotate: -10 }}
+                    animate={{ opacity: 1, scale: 1, rotate: 0 }}
+                    exit={{ opacity: 0, scale: 0.8, rotate: 10 }}
+                    transition={{
+                      type: "spring",
+                      stiffness: 450,
+                      damping: 25,
+                      mass: 0.5
+                    }}
+                    src={stepMascot}
+                    alt="Zro guide"
+                    className={`h-8 w-8 rounded-xl p-0.5 ${isDarkStep ? "border border-white/25 bg-white/10" : "bg-[#ecf8ff]"
+                      }`}
+                  />
+                </AnimatePresence>
                 {isForced && (
                   <div
-                    className={`rounded-full border px-2 py-1 text-[10px] font-semibold uppercase tracking-wider ${
-                      isDarkStep
+                    className={`rounded-full border px-2 py-1 text-[10px] font-semibold uppercase tracking-wider ${isDarkStep
                         ? "border-white/35 bg-white/10 text-white"
                         : "border-[#cbe9ff] bg-[#eef8ff] text-black/60"
-                    }`}
+                      }`}
                   >
                     Admin forced run
                   </div>
