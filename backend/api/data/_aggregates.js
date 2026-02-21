@@ -29,6 +29,7 @@ export function subscriptionUsageAggregate(userId, id = null) {
     {
       $unwind: {
         path: "$subscriptionUsage",
+        preserveNullAndEmptyArrays: true,
       },
     },
     {
@@ -56,6 +57,7 @@ export function subscriptionUsageAggregate(userId, id = null) {
     {
       $unwind: {
         path: "$category",
+        preserveNullAndEmptyArrays: true,
       },
     },
     {
@@ -495,7 +497,10 @@ export function usedCategoryFullDataAggregate(userId) {
       },
     },
     {
-      $unwind: "$categoryData",
+      $unwind: {
+        path: "$categoryData",
+        preserveNullAndEmptyArrays: true,
+      },
     },
     {
       $group: {
@@ -542,6 +547,12 @@ export function usedCategoryFullDataAggregate(userId) {
     {
       $project: {
         validSubscriptionScores: 0,
+      },
+    },
+    {
+      $addFields: {
+        name: { $ifNull: ["$name", "Uncategorized"] },
+        icon: { $ifNull: ["$icon", "❓"] },
       },
     },
   ];
@@ -673,6 +684,7 @@ export function barelyUsedMostExpensiveAggregate(userId) {
     {
       $unwind: {
         path: "$category",
+        preserveNullAndEmptyArrays: true,
       },
     },
   ];

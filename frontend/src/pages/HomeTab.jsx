@@ -131,9 +131,9 @@ export default function HomeTab() {
       </div>
 
       {/* Charts Row */}
-      {usedCategories?.length > 0 && pieData.length > 0 && (
-        <div className="flex flex-col gap-4">
-          <div className="rounded-2xl bg-white/40 p-5 backdrop-blur-sm dark:bg-white/10">
+      <div className="flex flex-col gap-4">
+        {usedCategories?.length > 0 && pieData.length > 0 && (
+          <div className="rounded-2xl bg-white/40 p-5 backdrop-blur-sm dark:bg-white/10 glow-xs">
             <p className="text-center text-sm font-semibold text-black/80 dark:text-white/80">
               Highest Spend Categories
             </p>
@@ -141,7 +141,9 @@ export default function HomeTab() {
               <UsedCategoriesPieChart pieData={pieData} />
             </div>
           </div>
-          <div className="rounded-2xl bg-white/40 p-5 backdrop-blur-sm dark:bg-white/10">
+        )}
+        {(dashboardData?.totalCostPerMonth > 0 || subscriptions?.length > 0) && (
+          <div className="rounded-2xl bg-white/40 p-5 backdrop-blur-sm dark:bg-white/10 glow-xs">
             <p className="text-center text-sm font-semibold text-black/80 dark:text-white/80">
               Subzero Spend-O-Meter
             </p>
@@ -155,8 +157,8 @@ export default function HomeTab() {
               />
             </div>
           </div>
-        </div>
-      )}
+        )}
+      </div>
 
       {/* Financial Reset Card */}
       <FinancialResetCard />
