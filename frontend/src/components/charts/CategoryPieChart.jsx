@@ -1,75 +1,69 @@
-import { PieChart, Pie, Tooltip, ResponsiveContainer, Cell } from "recharts";
 import { useDataContext } from "../../contexts/dataContext";
 import { filterByCategory } from "../../utils/filterHelper";
+import SubscriptionLogo from "../SubscriptionLogos";
 
 export default function CategoryPieChart({ categoryId }) {
   const { subscriptions } = useDataContext();
   const filteredSubscriptions = filterByCategory(subscriptions, categoryId);
 
-  const data = filteredSubscriptions.map((subscription) => {
-    return {
-      name: subscription.name,
-      value: subscription.monthlyPrice,
-    };
-  });
+  // Sort descending by price
+  const sortedData = [...filteredSubscriptions]
+    .sort((a, b) => b.monthlyPrice - a.monthlyPrice)
+    .slice(0, 10); // Show top 10 to keep it space-efficient
 
-  const total = data.reduce((acc, curr) => acc + curr.value, 0);
+  const maxPrice = sortedData.length > 0 ? sortedData[0].monthlyPrice : 0;
+  const colors = [
+    "from-indigo-500 to-purple-500",
+    "from-pink-500 to-rose-500",
+    "from-teal-400 to-emerald-500",
+    "from-blue-400 to-cyan-500",
+    "from-amber-400 to-orange-500",
+  ];
 
-  const renderCustomizedLabel = (props) => {
-    const { cx, cy, midAngle, outerRadius, payload } = props;
-    const RADIAN = Math.PI / 180;
-    const radius = outerRadius + 10;
-    const x = cx + radius * Math.cos(-midAngle * RADIAN);
-    const y = cy + radius * Math.sin(-midAngle * RADIAN);
-    const percent = ((payload.value / total) * 100).toFixed(0);
-
+  if (sortedData.length === 0) {
     return (
-      <text
-        x={x}
-        y={y}
-        fill="#6b7280"
-        fontSize={12}
-        textAnchor={x > cx ? "start" : "end"}
-        dominantBaseline="middle"
-      >
-        <tspan x={x} dy="0">
-          {payload.name}
-        </tspan>
-        <tspan x={x} dy="15">
-          EUR {payload.value.toFixed(2)} ({percent}%)
-        </tspan>
-      </text>
+      <div className="flex h-full w-full items-center justify-center text-sm text-black/40 dark:text-white/40">
+        No subscriptions found
+      </div>
     );
-  };
+  }
 
   return (
-    <ResponsiveContainer width="100%" height="100%">
-      <PieChart>
-        <defs>
-          <filter id="pieShadowSoft" x="-10%" y="-10%" width="120%" height="120%">
-            <feDropShadow dx="0" dy="4" stdDeviation="6" floodOpacity="0.1" />
-          </filter>
-        </defs>
-        <Pie
-          data={data}
-          cx="50%"
-          cy="50%"
-          outerRadius="65%"
-          dataKey="value"
-          labelLine={false}
-          label={renderCustomizedLabel}
-          stroke="transparent"
-          strokeWidth={1}
-          filter="url(#pieShadowSoft)"
-          paddingAngle={2}
-          className="transition-all duration-300 hover:opacity-90 active:scale-95 origin-center"
-        >
-          {data.map((entry, index) => {
-            const colors = ["#6366f1", "#ec4899", "#8b5cf6", "#14b8a6", "#f59e0b", "#3b82f6"];
-            return <Cell key={`cell-${index}`} fill={colors[index % colors.length]} className="cursor-pointer" />;
-          })}
-        </Pie>
-      </PieChart>
-    </ResponsiveContainer>
+    <div className="flex h-full w-full flex-col gap-4 overflow-y-auto pr-2 pb-2 scrollbar-hide">
+      {sortedData.map((sub, index) => {
+        const percent = maxPrice > 0 ? (sub.monthlyPrice / maxPrice) * 100 : 0;
+        const colorClass = colors[index % colors.length];
+        const displayName = sub.name.replace(/^(?:PAYPAL\s*\*?\s*|APPLE\s*\.?\s*COM\/BILL\s*|GOOGLE\s*\*?\s*)/i, "").trim() || sub.name;
+
+        return (
+          <div key={sub._id} className="flex flex-col gap-1.5 p-1">
+            <div className="flex items-center justify-between text-xs font-semibold">
+              <div className="flex items-center gap-2">
+                <div className="flex h-5 w-5 items-center justify-center overflow-hidden rounded border border-black/10 bg-white shadow-sm dark:border-white/10 dark:bg-white/90">
+                  <SubscriptionLogo subscriptionName={displayName} />
+                </div>
+                <span className="truncate max-w-[120px] text-black/80 dark:text-white/80">
+                  {displayName}
+                </span>
+              </div>
+              <span className="text-black/60 dark:text-white/60">
+                €{sub.monthlyPrice.toFixed(2)}
+              </span>
+            </div>
+            {/* The Bar */}
+            <div className="relative h-2.5 w-full overflow-hidden rounded-full bg-black/5 dark:bg-white/5">
+              <div
+                className={`absolute left-0 top-0 h-full rounded-full bg-gradient-to-r ${colorClass} opacity-90`}
+                style={{ width: `${percent}%`, transition: "width 1s cubic-bezier(0.4, 0, 0.2, 1)" }}
+              />
+              <div
+                className={`absolute left-0 top-0 h-full rounded-full bg-gradient-to-r ${colorClass} mix-blend-overlay`}
+                style={{ width: `${percent}%`, filter: "blur(4px)" }}
+              />
+            </div>
+          </div>
+        );
+      })}
+    </div>
   );
 }

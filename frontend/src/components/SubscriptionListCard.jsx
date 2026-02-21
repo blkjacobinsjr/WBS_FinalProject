@@ -20,13 +20,14 @@ export default function SubscriptionListCard({
   const touchStartY = useRef(0);
   const isHorizontalSwipe = useRef(null);
 
-  const displayName = useMemo(() =>
-    subscription?.name
-      ?.replace(/[^\p{L}\s]+/gu, " ")
+  const displayName = useMemo(() => {
+    const cleanName = subscription?.name
+      ?.replace(/^(?:PAYPAL\s*\*?\s*|APPLE\s*\.?\s*COM\/BILL\s*|GOOGLE\s*\*?\s*)/i, "")
+      .replace(/[^\p{L}\s]+/gu, " ")
       .replace(/\s+/g, " ")
-      .trim() || subscription?.name,
-    [subscription?.name]
-  );
+      .trim();
+    return cleanName || subscription?.name;
+  }, [subscription?.name]);
 
   const handleDelete = useCallback((e) => {
     e.stopPropagation();
@@ -126,24 +127,24 @@ export default function SubscriptionListCard({
           </svg>
         </button>
       )}
-        <div className="flex h-9 w-9 items-center justify-center rounded-xl border border-black/10 bg-white shadow-sm dark:border-white/20 dark:bg-white/90">
-          <SubscriptionLogo subscriptionName={subscription.name} />
-        </div>
-        <div className="min-w-0">
-          <div className="flex flex-col">
-            <div className="truncate text-sm font-medium leading-none text-black/90 dark:text-white">
-              {displayName}
-            </div>
-            {showCategory && (
-              <div className="flex min-w-0 items-center justify-start gap-2 pt-1 text-xs text-black/50 dark:text-white/50">
-                <CategoryIcon icon={subscription?.category?.icon} iconSize={4} />
-                <div className="truncate">
-                  {subscription?.category?.name || "Uncategorized"}
-                </div>
-              </div>
-            )}
+      <div className="flex h-9 w-9 items-center justify-center rounded-xl border border-black/10 bg-white shadow-sm dark:border-white/20 dark:bg-white/90">
+        <SubscriptionLogo subscriptionName={displayName || subscription?.name} />
+      </div>
+      <div className="min-w-0">
+        <div className="flex flex-col">
+          <div className="truncate text-sm font-medium leading-none text-black/90 dark:text-white">
+            {displayName}
           </div>
+          {showCategory && (
+            <div className="flex min-w-0 items-center justify-start gap-2 pt-1 text-xs text-black/50 dark:text-white/50">
+              <CategoryIcon icon={subscription?.category?.icon} iconSize={4} />
+              <div className="truncate">
+                {subscription?.category?.name || "Uncategorized"}
+              </div>
+            </div>
+          )}
         </div>
+      </div>
       <div className="text-right">
         <div className="relative whitespace-nowrap">
           <p className="font-medium text-black/90 dark:text-white">€{subscription.price}</p>

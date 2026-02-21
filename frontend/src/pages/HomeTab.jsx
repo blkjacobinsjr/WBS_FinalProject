@@ -160,9 +160,6 @@ export default function HomeTab() {
         )}
       </div>
 
-      {/* Financial Reset Card */}
-      <FinancialResetCard />
-
       {/* Recent Subscriptions */}
       {recentSubs.length > 0 && (
         <div>
@@ -189,6 +186,9 @@ export default function HomeTab() {
           </div>
         </div>
       )}
+
+      {/* Financial Reset Card */}
+      <FinancialResetCard />
 
       {/* Empty State */}
       {subscriptions?.length === 0 && (

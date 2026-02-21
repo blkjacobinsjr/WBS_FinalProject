@@ -22,6 +22,26 @@ const needle = (value, data, cx, cy, iR, oR, color) => {
   const xp = x0 + length * cos;
   const yp = y0 + length * sin;
 
+  const CirclePulse = () => (
+    <g>
+      <circle cx={xp} cy={yp} r={6} fill={color} />
+      <circle cx={xp} cy={yp} r={6} fill={color}>
+        <animate
+          attributeName="r"
+          values="6;14;6"
+          dur="2s"
+          repeatCount="indefinite"
+        />
+        <animate
+          attributeName="opacity"
+          values="0.5;0;0.5"
+          dur="2s"
+          repeatCount="indefinite"
+        />
+      </circle>
+    </g>
+  );
+
   return [
     <circle key="circle" cx={x0} cy={y0} r={r} fill={color} stroke="none" />,
     <path
@@ -31,6 +51,7 @@ const needle = (value, data, cx, cy, iR, oR, color) => {
       fill="#475569"
       style={{ filter: "drop-shadow(0px 4px 6px rgba(0,0,0,0.15))" }}
     />,
+    <CirclePulse key="pulse" />,
   ];
 };
 
@@ -77,9 +98,9 @@ export default function PieChartWithNeedle({ maxFirstSegment, needleValue }) {
         const height = entry.target.clientHeight;
         if (width && height) {
           setComputedCX(width * 0.5);
-          setComputedCY(height * 0.75);
-          setComputedIR(width * 0.5);
-          setComputedOR(width);
+          setComputedCY(height * 0.68);
+          setComputedIR(55);
+          setComputedOR(85);
         }
       }
     });
@@ -109,9 +130,9 @@ export default function PieChartWithNeedle({ maxFirstSegment, needleValue }) {
   ];
 
   const cx = "50%";
-  const cy = "75%";
-  const iR = "50%";
-  const oR = "100%";
+  const cy = "68%";
+  const iR = 55;
+  const oR = 85;
 
   return (
     <div ref={containerRef} className="h-full w-full">
