@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { Link } from "react-router-dom";
 import { SignedIn, SignedOut, UserButton } from "@clerk/clerk-react";
 import Grainient from "../components/ui/Grainient";
@@ -5,6 +6,7 @@ import BlurText from "../components/ui/BlurText";
 import FadeIn from "../components/ui/FadeIn";
 
 export default function Homepage() {
+  const [menuOpen, setMenuOpen] = useState(false);
   const features = [
     { icon: "✨", title: "Reclaim Your Money", description: "Discover subscriptions silently draining your account." },
     { icon: "🎯", title: "Crystal Clear Overview", description: "Every subscription, one beautiful dashboard." },
@@ -29,18 +31,62 @@ export default function Homepage() {
             <img src="/subzero_logo_icon.png" alt="Subzro" className="h-7 w-7" />
             <span className="text-lg font-semibold text-black/80">subzro</span>
           </Link>
-          <div className="flex items-center gap-3">
-            <Link to="/pricing" className="rounded-full bg-white/65 px-3 py-1.5 text-xs font-semibold text-black/70">
-              Pricing
-            </Link>
+          <div className="relative flex items-center gap-2 whitespace-nowrap">
             <SignedOut>
-              <Link to="/login" className="px-4 py-2 text-sm font-medium text-black/70 hover:text-black">Sign in</Link>
-              <Link to="/signup" className="rounded-full bg-black px-4 py-2 text-sm font-medium text-white">Get Started</Link>
+              <Link to="/login" className="px-2.5 py-2 text-sm font-medium text-black/70 hover:text-black sm:px-3">Sign in</Link>
+              <Link to="/signup" className="rounded-full bg-black px-3.5 py-1.5 text-sm font-medium text-white sm:px-4 sm:py-2">
+                Get Started
+              </Link>
             </SignedOut>
             <SignedIn>
               <Link to="/dashboard" className="rounded-full bg-black px-4 py-2 text-sm font-medium text-white">Dashboard</Link>
               <UserButton afterSignOutUrl={window.location.origin} />
             </SignedIn>
+            <button
+              type="button"
+              aria-label={menuOpen ? "Close menu" : "Open menu"}
+              aria-expanded={menuOpen}
+              onClick={() => setMenuOpen((prev) => !prev)}
+              className="grid h-9 w-9 place-content-center rounded-full bg-white/65 transition hover:bg-white/80"
+            >
+              <span
+                className={`block h-[2px] w-4 bg-black transition duration-200 ${
+                  menuOpen ? "translate-y-[4px] rotate-45" : ""
+                }`}
+              />
+              <span
+                className={`mt-[4px] block h-[2px] w-4 bg-black transition duration-200 ${
+                  menuOpen ? "-translate-y-[2px] -rotate-45" : ""
+                }`}
+              />
+            </button>
+            <div
+              className={`absolute right-0 top-12 w-44 overflow-hidden rounded-2xl border border-white/30 bg-white/85 p-2 shadow-xl backdrop-blur-md transition-all duration-200 ${
+                menuOpen ? "translate-y-0 opacity-100" : "pointer-events-none -translate-y-1 opacity-0"
+              }`}
+            >
+              <Link
+                to="/pricing"
+                onClick={() => setMenuOpen(false)}
+                className="block rounded-xl px-3 py-2 text-sm font-medium text-black/80 transition hover:bg-white"
+              >
+                Pricing
+              </Link>
+              <Link
+                to="/impressum"
+                onClick={() => setMenuOpen(false)}
+                className="mt-1 block rounded-xl px-3 py-2 text-sm font-medium text-black/70 transition hover:bg-white"
+              >
+                Impressum
+              </Link>
+              <Link
+                to="/privacy"
+                onClick={() => setMenuOpen(false)}
+                className="mt-1 block rounded-xl px-3 py-2 text-sm font-medium text-black/70 transition hover:bg-white"
+              >
+                Privacy
+              </Link>
+            </div>
           </div>
         </div>
       </nav>
@@ -50,8 +96,8 @@ export default function Homepage() {
         <div className="mx-auto max-w-3xl text-center">
           <FadeIn delay={0}>
             <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-white/40 bg-white/50 px-4 py-1.5 backdrop-blur-sm">
-              <span className="text-xs">❄️</span>
-              <span className="text-xs font-medium text-purple-900">Smart women know where their money goes</span>
+              <img src="/mascot-subzro/mascotmove12.webp" alt="" className="h-4 w-4 rounded-full object-cover" />
+              <span className="text-xs font-medium text-purple-900">For busy women who want to know where their money goes</span>
             </div>
           </FadeIn>
 
@@ -63,15 +109,15 @@ export default function Homepage() {
 
           <FadeIn delay={0.3}>
             <p className="mx-auto mb-8 max-w-xl text-lg text-black/70">
-              Elevate essentials. Freeze out the waste.<br className="hidden sm:block" />
-              Take control of every subscription in one beautiful dashboard.
+              Your personal finance pet quietly sniffs recurring spend.<br className="hidden sm:block" />
+              Keep what matters. Freeze what does not.
             </p>
           </FadeIn>
 
           <FadeIn delay={0.5}>
             <div className="flex flex-col items-center gap-4 sm:flex-row sm:justify-center">
-              <Link to="/signup" className="rounded-full bg-gradient-to-r from-purple-600 to-pink-600 px-8 py-3 text-sm font-semibold text-white shadow-lg hover:shadow-purple-500/25">
-                Start Free — No Card Needed
+              <Link to="/signup" className="rounded-full bg-gradient-to-r from-purple-600 to-pink-600 px-7 py-3 text-sm font-semibold text-white shadow-lg hover:shadow-purple-500/25">
+                Start Free - No Card Needed
               </Link>
               <Link to="/login" className="inline-flex items-center gap-2 rounded-full border border-white/40 bg-white/50 px-6 py-3 text-sm font-medium text-black/70 backdrop-blur-sm">
                 I have an account →

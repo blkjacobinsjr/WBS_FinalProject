@@ -1,9 +1,10 @@
-import { useRef, useState } from "react";
+import { useRef, useState, useCallback, useMemo } from "react";
 import CategoryIcon from "./CategoryIcon";
 import SubscriptionLogo from "./SubscriptionLogos";
 import eventEmitter from "../utils/EventEmitter";
 
 const SWIPE_THRESHOLD = 100;
+const MAX_SWIPE_DISTANCE = 150;
 
 export default function SubscriptionListCard({
   subscription,
@@ -19,16 +20,27 @@ export default function SubscriptionListCard({
   const touchStartY = useRef(0);
   const isHorizontalSwipe = useRef(null);
 
-  const displayName =
+  const displayName = useMemo(() =>
     subscription?.name
       ?.replace(/[^\p{L}\s]+/gu, " ")
       .replace(/\s+/g, " ")
-      .trim() || subscription?.name;
+      .trim() || subscription?.name,
+    [subscription?.name]
+  );
 
-  function handleDelete(e) {
+  const handleDelete = useCallback((e) => {
     e.stopPropagation();
     eventEmitter.emit("deleteSubscription", subscription);
-  }
+  }, [subscription]);
+
+  const handleKeyDown = useCallback((e) => {
+    if (!enableDelete) return;
+    // Delete on Backspace or Delete key when focused
+    if (e.key === "Backspace" || e.key === "Delete") {
+      e.preventDefault();
+      eventEmitter.emit("deleteSubscription", subscription);
+    }
+  }, [enableDelete, subscription]);
 
   function handleTouchStart(e) {
     if (!enableDelete) return;
@@ -51,7 +63,7 @@ export default function SubscriptionListCard({
 
     // Only handle horizontal swipes (left only)
     if (isHorizontalSwipe.current && deltaX < 0) {
-      setSwipeX(Math.max(deltaX, -150)); // Limit swipe distance
+      setSwipeX(Math.max(deltaX, -MAX_SWIPE_DISTANCE)); // Limit swipe distance
     }
   }
 
@@ -61,7 +73,7 @@ export default function SubscriptionListCard({
 
     if (swipeX < -SWIPE_THRESHOLD) {
       // Swipe past threshold - delete
-      setSwipeX(-150); // Animate to full reveal
+      setSwipeX(-MAX_SWIPE_DISTANCE); // Animate to full reveal
       setTimeout(() => {
         eventEmitter.emit("deleteSubscription", subscription);
         setSwipeX(0);
@@ -73,25 +85,33 @@ export default function SubscriptionListCard({
     isHorizontalSwipe.current = null;
   }
 
+  // Memoize style object to prevent re-renders
+  const cardStyle = useMemo(() => ({
+    ...style,
+    transform: `translateX(${swipeX}px)`,
+    transition: isSwiping ? "none" : "transform 0.2s ease-out",
+  }), [style, swipeX, isSwiping]);
+
   return (
     <div
-      className={`group relative grid w-full min-w-0 cursor-pointer grid-cols-[2.5rem_minmax(0,1fr)_auto] items-center gap-3 rounded-xl border border-white/30 bg-white/40 p-3 backdrop-blur-sm hover:bg-white/60 dark:border-white/10 dark:bg-white/10 dark:hover:bg-white/15 ${className}`}
+      className={`group relative grid w-full min-w-0 cursor-pointer grid-cols-[2.5rem_minmax(0,1fr)_auto] items-center gap-3 rounded-xl border border-white/30 bg-white/40 p-3 backdrop-blur-sm transition-colors duration-150 hover:bg-white/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-500/50 dark:border-white/10 dark:bg-white/10 dark:hover:bg-white/15 ${className}`}
       key={subscription?._id}
       onClick={clickHandler}
+      onKeyDown={handleKeyDown}
       onTouchStart={handleTouchStart}
       onTouchMove={handleTouchMove}
       onTouchEnd={handleTouchEnd}
-      style={{
-        ...style,
-        transform: `translateX(${swipeX}px)`,
-        transition: isSwiping ? "none" : "transform 0.2s ease-out",
-      }}
+      tabIndex={0}
+      role="button"
+      aria-label={`${displayName}, €${subscription?.price} per ${subscription?.interval}`}
+      style={cardStyle}
     >
-      {/* Subtle X button - top right, appears on hover */}
+      {/* Subtle X button - top right, appears on hover/focus */}
       {enableDelete && (
         <button
           onClick={handleDelete}
-          className="absolute -right-1 -top-1 z-10 flex h-5 w-5 items-center justify-center rounded-full bg-black/10 text-black/40 opacity-0 backdrop-blur-sm transition-all hover:bg-black/20 hover:text-black/60 group-hover:opacity-100 dark:bg-white/10 dark:text-white/40 dark:hover:bg-white/20 dark:hover:text-white/60"
+          aria-label={`Delete ${displayName}`}
+          className="absolute -right-1 -top-1 z-10 flex h-5 w-5 items-center justify-center rounded-full bg-black/10 text-black/50 opacity-0 backdrop-blur-sm transition-all duration-150 hover:bg-red-500/20 hover:text-red-600 focus-visible:opacity-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500/50 group-hover:opacity-100 dark:bg-white/10 dark:text-white/50 dark:hover:bg-red-500/20 dark:hover:text-red-400"
         >
           <svg
             xmlns="http://www.w3.org/2000/svg"
@@ -100,6 +120,7 @@ export default function SubscriptionListCard({
             strokeWidth={2}
             stroke="currentColor"
             className="h-3 w-3"
+            aria-hidden="true"
           >
             <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
           </svg>

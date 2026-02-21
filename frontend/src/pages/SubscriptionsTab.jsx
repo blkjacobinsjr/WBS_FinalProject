@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo, useCallback } from "react";
 import { useDataContext } from "../contexts/dataContext";
 import SubscriptionListCard from "../components/SubscriptionListCard";
 import eventEmitter from "../utils/EventEmitter";
@@ -8,23 +8,25 @@ export default function SubscriptionsTab({ onOpenBulkImport }) {
   const [selectedCategory, setSelectedCategory] = useState("all");
   const [searchQuery, setSearchQuery] = useState("");
 
-  // Filter subscriptions
-  const filteredSubs = subscriptions?.filter((sub) => {
-    const matchesCategory =
-      selectedCategory === "all" || sub.category?._id === selectedCategory;
-    const matchesSearch =
-      !searchQuery ||
-      sub.name.toLowerCase().includes(searchQuery.toLowerCase());
-    return matchesCategory && matchesSearch;
-  }) || [];
+  // Memoize filtered subscriptions to prevent recalculation on every render
+  const filteredSubs = useMemo(() => {
+    return subscriptions?.filter((sub) => {
+      const matchesCategory =
+        selectedCategory === "all" || sub.category?._id === selectedCategory;
+      const matchesSearch =
+        !searchQuery ||
+        sub.name.toLowerCase().includes(searchQuery.toLowerCase());
+      return matchesCategory && matchesSearch;
+    }) || [];
+  }, [subscriptions, selectedCategory, searchQuery]);
 
-  function handleSubscriptionClick(subscription) {
+  const handleSubscriptionClick = useCallback((subscription) => {
     eventEmitter.emit("openSubscriptionForm", subscription, "show");
-  }
+  }, []);
 
-  function handleAddSubscription() {
+  const handleAddSubscription = useCallback(() => {
     eventEmitter.emit("openSubscriptionForm", null, "add");
-  }
+  }, []);
 
   return (
     <div className="flex flex-col gap-4 pb-24">
@@ -36,7 +38,8 @@ export default function SubscriptionsTab({ onOpenBulkImport }) {
           viewBox="0 0 24 24"
           strokeWidth={1.5}
           stroke="currentColor"
-          className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-black/30 dark:text-white/30"
+          className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-black/40 dark:text-white/40"
+          aria-hidden="true"
         >
           <path
             strokeLinecap="round"
@@ -45,22 +48,25 @@ export default function SubscriptionsTab({ onOpenBulkImport }) {
           />
         </svg>
         <input
-          type="text"
+          type="search"
           placeholder="Search subscriptions..."
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
-          className="w-full rounded-xl border-0 bg-white/40 py-3 pl-10 pr-4 text-sm text-black/80 placeholder-black/30 backdrop-blur-sm focus:outline-none focus:ring-2 focus:ring-black/10 dark:bg-white/10 dark:text-white dark:placeholder-white/30 dark:focus:ring-purple-500/30"
+          aria-label="Search subscriptions"
+          className="w-full rounded-xl border-0 bg-white/40 py-3 pl-10 pr-4 text-sm text-black/80 placeholder-black/40 backdrop-blur-sm transition-all duration-150 focus:bg-white/60 focus:outline-none focus:ring-2 focus:ring-black/10 dark:bg-white/10 dark:text-white dark:placeholder-white/40 dark:focus:bg-white/15 dark:focus:ring-purple-500/30"
         />
       </div>
 
       {/* Category Pills */}
-      <div className="no-scrollbar flex gap-2 overflow-x-auto pb-1">
+      <div className="no-scrollbar flex gap-2 overflow-x-auto pb-1" role="tablist" aria-label="Filter by category">
         <button
           onClick={() => setSelectedCategory("all")}
-          className={`shrink-0 rounded-full px-4 py-1.5 text-xs font-medium transition-all active:scale-95 ${
+          role="tab"
+          aria-selected={selectedCategory === "all"}
+          className={`shrink-0 rounded-full px-4 py-1.5 text-xs font-medium transition-all duration-150 ease-out active:scale-95 ${
             selectedCategory === "all"
-              ? "bg-black text-white dark:bg-purple-500 dark:text-white"
-              : "bg-black/5 text-black/60 hover:bg-black/10 dark:bg-white/10 dark:text-white/60 dark:hover:bg-white/20"
+              ? "bg-black text-white shadow-sm dark:bg-purple-500 dark:text-white dark:shadow-purple-500/25"
+              : "bg-black/5 text-black/70 hover:-translate-y-0.5 hover:bg-black/10 dark:bg-white/10 dark:text-white/70 dark:hover:bg-white/20"
           }`}
         >
           All
@@ -69,10 +75,12 @@ export default function SubscriptionsTab({ onOpenBulkImport }) {
           <button
             key={cat._id}
             onClick={() => setSelectedCategory(cat._id)}
-            className={`shrink-0 rounded-full px-4 py-1.5 text-xs font-medium transition-all active:scale-95 ${
+            role="tab"
+            aria-selected={selectedCategory === cat._id}
+            className={`shrink-0 rounded-full px-4 py-1.5 text-xs font-medium transition-all duration-150 ease-out active:scale-95 ${
               selectedCategory === cat._id
-                ? "bg-black text-white dark:bg-purple-500 dark:text-white"
-                : "bg-black/5 text-black/60 hover:bg-black/10 dark:bg-white/10 dark:text-white/60 dark:hover:bg-white/20"
+                ? "bg-black text-white shadow-sm dark:bg-purple-500 dark:text-white dark:shadow-purple-500/25"
+                : "bg-black/5 text-black/70 hover:-translate-y-0.5 hover:bg-black/10 dark:bg-white/10 dark:text-white/70 dark:hover:bg-white/20"
             }`}
           >
             {cat.name}
@@ -83,7 +91,8 @@ export default function SubscriptionsTab({ onOpenBulkImport }) {
       {/* Add Subscription Button */}
       <button
         onClick={handleAddSubscription}
-        className="flex items-center justify-center gap-2 rounded-xl bg-black py-3 font-medium text-white transition-all active:scale-[0.98] dark:bg-gradient-to-r dark:from-purple-600 dark:to-pink-600 dark:text-white"
+        aria-label="Add new subscription"
+        className="flex items-center justify-center gap-2 rounded-xl bg-black py-3 font-medium text-white transition-all duration-150 ease-out hover:-translate-y-0.5 hover:shadow-lg active:scale-[0.98] dark:bg-gradient-to-r dark:from-purple-600 dark:to-pink-600 dark:text-white dark:hover:shadow-purple-500/25"
       >
         <svg
           xmlns="http://www.w3.org/2000/svg"
@@ -132,9 +141,10 @@ export default function SubscriptionsTab({ onOpenBulkImport }) {
       {/* Bulk Import Card */}
       <button
         onClick={onOpenBulkImport}
-        className="flex items-center gap-3 rounded-xl bg-white/40 p-4 text-left backdrop-blur-sm transition-all active:scale-[0.98] dark:bg-white/10"
+        aria-label="Import subscriptions from bank statement PDF"
+        className="flex items-center gap-3 rounded-xl bg-white/40 p-4 text-left backdrop-blur-sm transition-all duration-150 ease-out hover:-translate-y-0.5 hover:bg-white/60 active:scale-[0.98] dark:bg-white/10 dark:hover:bg-white/15"
       >
-        <div className="rounded-full bg-black/5 p-2 dark:bg-white/10">
+        <div className="rounded-full bg-black/5 p-2 transition-colors duration-150 group-hover:bg-black/10 dark:bg-white/10">
           <svg
             xmlns="http://www.w3.org/2000/svg"
             fill="none"
@@ -142,6 +152,7 @@ export default function SubscriptionsTab({ onOpenBulkImport }) {
             strokeWidth={1.5}
             stroke="currentColor"
             className="h-5 w-5 text-black/60 dark:text-white/60"
+            aria-hidden="true"
           >
             <path
               strokeLinecap="round"
@@ -154,7 +165,7 @@ export default function SubscriptionsTab({ onOpenBulkImport }) {
           <p className="text-sm font-medium text-black/80 dark:text-white/80">
             Import from bank statement
           </p>
-          <p className="text-xs text-black/40 dark:text-white/40">
+          <p className="text-xs text-black/50 dark:text-white/50">
             Auto-detect subscriptions from PDF
           </p>
         </div>

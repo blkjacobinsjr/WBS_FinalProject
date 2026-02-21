@@ -1,9 +1,10 @@
 import { SignedIn, SignedOut, UserButton, useUser } from "@clerk/clerk-react";
-import { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { Link, useSearchParams } from "react-router-dom";
 import { toast } from "sonner";
 import FadeIn from "../components/ui/FadeIn";
 import Grainient from "../components/ui/Grainient";
+import { logOnboardingEvent } from "../utils/onboardingDebug";
 
 const PADDLE_SCRIPT_ID = "paddle-js-v2";
 let paddleBootPromise = null;
@@ -96,15 +97,30 @@ async function initializePaddle(clientToken, environment, eventCallback) {
 
 export default function PricingPage() {
   const { user } = useUser();
+  const [searchParams] = useSearchParams();
   const [isPaddleReady, setIsPaddleReady] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const autoCheckoutRef = useRef(false);
 
   const paddleClientToken = import.meta.env.VITE_PADDLE_CLIENT_TOKEN;
   const paddlePriceId = import.meta.env.VITE_PADDLE_PRICE_ID_MATCHA_MONTHLY;
   const paddleEnvironment = import.meta.env.VITE_PADDLE_ENV || "sandbox";
+  const autoCheckout = searchParams.get("autoCheckout") === "1";
+  const checkoutSource = searchParams.get("source") || "subzro_pricing";
+  const returnTo = searchParams.get("returnTo");
+  const successPath =
+    returnTo && returnTo.startsWith("/")
+      ? returnTo
+      : "/dashboard?checkout=success";
+  const checkoutSuccessUrl = `${window.location.origin}${successPath}`;
 
   useEffect(() => {
     let cancelled = false;
+
+    logOnboardingEvent("pricing_opened", {
+      autoCheckout,
+      source: checkoutSource,
+    });
 
     initializePaddle(paddleClientToken, paddleEnvironment, (event) => {
       if (cancelled) return;
@@ -114,22 +130,30 @@ export default function PricingPage() {
         event?.name === "checkout.payment.failed"
       ) {
         setIsLoading(false);
+        logOnboardingEvent("pricing_checkout_event", {
+          name: event?.name,
+          source: checkoutSource,
+        });
       }
     })
       .then(() => {
         if (!cancelled) setIsPaddleReady(true);
+        logOnboardingEvent("pricing_paddle_ready", { source: checkoutSource });
       })
       .catch((error) => {
         console.error("[PADDLE_INIT_ERROR]", error);
         if (!cancelled) setIsPaddleReady(false);
+        logOnboardingEvent("pricing_paddle_init_failed", {
+          source: checkoutSource,
+        });
       });
 
     return () => {
       cancelled = true;
     };
-  }, [paddleClientToken, paddleEnvironment]);
+  }, [autoCheckout, checkoutSource, paddleClientToken, paddleEnvironment]);
 
-  function openCheckout() {
+  const openCheckout = useCallback(() => {
     if (!paddlePriceId) {
       toast.error("Pricing is not configured yet.");
       return;
@@ -141,6 +165,10 @@ export default function PricingPage() {
     }
 
     setIsLoading(true);
+    logOnboardingEvent("pricing_checkout_open_attempt", {
+      source: checkoutSource,
+      autoCheckout,
+    });
 
     try {
       const email = user?.primaryEmailAddress?.emailAddress;
@@ -149,14 +177,14 @@ export default function PricingPage() {
         items: [{ priceId: paddlePriceId, quantity: 1 }],
         customer: email ? { email } : undefined,
         customData: {
-          source: "subzro_pricing",
+          source: checkoutSource,
           userId: user?.id ?? null,
         },
         settings: {
           displayMode: "overlay",
           theme: "light",
           locale: "en",
-          successUrl: `${window.location.origin}/dashboard?checkout=success`,
+          successUrl: checkoutSuccessUrl,
         },
       });
     } catch (error) {
@@ -164,7 +192,26 @@ export default function PricingPage() {
       setIsLoading(false);
       toast.error("Could not start checkout.");
     }
-  }
+  }, [
+    checkoutSource,
+    checkoutSuccessUrl,
+    isPaddleReady,
+    paddlePriceId,
+    user?.id,
+    user?.primaryEmailAddress?.emailAddress,
+  ]);
+
+  useEffect(() => {
+    if (!autoCheckout) return;
+    if (!isPaddleReady) return;
+    if (isLoading) return;
+    if (autoCheckoutRef.current) return;
+    autoCheckoutRef.current = true;
+    logOnboardingEvent("pricing_auto_checkout_triggered", {
+      source: checkoutSource,
+    });
+    openCheckout();
+  }, [autoCheckout, isLoading, isPaddleReady, openCheckout]);
 
   return (
     <div className="relative min-h-screen bg-[#edf6ff]">
@@ -224,6 +271,16 @@ export default function PricingPage() {
                 <p className="mt-2 text-sm text-black/65 sm:text-base">
                   One clean subscription for full access. No setup complexity.
                 </p>
+                {checkoutSource === "subzro_onboarding" && (
+                  <div className="mt-3 inline-flex items-center gap-2 rounded-full border border-[#d7f0ff] bg-[#eef9ff] px-3 py-1.5 text-xs font-semibold text-black/70">
+                    <img
+                      src="/mascot-subzro/mascotwink.webp"
+                      alt="Subzro mascot"
+                      className="mascot-blink h-5 w-5"
+                    />
+                    Final onboarding step
+                  </div>
+                )}
               </div>
 
               <div className="rounded-2xl border border-white/55 bg-white/70 p-5">
@@ -235,7 +292,12 @@ export default function PricingPage() {
                     <p className="mt-1 text-4xl font-bold text-black/90">$4.99</p>
                     <p className="text-sm text-black/60">per month</p>
                   </div>
-                  <div className="rounded-xl bg-gradient-to-r from-[#a7ffd6] to-[#ffe8b6] px-3 py-1.5 text-xs font-semibold text-black/70">
+                  <div className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-[#a7ffd6] to-[#ffe8b6] px-3 py-1.5 text-xs font-semibold text-black/70">
+                    <img
+                      src="/mascot-subzro/mascotmove7.webp"
+                      alt=""
+                      className="mascot-slide h-5 w-5"
+                    />
                     Matcha money
                   </div>
                 </div>
@@ -267,7 +329,18 @@ export default function PricingPage() {
                 disabled={isLoading || !isPaddleReady}
                 className="mt-6 w-full rounded-full bg-gradient-to-r from-[#42d587] via-[#6ce0b8] to-[#ffbd67] px-6 py-4 text-base font-semibold text-black transition hover:brightness-105 disabled:cursor-not-allowed disabled:opacity-60"
               >
-                {isLoading ? "Opening checkout..." : "Subscribe for $4.99/month"}
+                <span className="inline-flex items-center justify-center gap-2">
+                  {isLoading && (
+                    <img
+                      src="/mascot-subzro/mascotmove3.webp"
+                      alt=""
+                      className="mascot-slide h-6 w-6"
+                    />
+                  )}
+                  {isLoading
+                    ? "Opening checkout..."
+                    : "Subscribe for $4.99/month"}
+                </span>
               </button>
 
               <p className="mt-3 text-center text-xs text-black/55">

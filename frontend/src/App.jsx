@@ -1,4 +1,4 @@
-import { ClerkProvider, SignedIn, SignedOut } from "@clerk/clerk-react";
+import { ClerkProvider, SignedIn, SignedOut, useUser } from "@clerk/clerk-react";
 import {
   BrowserRouter,
   Navigate,
@@ -14,8 +14,13 @@ import ErrorPage from "./pages/ErrorPage";
 import Homepage from "./pages/Homepage";
 import LegalPage from "./pages/LegalPage";
 import Login from "./pages/Login";
+import Onboarding from "./pages/Onboarding";
 import PricingPage from "./pages/PricingPage";
 import Signup from "./pages/Signup";
+import {
+  isForceFreshOnboardingEmail,
+  readOnboardingCompletedAt,
+} from "./utils/onboardingState";
 
 // access our key
 const publishableKey = import.meta.env.VITE_REACT_APP_CLERK_PUBLISHABLE_KEY;
@@ -27,6 +32,28 @@ if (!publishableKey) {
 
 // Our app has to be wrapped in a Clerk provider that will take also care
 // of routing
+function DashboardEntryGuard({ children }) {
+  const { user, isLoaded } = useUser();
+
+  if (!isLoaded) return null;
+
+  const email = user?.primaryEmailAddress?.emailAddress || "";
+  const completedAt = readOnboardingCompletedAt(email);
+  const forceFresh = isForceFreshOnboardingEmail(email);
+
+  if (forceFresh || !completedAt) {
+    const source = forceFresh ? "dashboard_force_fresh" : "dashboard_first_run";
+    return (
+      <Navigate
+        to={`/onboarding?force=${forceFresh ? "1" : "0"}&source=${source}`}
+        replace
+      />
+    );
+  }
+
+  return children;
+}
+
 function ClerkRouteProvider() {
   const navigate = useNavigate();
 
@@ -56,6 +83,19 @@ function ClerkRouteProvider() {
         />
         <Route path="/login" element={<Login />} />
         <Route path="/signup" element={<Signup />} />
+        <Route
+          path="/onboarding"
+          element={
+            <>
+              <SignedIn>
+                <Onboarding />
+              </SignedIn>
+              <SignedOut>
+                <Navigate to="/signup" />
+              </SignedOut>
+            </>
+          }
+        />
         <Route path="/pricing" element={<PricingPage />} />
         <Route path="/impressum" element={<LegalPage pageKey="imprint" />} />
         <Route path="/imprint" element={<LegalPage pageKey="imprint" />} />
@@ -79,9 +119,11 @@ function ClerkRouteProvider() {
           element={
             <>
               <SignedIn>
-                <DataProvider>
-                  <Dashboard />
-                </DataProvider>
+                <DashboardEntryGuard>
+                  <DataProvider>
+                    <Dashboard />
+                  </DataProvider>
+                </DashboardEntryGuard>
               </SignedIn>
               <SignedOut>
                 <Navigate to="/" />
@@ -96,9 +138,11 @@ function ClerkRouteProvider() {
           element={
             <>
               <SignedIn>
-                <DataProvider>
-                  <Dashboard />
-                </DataProvider>
+                <DashboardEntryGuard>
+                  <DataProvider>
+                    <Dashboard />
+                  </DataProvider>
+                </DashboardEntryGuard>
               </SignedIn>
               <SignedOut>
                 <Navigate to="/" />

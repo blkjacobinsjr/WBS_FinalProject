@@ -1,5 +1,3 @@
-import LoadingSpinner from "./LoadingSpinner";
-
 export default function LoadingButton({
   isLoading = false,
   loadingText,
@@ -17,7 +15,13 @@ export default function LoadingButton({
       aria-busy={isLoading}
       className={`btn-press inline-flex items-center justify-center gap-2 ${className}`}
     >
-      {isLoading && <LoadingSpinner className="h-4 w-4" />}
+      {isLoading && (
+        <img
+          src="/mascot-subzro/mascotmove5.webp"
+          alt=""
+          className="mascot-slide h-5 w-5"
+        />
+      )}
       <span>{isLoading && loadingText ? loadingText : children}</span>
     </button>
   );

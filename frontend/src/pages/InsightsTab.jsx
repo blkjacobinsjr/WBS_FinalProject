@@ -1,3 +1,4 @@
+import { useMemo } from "react";
 import { useDataContext } from "../contexts/dataContext";
 import UsageRadarChart from "../components/charts/UsageRadarChart";
 import UsedCategoriesPieChart from "../components/charts/UsedCategoriesPieChart";
@@ -42,8 +43,8 @@ export default function InsightsTab() {
   if (leastExpensiveCategory?.totalCost === Infinity)
     leastExpensiveCategory.totalCost = 0;
 
-  // Pie chart data
-  const pieData =
+  // Memoize pie chart data
+  const pieData = useMemo(() =>
     usedCategories?.length > 0 && subscriptions?.length > 0
       ? usedCategories.map((category) => ({
           name: category.name,
@@ -52,13 +53,18 @@ export default function InsightsTab() {
             (s) => s.category._id === category._id
           ),
         }))
-      : [];
+      : [],
+    [usedCategories, subscriptions]
+  );
 
-  // Least used subscriptions for recommendations
-  const leastUsedSubs = subscriptions
-    ?.filter((s) => s.score !== 0 && s.score !== undefined && s.score !== null)
-    .sort((a, b) => a.score - b.score)
-    .slice(0, 3);
+  // Memoize least used subscriptions for recommendations
+  const leastUsedSubs = useMemo(() =>
+    subscriptions
+      ?.filter((s) => s.score !== 0 && s.score !== undefined && s.score !== null)
+      .sort((a, b) => a.score - b.score)
+      .slice(0, 3),
+    [subscriptions]
+  );
 
   return (
     <div className="flex flex-col gap-4 pb-24">
@@ -195,45 +201,45 @@ export default function InsightsTab() {
       )}
 
       {/* Stats Grid - Row 1 */}
-      <div className="grid grid-cols-2 gap-2">
-        <div className="rounded-xl bg-white/40 p-4 backdrop-blur-sm dark:bg-white/10">
-          <p className="text-xs font-medium text-black/40 dark:text-white/40">
+      <div className="grid grid-cols-2 gap-2" role="group" aria-label="Subscription statistics">
+        <div className="rounded-xl bg-white/40 p-4 backdrop-blur-sm transition-all duration-150 ease-out hover:-translate-y-0.5 hover:bg-white/60 dark:bg-white/10 dark:hover:bg-white/15">
+          <p className="text-xs font-medium text-black/50 dark:text-white/50">
             Total Subscriptions
           </p>
-          <p className="mt-1 text-2xl font-bold text-black/80 dark:text-white/80">
+          <p className="mt-1 bg-gradient-to-b from-black/50 to-black/90 bg-clip-text text-2xl font-bold text-transparent dark:from-white dark:to-white/60">
             {totalCount}
           </p>
         </div>
-        <div className="rounded-xl bg-white/40 p-4 backdrop-blur-sm dark:bg-white/10">
-          <p className="text-xs font-medium text-black/40 dark:text-white/40">
+        <div className="rounded-xl bg-white/40 p-4 backdrop-blur-sm transition-all duration-150 ease-out hover:-translate-y-0.5 hover:bg-white/60 dark:bg-white/10 dark:hover:bg-white/15">
+          <p className="text-xs font-medium text-black/50 dark:text-white/50">
             Monthly Spend
           </p>
-          <p className="mt-1 text-2xl font-bold text-black/80 dark:text-white/80">
+          <p className="mt-1 bg-gradient-to-b from-black/50 to-black/90 bg-clip-text text-2xl font-bold text-transparent dark:from-white dark:to-white/60">
             €{dashboardData?.totalCostPerMonth?.toFixed(2) || "0.00"}
           </p>
         </div>
-        <div className="rounded-xl bg-white/40 p-4 backdrop-blur-sm dark:bg-white/10">
-          <p className="text-xs font-medium text-black/40 dark:text-white/40">
+        <div className="rounded-xl bg-white/40 p-4 backdrop-blur-sm transition-all duration-150 ease-out hover:-translate-y-0.5 hover:bg-white/60 dark:bg-white/10 dark:hover:bg-white/15">
+          <p className="text-xs font-medium text-black/50 dark:text-white/50">
             You've Identified
           </p>
-          <p className="mt-1 text-2xl font-bold text-green-600 dark:text-green-400">
+          <p className="mt-1 bg-gradient-to-b from-green-400 to-green-600 bg-clip-text text-2xl font-bold text-transparent dark:from-green-300 dark:to-green-500">
             €{dashboardData?.potentialMonthlySavings?.toFixed(2) || "0.00"}
           </p>
           {dashboardData?.potentialMonthlySavings > 0 && (
-            <p className="mt-0.5 text-[10px] text-green-700/60 dark:text-green-400/60">
+            <p className="mt-0.5 text-[10px] text-green-700/70 dark:text-green-400/70">
               in savings. Don't lose it.
             </p>
           )}
         </div>
-        <div className="rounded-xl bg-white/40 p-4 backdrop-blur-sm dark:bg-white/10">
-          <p className="text-xs font-medium text-black/40 dark:text-white/40">
+        <div className="rounded-xl bg-white/40 p-4 backdrop-blur-sm transition-all duration-150 ease-out hover:-translate-y-0.5 hover:bg-white/60 dark:bg-white/10 dark:hover:bg-white/15">
+          <p className="text-xs font-medium text-black/50 dark:text-white/50">
             Barely Used, Expensive
           </p>
           <p className="mt-1 truncate text-sm font-semibold text-red-600 dark:text-red-400">
             {dashboardData?.barelyUsedMostExpensive?.name || "—"}
           </p>
           {dashboardData?.barelyUsedMostExpensive?.monthlyPrice && (
-            <p className="text-xs text-black/40 dark:text-white/40">
+            <p className="text-xs text-black/50 dark:text-white/50">
               €{dashboardData.barelyUsedMostExpensive.monthlyPrice.toFixed(2)} • Score {dashboardData.barelyUsedMostExpensive.score?.toFixed(1) || "0"}
             </p>
           )}
@@ -242,54 +248,54 @@ export default function InsightsTab() {
 
       {/* Stats Grid - Row 2 */}
       <div className="grid grid-cols-2 gap-2">
-        <div className="rounded-xl bg-white/40 p-4 backdrop-blur-sm dark:bg-white/10">
-          <p className="text-xs font-medium text-black/40 dark:text-white/40">
+        <div className="rounded-xl bg-white/40 p-4 backdrop-blur-sm transition-all duration-150 ease-out hover:-translate-y-0.5 hover:bg-white/60 dark:bg-white/10 dark:hover:bg-white/15">
+          <p className="text-xs font-medium text-black/50 dark:text-white/50">
             Most Used
           </p>
           <p className="mt-1 truncate text-sm font-semibold text-black/80 dark:text-white/80">
             {dashboardData?.mostUsed?.name || "—"}
           </p>
           {mostUsed?.monthlyPrice && (
-            <p className="text-xs text-black/40 dark:text-white/40">
+            <p className="text-xs text-black/50 dark:text-white/50">
               €{mostUsed.monthlyPrice.toFixed(2)} • Score {mostUsed.score?.toFixed(1) || "0"}
             </p>
           )}
         </div>
-        <div className="rounded-xl bg-white/40 p-4 backdrop-blur-sm dark:bg-white/10">
-          <p className="text-xs font-medium text-black/40 dark:text-white/40">
+        <div className="rounded-xl bg-white/40 p-4 backdrop-blur-sm transition-all duration-150 ease-out hover:-translate-y-0.5 hover:bg-white/60 dark:bg-white/10 dark:hover:bg-white/15">
+          <p className="text-xs font-medium text-black/50 dark:text-white/50">
             Least Used
           </p>
           <p className="mt-1 truncate text-sm font-semibold text-black/80 dark:text-white/80">
             {dashboardData?.leastUsed?.name || "—"}
           </p>
           {leastUsed?.monthlyPrice && (
-            <p className="text-xs text-black/40 dark:text-white/40">
+            <p className="text-xs text-black/50 dark:text-white/50">
               €{leastUsed.monthlyPrice.toFixed(2)} • Score {leastUsed.score?.toFixed(1) || "0"}
             </p>
           )}
         </div>
-        <div className="rounded-xl bg-white/40 p-4 backdrop-blur-sm dark:bg-white/10">
-          <p className="text-xs font-medium text-black/40 dark:text-white/40">
+        <div className="rounded-xl bg-white/40 p-4 backdrop-blur-sm transition-all duration-150 ease-out hover:-translate-y-0.5 hover:bg-white/60 dark:bg-white/10 dark:hover:bg-white/15">
+          <p className="text-xs font-medium text-black/50 dark:text-white/50">
             Most Expensive Category
           </p>
           <p className="mt-1 truncate text-sm font-semibold text-black/80 dark:text-white/80">
             {mostExpensiveCategory?.name || "—"}
           </p>
           {mostExpensiveCategory?.totalCost > 0 && (
-            <p className="text-xs text-black/40 dark:text-white/40">
+            <p className="text-xs text-black/50 dark:text-white/50">
               €{mostExpensiveCategory.totalCost.toFixed(2)}/mo
             </p>
           )}
         </div>
-        <div className="rounded-xl bg-white/40 p-4 backdrop-blur-sm dark:bg-white/10">
-          <p className="text-xs font-medium text-black/40 dark:text-white/40">
+        <div className="rounded-xl bg-white/40 p-4 backdrop-blur-sm transition-all duration-150 ease-out hover:-translate-y-0.5 hover:bg-white/60 dark:bg-white/10 dark:hover:bg-white/15">
+          <p className="text-xs font-medium text-black/50 dark:text-white/50">
             Least Expensive Category
           </p>
           <p className="mt-1 truncate text-sm font-semibold text-black/80 dark:text-white/80">
             {leastExpensiveCategory?.name || "—"}
           </p>
           {leastExpensiveCategory?.totalCost > 0 && (
-            <p className="text-xs text-black/40 dark:text-white/40">
+            <p className="text-xs text-black/50 dark:text-white/50">
               €{leastExpensiveCategory.totalCost.toFixed(2)}/mo
             </p>
           )}
