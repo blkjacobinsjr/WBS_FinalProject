@@ -44,7 +44,43 @@ export async function postSubscription(req, res, next) {
     body,
   );
 
-  const postThis = { ...body, userId };
+  let categoryId = body.category;
+
+  // If category is "None" or missing, let's use OpenRouter AI to auto-categorize
+  if (process.env.OPENROUTER_API_KEY && (!categoryId || categoryId === "65085704f18207c1481e6642")) {
+    try {
+      const Category = (await import("../models/_categorySchema.js")).default;
+      const categories = await Category.find({});
+      const categoryNames = categories.map((c) => `ID: ${c._id}, Name: ${c.name}`).join("\n");
+
+      const prompt = `You are an AI categorizer. Given the subscription name "${body.name}", pick the single best category ID from the list below. Return ONLY the ID, nothing else. If you are not sure, return 65085704f18207c1481e6642.\n\n${categoryNames}`;
+
+      const aiResponse = await fetch("https://openrouter.ai/api/v1/chat/completions", {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${process.env.OPENROUTER_API_KEY}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          model: "google/gemini-2.5-flash",
+          messages: [{ role: "user", content: prompt }],
+          temperature: 0,
+        }),
+      });
+
+      if (aiResponse.ok) {
+        const data = await aiResponse.json();
+        const predictedId = data.choices?.[0]?.message?.content?.trim();
+        if (predictedId && categories.find((c) => c._id.toString() === predictedId)) {
+          categoryId = predictedId;
+        }
+      }
+    } catch (err) {
+      console.error("OpenRouter auto-categorization failed:", err);
+    }
+  }
+
+  const postThis = { ...body, userId, category: categoryId };
 
   const { _id: newSubId } = await Subscription.create(postThis);
 
