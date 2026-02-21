@@ -137,7 +137,7 @@ export default function HomeTab() {
             <p className="text-center text-sm font-semibold text-black/80 dark:text-white/80">
               Highest Spend Categories
             </p>
-            <div className="mt-4 flex min-h-[200px] w-full items-center justify-center">
+            <div className="mt-4 h-[250px] w-full">
               <UsedCategoriesPieChart pieData={pieData} />
             </div>
           </div>
@@ -148,7 +148,7 @@ export default function HomeTab() {
             <p className="text-center text-xs text-black/40 dark:text-white/40">
               Track Subscription Spend Above Average
             </p>
-            <div className="mt-4 flex min-h-[200px] w-full items-center justify-center">
+            <div className="mt-4 h-[250px] w-full">
               <Piechartwithneedle
                 maxFirstSegment={219}
                 needleValue={dashboardData?.totalCostPerMonth || 0}
