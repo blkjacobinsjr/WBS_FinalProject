@@ -28,8 +28,8 @@ const needle = (value, data, cx, cy, iR, oR, color) => {
       key="path"
       d={`M${xba} ${yba}L${xbb} ${ybb} L${xp} ${yp} L${xba} ${yba}`}
       stroke="none"
-      fill="url(#needleGradient)"
-      filter="url(#shadow)"
+      fill="#475569"
+      style={{ filter: "drop-shadow(0px 4px 6px rgba(0,0,0,0.15))" }}
     />,
   ];
 };
@@ -117,32 +117,6 @@ export default function PieChartWithNeedle({ maxFirstSegment, needleValue }) {
     <div ref={containerRef} className="h-full w-full">
       <ResponsiveContainer width="100%" height="100%">
         <PieChart>
-          <defs>
-            <linearGradient id="gemAverage" x1="0" y1="0" x2="1" y2="1">
-              <stop offset="0%" stopColor="#818cf8" />
-              <stop offset="50%" stopColor="#4f46e5" />
-              <stop offset="100%" stopColor="#312e81" />
-            </linearGradient>
-            <linearGradient id="gemAboveAverage" x1="0" y1="0" x2="1" y2="1">
-              <stop offset="0%" stopColor="#38bdf8" />
-              <stop offset="50%" stopColor="#0ea5e9" />
-              <stop offset="100%" stopColor="#075985" />
-            </linearGradient>
-            <linearGradient id="gemHigh" x1="0" y1="0" x2="1" y2="1">
-              <stop offset="0%" stopColor="#e2e8f0" />
-              <stop offset="50%" stopColor="#cbd5e1" />
-              <stop offset="100%" stopColor="#94a3b8" />
-            </linearGradient>
-            <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%">
-              <feDropShadow dx="0" dy="10" stdDeviation="15" floodOpacity="0.4" />
-              <feComponentTransfer><feFuncA type="linear" slope="0.7" /></feComponentTransfer>
-            </filter>
-            <radialGradient id="needleGradient" cx="50%" cy="50%" r="50%" fx="30%" fy="30%">
-              <stop offset="0%" stopColor="#f8fafc" />
-              <stop offset="50%" stopColor="#94a3b8" />
-              <stop offset="100%" stopColor="#334155" />
-            </radialGradient>
-          </defs>
           <Pie
             dataKey="value"
             nameKey="name"
@@ -161,10 +135,9 @@ export default function PieChartWithNeedle({ maxFirstSegment, needleValue }) {
               <Cell
                 key={`cell-${index}`}
                 fill={
-                  index === 0 ? "url(#gemAverage)" : index === 1 ? "url(#gemAboveAverage)" : "url(#gemHigh)"
+                  index === 0 ? "#6366f1" : index === 1 ? "#38bdf8" : "#e2e8f0"
                 }
-                filter="url(#shadow)"
-                className="transition-all duration-300 hover:opacity-90"
+                className="transition-all duration-300 hover:opacity-80"
               />
             ))}
           </Pie>
@@ -184,7 +157,7 @@ export default function PieChartWithNeedle({ maxFirstSegment, needleValue }) {
             computedCY,
             computedIR,
             computedOR,
-            "url(#needleGradient)",
+            "#475569",
           )}
         </PieChart>
       </ResponsiveContainer>

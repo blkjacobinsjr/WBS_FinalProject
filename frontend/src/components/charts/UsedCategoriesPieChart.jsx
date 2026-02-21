@@ -42,18 +42,8 @@ export default function UsedCategoriesPieChart({ pieData }) {
     <ResponsiveContainer>
       <PieChart>
         <defs>
-          <linearGradient id="innerGem" x1="0" y1="0" x2="1" y2="1">
-            <stop offset="0%" stopColor="#2dd4bf" />
-            <stop offset="50%" stopColor="#0ea5e9" />
-            <stop offset="100%" stopColor="#0369a1" />
-          </linearGradient>
-          <linearGradient id="outerGem" x1="0" y1="1" x2="1" y2="0">
-            <stop offset="0%" stopColor="#a78bfa" />
-            <stop offset="50%" stopColor="#6366f1" />
-            <stop offset="100%" stopColor="#312e81" />
-          </linearGradient>
-          <filter id="pieShadow" x="-20%" y="-20%" width="140%" height="140%">
-            <feDropShadow dx="0" dy="8" stdDeviation="10" floodOpacity="0.5" />
+          <filter id="pieShadowSoft" x="-10%" y="-10%" width="120%" height="120%">
+            <feDropShadow dx="0" dy="4" stdDeviation="6" floodOpacity="0.1" />
           </filter>
         </defs>
         {/* Inner Ring: Subscriptions */}
@@ -64,10 +54,10 @@ export default function UsedCategoriesPieChart({ pieData }) {
           cx="50%"
           cy="50%"
           outerRadius={50}
-          fill="url(#innerGem)"
-          stroke="rgba(255,255,255,0.2)"
+          fill="#3b82f6"
+          stroke="transparent"
           strokeWidth={1}
-          filter="url(#pieShadow)"
+          filter="url(#pieShadowSoft)"
           onMouseEnter={() => setActivePie("inner")}
           onMouseLeave={() => setActivePie(null)}
         >
@@ -84,12 +74,12 @@ export default function UsedCategoriesPieChart({ pieData }) {
           cy="50%"
           innerRadius={55}
           outerRadius={85}
-          fill="url(#outerGem)"
-          stroke="rgba(255,255,255,0.2)"
+          fill="#6366f1"
+          stroke="transparent"
           strokeWidth={1}
-          filter="url(#pieShadow)"
-          paddingAngle={3}
-          labelLine={{ stroke: "#94a3b8", strokeWidth: 1.5 }}
+          filter="url(#pieShadowSoft)"
+          paddingAngle={2}
+          labelLine={{ stroke: "#94a3b8", strokeWidth: 1 }}
           label={({
             cx,
             cy,

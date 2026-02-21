@@ -50,7 +50,7 @@ export default function InsightsTab() {
         name: category.name,
         value: category.totalCost,
         subscriptions: subscriptions.filter(
-          (s) => s.category._id === category._id
+          (s) => s.category?._id === category._id
         ),
       }))
       : [],
@@ -302,66 +302,69 @@ export default function InsightsTab() {
         </div>
       </div>
 
-      {/* Spend-O-Meter */}
-      <div className="rounded-2xl bg-white/40 p-5 backdrop-blur-sm dark:bg-white/10">
-        <p className="text-center text-sm font-semibold text-black/80 dark:text-white/80">
-          Spend-O-Meter
-        </p>
-        <p className="text-center text-xs text-black/40 dark:text-white/40">
-          vs. Average Monthly Spend (€219)
-        </p>
-        <div className="mt-4 h-[250px] w-full">
-          <Piechartwithneedle
-            maxFirstSegment={219}
-            needleValue={dashboardData?.totalCostPerMonth}
-          />
+      {/* Charts Grid - Side by Side View */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        {/* Spend-O-Meter */}
+        <div className="rounded-2xl bg-white/40 p-5 backdrop-blur-sm dark:bg-white/10 min-w-0">
+          <p className="text-center text-sm font-semibold text-black/80 dark:text-white/80">
+            Spend-O-Meter
+          </p>
+          <p className="text-center text-xs text-black/40 dark:text-white/40">
+            vs. Average Monthly Spend (€219)
+          </p>
+          <div className="mt-4 h-[250px] w-full">
+            <Piechartwithneedle
+              maxFirstSegment={219}
+              needleValue={dashboardData?.totalCostPerMonth}
+            />
+          </div>
         </div>
+
+        {/* Usage Radar Chart */}
+        {usedCategories?.length > 0 && (
+          <div className="rounded-2xl bg-white/40 p-5 backdrop-blur-sm dark:bg-white/10 min-w-0">
+            <p className="text-center text-sm font-semibold text-black/80 dark:text-white/80">
+              Category Usage vs. Cost
+            </p>
+            <p className="text-center text-xs text-black/40 dark:text-white/40">
+              Higher means more usage relative to cost
+            </p>
+            <div className="mt-4 h-[250px] w-full">
+              <UsageRadarChart />
+            </div>
+          </div>
+        )}
+
+        {/* Category Spend Pie Chart */}
+        {usedCategories?.length > 0 && pieData.length > 0 && (
+          <div className="rounded-2xl bg-white/40 p-5 backdrop-blur-sm dark:bg-white/10 min-w-0">
+            <p className="text-center text-sm font-semibold text-black/80 dark:text-white/80">
+              Spending by Category
+            </p>
+            <p className="text-center text-xs text-black/40 dark:text-white/40">
+              How your money is distributed
+            </p>
+            <div className="mt-4 h-[250px] w-full">
+              <UsedCategoriesPieChart pieData={pieData} />
+            </div>
+          </div>
+        )}
+
+        {/* All Subscriptions Pie Chart */}
+        {subscriptions?.length > 0 && (
+          <div className="rounded-2xl bg-white/40 p-5 backdrop-blur-sm dark:bg-white/10 min-w-0">
+            <p className="text-center text-sm font-semibold text-black/80 dark:text-white/80">
+              All Subscriptions
+            </p>
+            <p className="text-center text-xs text-black/40 dark:text-white/40">
+              Individual subscription costs
+            </p>
+            <div className="mt-4 h-[250px] w-full">
+              <CategoryPieChart />
+            </div>
+          </div>
+        )}
       </div>
-
-      {/* Usage Radar Chart */}
-      {usedCategories?.length > 0 && (
-        <div className="rounded-2xl bg-white/40 p-5 backdrop-blur-sm dark:bg-white/10">
-          <p className="text-center text-sm font-semibold text-black/80 dark:text-white/80">
-            Category Usage vs. Cost
-          </p>
-          <p className="text-center text-xs text-black/40 dark:text-white/40">
-            Higher means more usage relative to cost
-          </p>
-          <div className="mt-4 h-[250px] w-full">
-            <UsageRadarChart />
-          </div>
-        </div>
-      )}
-
-      {/* Category Spend Pie Chart */}
-      {usedCategories?.length > 0 && pieData.length > 0 && (
-        <div className="rounded-2xl bg-white/40 p-5 backdrop-blur-sm dark:bg-white/10">
-          <p className="text-center text-sm font-semibold text-black/80 dark:text-white/80">
-            Spending by Category
-          </p>
-          <p className="text-center text-xs text-black/40 dark:text-white/40">
-            How your money is distributed
-          </p>
-          <div className="mt-4 h-[250px] w-full">
-            <UsedCategoriesPieChart pieData={pieData} />
-          </div>
-        </div>
-      )}
-
-      {/* All Subscriptions Pie Chart */}
-      {subscriptions?.length > 0 && (
-        <div className="rounded-2xl bg-white/40 p-5 backdrop-blur-sm dark:bg-white/10">
-          <p className="text-center text-sm font-semibold text-black/80 dark:text-white/80">
-            All Subscriptions
-          </p>
-          <p className="text-center text-xs text-black/40 dark:text-white/40">
-            Individual subscription costs
-          </p>
-          <div className="mt-4 h-[250px] w-full">
-            <CategoryPieChart />
-          </div>
-        </div>
-      )}
 
       {/* Empty State */}
       {subscriptions?.length === 0 && (

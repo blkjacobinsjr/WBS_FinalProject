@@ -131,9 +131,9 @@ export default function HomeTab() {
       </div>
 
       {/* Charts Row */}
-      <div className="flex flex-col gap-4">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         {usedCategories?.length > 0 && pieData.length > 0 && (
-          <div className="rounded-2xl bg-white/40 p-5 backdrop-blur-sm dark:bg-white/10 glow-xs">
+          <div className="rounded-2xl bg-white/40 p-5 backdrop-blur-sm dark:bg-white/10 glow-xs min-w-0">
             <p className="text-center text-sm font-semibold text-black/80 dark:text-white/80">
               Highest Spend Categories
             </p>
@@ -143,7 +143,7 @@ export default function HomeTab() {
           </div>
         )}
         {(dashboardData?.totalCostPerMonth > 0 || subscriptions?.length > 0) && (
-          <div className="rounded-2xl bg-white/40 p-5 backdrop-blur-sm dark:bg-white/10 glow-xs">
+          <div className="rounded-2xl bg-white/40 p-5 backdrop-blur-sm dark:bg-white/10 glow-xs min-w-0">
             <p className="text-center text-sm font-semibold text-black/80 dark:text-white/80">
               Subzero Spend-O-Meter
             </p>
