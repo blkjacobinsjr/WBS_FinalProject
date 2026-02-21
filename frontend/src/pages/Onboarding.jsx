@@ -80,29 +80,52 @@ function institutionLogoUrl(domain) {
 }
 
 function StepProgress({ step, dark }) {
+  const visibleIndices = useMemo(() => {
+    // Show window of 3: [prev, current, next]
+    if (step === 0) return [0, 1, 2];
+    if (step === TOTAL_STEPS - 1) return [TOTAL_STEPS - 3, TOTAL_STEPS - 2, TOTAL_STEPS - 1];
+    return [step - 1, step, step + 1];
+  }, [step]);
+
   return (
     <div className="flex items-center gap-2">
-      {Array.from({ length: TOTAL_STEPS }).map((_, index) => {
-        const isActive = index === step;
-        const isDone = index < step;
+      <AnimatePresence mode="popLayout" initial={false}>
+        {visibleIndices.map((index) => {
+          const isActive = index === step;
+          const isDone = index < step;
 
-        return (
-          <div
-            key={index}
-            className={`h-2 rounded-full transition-all duration-300 ${
-              isDone
-                ? "w-6 bg-[#26c06f]"
-                : isActive
-                  ? dark
-                    ? "w-6 bg-[#7dc1ff]"
-                    : "w-6 bg-[#2b63a4]"
-                  : dark
-                    ? "w-4 bg-white/25"
-                    : "w-4 bg-black/20"
-            }`}
-          />
-        );
-      })}
+          return (
+            <motion.div
+              key={index}
+              layout
+              initial={{ opacity: 0, scale: 0.8, width: 0 }}
+              animate={{ 
+                opacity: 1, 
+                scale: 1,
+                width: isActive ? 32 : 12,
+              }}
+              exit={{ opacity: 0, scale: 0.8, width: 0 }}
+              transition={{ 
+                type: "spring", 
+                stiffness: 400, 
+                damping: 35,
+                mass: 0.8
+              }}
+              className={`h-1.5 rounded-full ${
+                isDone
+                  ? "bg-[#26c06f]"
+                  : isActive
+                    ? dark
+                      ? "bg-[#7dc1ff] shadow-[0_0_15px_rgba(125,193,255,0.4)]"
+                      : "bg-[#2b63a4] shadow-[0_0_15px_rgba(43,99,164,0.3)]"
+                    : dark
+                      ? "bg-white/20"
+                      : "bg-black/15"
+              }`}
+            />
+          );
+        })}
+      </AnimatePresence>
     </div>
   );
 }
