@@ -39,7 +39,7 @@ export default function UsedCategoriesPieChart({ pieData }) {
   const [activePie, setActivePie] = useState();
 
   return (
-    <ResponsiveContainer>
+    <ResponsiveContainer width="100%" height={300} minHeight={300}>
       <PieChart>
         <defs>
           <filter id="pieShadowSoft" x="-10%" y="-10%" width="120%" height="120%">

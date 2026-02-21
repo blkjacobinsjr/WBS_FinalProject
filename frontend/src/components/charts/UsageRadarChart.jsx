@@ -20,7 +20,7 @@ export default function UsageRadarChart() {
 
   // TODO: Hide charts if too few subscriptions are in category / have been rated
   return (
-    <ResponsiveContainer width="100%" height="100%">
+    <ResponsiveContainer width="100%" height={300} minHeight={300}>
       <RadarChart cx="50%" cy="50%" outerRadius="60%" data={data}>
         <PolarGrid stroke="rgba(0,0,0,0.1)" />
         <PolarAngleAxis

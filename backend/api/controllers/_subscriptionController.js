@@ -150,21 +150,59 @@ export async function postDummySubscriptions(req, res, next) {
       { name: "Discord Nitro", price: 9.99, interval: "monthly" },
     ];
 
+    const categoryMap = {
+      "Netflix": "Entertainment",
+      "Spotify Premium": "Music",
+      "Amazon Prime": "Shopping",
+      "Hulu": "Entertainment",
+      "Disney+": "Entertainment",
+      "Apple Music": "Music",
+      "YouTube Premium": "Video",
+      "ChatGPT Plus": "Software",
+      "Claude Pro": "Software",
+      "Gym Membership": "Fitness",
+      "Internet": "Utilities",
+      "Phone Bill": "Utilities",
+      "Water": "Utilities",
+      "Electricity": "Utilities",
+      "HBO Max": "Entertainment",
+      "Strava": "Fitness",
+      "Duolingo Super": "Education",
+      "Notion Plus": "Software",
+      "GitHub Copilot": "Software",
+      "Xbox Game Pass": "Gaming",
+      "PlayStation Plus": "Gaming",
+      "Discord Nitro": "Software"
+    };
+
     const subsToCreate = popularSubs.map(sub => {
       const daysAgo = Math.floor(Math.random() * 28);
       const d = new Date();
       d.setDate(d.getDate() - daysAgo);
 
-      const randomCategory = categoriesDb.length > 0
-        ? categoriesDb[Math.floor(Math.random() * categoriesDb.length)]._id
-        : defaultCat;
+      const targetCategoryName = categoryMap[sub.name];
+      const foundCategory = categoriesDb.find(
+        (c) => c.name.toLowerCase() === targetCategoryName.toLowerCase() ||
+          c.name.toLowerCase().includes(targetCategoryName.toLowerCase()) ||
+          targetCategoryName.toLowerCase().includes(c.name.toLowerCase())
+      );
+
+      // Fallback: if we didn't find an exact category, at least pick something colorful that exists!
+      const validCategories = categoriesDb.filter(c => c._id.toString() !== defaultCat);
+      let categoryToUse = defaultCat;
+
+      if (foundCategory) {
+        categoryToUse = foundCategory._id;
+      } else if (validCategories.length > 0) {
+        categoryToUse = validCategories[Math.floor(Math.random() * validCategories.length)]._id;
+      }
 
       return {
         userId,
         name: sub.name,
         price: sub.price,
         interval: sub.interval,
-        category: randomCategory,
+        category: categoryToUse,
         billing_date: d,
         active: true,
       };

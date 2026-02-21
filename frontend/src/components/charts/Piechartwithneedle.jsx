@@ -8,7 +8,10 @@ const needle = (value, data, cx, cy, iR, oR, color) => {
   data.forEach((v) => {
     total += v.value;
   });
-  const ang = 180.0 * (1 - value / total);
+
+  // Clamp value to total so needle doesn't break
+  const clampedValue = Math.min(value, total);
+  const ang = 180.0 * (1 - clampedValue / total);
   const length = (iR + oR) / 4.5;
   const sin = Math.sin(-RADIAN * ang);
   const cos = Math.cos(-RADIAN * ang);
@@ -135,8 +138,8 @@ export default function PieChartWithNeedle({ maxFirstSegment, needleValue }) {
   const oR = 85;
 
   return (
-    <div ref={containerRef} className="h-full w-full">
-      <ResponsiveContainer width="100%" height="100%">
+    <div ref={containerRef} className="h-full w-full min-h-[200px]">
+      <ResponsiveContainer width="100%" height="100%" minHeight={200}>
         <PieChart>
           <Pie
             dataKey="value"

@@ -437,7 +437,9 @@ export default function SettingsTab({ onResetData, isResettingData }) {
                     try {
                       setStatusNote("Generating dummy data...");
                       const token = await getToken();
-                      const res = await fetch(ApiEndpoints.subscriptions + "/dummy", {
+                      // Try hitting localhost directly since the backend changes might only exist locally
+                      const fetchUrl = import.meta.env.DEV ? "http://localhost:3001/api/subscriptions/dummy" : ApiEndpoints.subscriptions + "/dummy";
+                      const res = await fetch(fetchUrl, {
                         method: "POST",
                         headers: {
                           "Authorization": `Bearer ${token}`
