@@ -108,7 +108,7 @@ export function fullSubscriptionData(userId) {
             {
               $size: "$usages",
             },
-            4,
+            1,
           ],
         },
         monthlyPrice: {
@@ -218,7 +218,7 @@ export function potentialMonthlySavingsAggregate(userId) {
     {
       $match: {
         usageCount: {
-          $gt: 4,
+          $gt: 0,
         },
       },
     },
@@ -292,7 +292,7 @@ export function mostUsedSubscriptionAggregate(userId, sort = -1) {
   const additionalStages = [
     {
       $match: {
-        count: { $gte: 4 },
+        count: { $gte: 1 },
       },
     },
     {
@@ -434,7 +434,7 @@ export function usedCategoryFullDataAggregate(userId) {
             {
               $size: "$subscriptionUsage",
             },
-            4,
+            1,
           ],
         },
         adjustedPrice: {
@@ -598,7 +598,7 @@ export function barelyUsedMostExpensiveAggregate(userId) {
             {
               $size: "$usages",
             },
-            4,
+            1,
           ],
         },
         monthlyPrice: {

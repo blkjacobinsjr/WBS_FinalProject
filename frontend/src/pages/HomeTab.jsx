@@ -4,6 +4,8 @@ import { useDataContext } from "../contexts/dataContext";
 import FinancialResetCard from "../components/FinancialResetCard";
 import Notifications from "../components/Notifications";
 import SubscriptionListCard from "../components/SubscriptionListCard";
+import UsedCategoriesPieChart from "../components/charts/UsedCategoriesPieChart";
+import Piechartwithneedle from "../components/charts/Piechartwithneedle";
 import eventEmitter from "../utils/EventEmitter";
 
 // Daily rotating insights - FOMO Punch + Variable Rewards
@@ -31,7 +33,7 @@ function getGreeting() {
 
 export default function HomeTab() {
   const { user } = useUser();
-  const { subscriptions, dashboardData, notifications } = useDataContext();
+  const { subscriptions, dashboardData, notifications, usedCategories } = useDataContext();
 
   const greeting = useMemo(() => getGreeting(), []);
   const firstName = user?.firstName || "there";
@@ -55,6 +57,20 @@ export default function HomeTab() {
       eventEmitter.emit("notificationClicked", firstNotificationId);
     }
   }, [notifications]);
+
+  const pieData = useMemo(() =>
+    usedCategories?.length > 0 && subscriptions?.length > 0
+      ? usedCategories.map((category) => ({
+        name: category.name,
+        value: category.totalCost,
+        subscriptions: subscriptions.filter(
+          (s) => s.category?._id === category._id
+        ),
+      }))
+      : [],
+    [usedCategories, subscriptions]
+  );
+
 
   return (
     <div className="flex flex-col gap-4 pb-24">
@@ -113,6 +129,34 @@ export default function HomeTab() {
           </p>
         </button>
       </div>
+
+      {/* Charts Row */}
+      {usedCategories?.length > 0 && pieData.length > 0 && (
+        <div className="flex flex-col gap-4">
+          <div className="rounded-2xl bg-white/40 p-5 backdrop-blur-sm dark:bg-white/10">
+            <p className="text-center text-sm font-semibold text-black/80 dark:text-white/80">
+              Highest Spend Categories
+            </p>
+            <div className="mt-4 flex min-h-[200px] w-full items-center justify-center">
+              <UsedCategoriesPieChart pieData={pieData} />
+            </div>
+          </div>
+          <div className="rounded-2xl bg-white/40 p-5 backdrop-blur-sm dark:bg-white/10">
+            <p className="text-center text-sm font-semibold text-black/80 dark:text-white/80">
+              Subzero Spend-O-Meter
+            </p>
+            <p className="text-center text-xs text-black/40 dark:text-white/40">
+              Track Subscription Spend Above Average
+            </p>
+            <div className="mt-4 flex min-h-[200px] w-full items-center justify-center">
+              <Piechartwithneedle
+                maxFirstSegment={219}
+                needleValue={dashboardData?.totalCostPerMonth || 0}
+              />
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Financial Reset Card */}
       <FinancialResetCard />

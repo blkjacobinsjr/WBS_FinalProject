@@ -241,90 +241,41 @@ export default function UsageModal({
                     Does this bring you joy?
                   </p>
 
-                  {/* Rating options - Joy-based */}
-                  <RadioGroup
-                    value={selectedScore}
-                    onChange={(val) => setSelectedScore(Number(val))}
-                    className="space-y-2"
-                  >
-                    {/* Love it - Keep & maximize */}
-                    <RadioGroup.Option
-                      value={5}
-                      className={({ checked }) =>
-                        `cursor-pointer rounded-xl px-4 py-3 transition-all active:scale-[0.98] ${
-                          checked
-                            ? "bg-gradient-to-r from-green-500 to-emerald-500 text-white shadow-lg"
-                            : "bg-green-50 text-green-900 dark:bg-green-900/30 dark:text-green-300"
-                        }`
-                      }
+                  {/* Tinder-style Rating Buttons */}
+                  <div className="mt-8 flex items-center justify-center gap-6">
+                    {/* Could live without - Cut ruthlessly (Left / Red) */}
+                    <button
+                      onClick={() => setSelectedScore(1)}
+                      className="group flex flex-col items-center gap-2"
                     >
-                      {({ checked }) => (
-                        <div className="flex items-center gap-3">
-                          <div className={`text-lg ${checked ? "" : "grayscale"}`}>
-                            ✨
-                          </div>
-                          <div className="flex-1">
-                            <span className="text-sm font-semibold">Love it</span>
-                            <span className={`ml-2 text-xs ${checked ? "text-white/80" : "opacity-60"}`}>
-                              keep & maximize
-                            </span>
-                          </div>
-                        </div>
-                      )}
-                    </RadioGroup.Option>
+                      <div className="flex h-16 w-16 items-center justify-center rounded-full border-2 border-red-500 bg-white shadow-md transition-all active:scale-90 active:bg-red-50 dark:bg-gray-900 dark:active:bg-red-900/30">
+                        <span className="text-2xl">🗑️</span>
+                      </div>
+                      <span className="text-xs font-semibold text-red-600 dark:text-red-400">Cut it</span>
+                    </button>
 
-                    {/* It's fine - Functional */}
-                    <RadioGroup.Option
-                      value={3}
-                      className={({ checked }) =>
-                        `cursor-pointer rounded-xl px-4 py-3 transition-all active:scale-[0.98] ${
-                          checked
-                            ? "bg-gradient-to-r from-amber-500 to-orange-500 text-white shadow-lg"
-                            : "bg-amber-50 text-amber-900 dark:bg-amber-900/30 dark:text-amber-300"
-                        }`
-                      }
+                    {/* It's fine - Functional (Middle / Amber) */}
+                    <button
+                      onClick={() => setSelectedScore(3)}
+                      className="group flex flex-col items-center gap-2"
                     >
-                      {({ checked }) => (
-                        <div className="flex items-center gap-3">
-                          <div className={`text-lg ${checked ? "" : "grayscale"}`}>
-                            🤷
-                          </div>
-                          <div className="flex-1">
-                            <span className="text-sm font-semibold">It's fine</span>
-                            <span className={`ml-2 text-xs ${checked ? "text-white/80" : "opacity-60"}`}>
-                              review later
-                            </span>
-                          </div>
-                        </div>
-                      )}
-                    </RadioGroup.Option>
+                      <div className="flex h-14 w-14 items-center justify-center rounded-full border-2 border-amber-500 bg-white shadow-md transition-all active:scale-90 active:bg-amber-50 dark:bg-gray-900 dark:active:bg-amber-900/30">
+                        <span className="text-xl">🤷</span>
+                      </div>
+                      <span className="text-[10px] font-semibold text-amber-600 dark:text-amber-400">Review</span>
+                    </button>
 
-                    {/* Could live without - Cut ruthlessly */}
-                    <RadioGroup.Option
-                      value={1}
-                      className={({ checked }) =>
-                        `cursor-pointer rounded-xl px-4 py-3 transition-all active:scale-[0.98] ${
-                          checked
-                            ? "bg-gradient-to-r from-red-500 to-rose-500 text-white shadow-lg"
-                            : "bg-red-50 text-red-900 dark:bg-red-900/30 dark:text-red-300"
-                        }`
-                      }
+                    {/* Love it - Keep (Right / Green) */}
+                    <button
+                      onClick={() => setSelectedScore(5)}
+                      className="group flex flex-col items-center gap-2"
                     >
-                      {({ checked }) => (
-                        <div className="flex items-center gap-3">
-                          <div className={`text-lg ${checked ? "" : "grayscale"}`}>
-                            🗑️
-                          </div>
-                          <div className="flex-1">
-                            <span className="text-sm font-semibold">Could live without</span>
-                            <span className={`ml-2 text-xs ${checked ? "text-white/80" : "opacity-60"}`}>
-                              cut it
-                            </span>
-                          </div>
-                        </div>
-                      )}
-                    </RadioGroup.Option>
-                  </RadioGroup>
+                      <div className="flex h-16 w-16 items-center justify-center rounded-full border-2 border-green-500 bg-white shadow-md transition-all active:scale-90 active:bg-green-50 dark:bg-gray-900 dark:active:bg-green-900/30">
+                        <span className="text-2xl">✨</span>
+                      </div>
+                      <span className="text-xs font-semibold text-green-600 dark:text-green-400">Love it</span>
+                    </button>
+                  </div>
 
                   {/* Skip button */}
                   {unratedNotifications?.length > 1 && (
