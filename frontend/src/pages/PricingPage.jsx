@@ -1,8 +1,8 @@
-import { SignedIn, SignedOut, UserButton, useUser } from "@clerk/clerk-react";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { SignedIn, UserButton, useUser } from "@clerk/clerk-react";
+import { useCallback, useEffect, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import { toast } from "sonner";
-import FadeIn from "../components/ui/FadeIn";
+import { ShieldCheckIcon, SparklesIcon, StarIcon, BanknotesIcon } from '@heroicons/react/24/solid';
 import Grainient from "../components/ui/Grainient";
 import { logOnboardingEvent } from "../utils/onboardingDebug";
 
@@ -110,10 +110,15 @@ export default function PricingPage() {
         logOnboardingEvent("pricing_paddle_ready", { source: checkoutSource });
       })
       .catch((error) => {
-        console.error("[PADDLE_INIT_ERROR]", error);
+        if (error.message.includes("Missing VITE_PADDLE")) {
+          console.warn("Payment disabled (Missing VITE_PADDLE_CLIENT_TOKEN). Add this to your .env to test checkout locally.");
+        } else {
+          console.error("[PADDLE_INIT_ERROR]", error);
+        }
         if (!cancelled) setIsPaddleReady(false);
         logOnboardingEvent("pricing_paddle_init_failed", {
           source: checkoutSource,
+          reason: error.message
         });
       });
 
@@ -162,6 +167,7 @@ export default function PricingPage() {
       toast.error("Could not start checkout.");
     }
   }, [
+    autoCheckout,
     checkoutSource,
     checkoutSuccessUrl,
     isPaddleReady,
@@ -171,36 +177,24 @@ export default function PricingPage() {
   ]);
 
   return (
-    <div className="relative min-h-screen bg-[#edf6ff]">
-      <div className="fixed inset-0 -z-20">
+    <div className="relative min-h-[100dvh] bg-[#F4F6F9] overflow-x-hidden selection:bg-[#007AFF]/20 pb-[140px] flex flex-col items-center">
+      <div className="fixed inset-0 pointer-events-none">
         <Grainient />
       </div>
-      <div className="pointer-events-none fixed inset-0 -z-10 overflow-hidden">
-        <div className="absolute -top-24 left-1/2 h-72 w-72 -translate-x-1/2 rounded-full bg-[#8dd7ff]/45 blur-3xl" />
-        <div className="absolute bottom-8 right-0 h-56 w-56 rounded-full bg-[#9dffb2]/35 blur-3xl" />
+      <div className="fixed inset-0 -z-10 bg-white/40" />
+      <div className="pointer-events-none fixed inset-0 -z-20 overflow-hidden">
+        <div className="absolute -top-32 left-1/2 h-80 w-80 -translate-x-1/2 rounded-full bg-[#8dd7ff]/40 blur-[80px]" />
+        <div className="absolute top-40 -left-20 h-64 w-64 rounded-full bg-[#007AFF]/20 blur-[90px]" />
+        <div className="absolute top-1/2 right-[-20%] h-80 w-80 rounded-full bg-[#42D587]/30 blur-[100px]" />
       </div>
 
-      <nav className="sticky top-0 z-50 border-b border-white/30 bg-white/45 backdrop-blur-md">
-        <div className="mx-auto flex h-14 max-w-5xl items-center justify-between px-4">
+      <nav className="sticky top-0 z-50 bg-white/60 backdrop-blur-xl border-b border-white/50 hidden md:block px-4">
+        <div className="mx-auto flex h-14 max-w-5xl items-center justify-between">
           <Link to="/" className="flex items-center gap-2">
             <img src="/subzero_logo_icon.png" alt="Subzro" className="h-7 w-7" />
             <span className="text-lg font-semibold text-black/80">subzro</span>
           </Link>
           <div className="flex items-center gap-3">
-            <Link
-              to="/pricing"
-              className="rounded-full bg-white/70 px-3 py-1.5 text-xs font-semibold text-black/70"
-            >
-              Matcha Plan
-            </Link>
-            <SignedOut>
-              <Link to="/login" className="px-3 py-2 text-sm font-medium text-black/70 hover:text-black">
-                Sign in
-              </Link>
-              <Link to="/signup" className="rounded-full bg-black px-4 py-2 text-sm font-medium text-white">
-                Get Started
-              </Link>
-            </SignedOut>
             <SignedIn>
               <Link to="/dashboard" className="rounded-full bg-black px-4 py-2 text-sm font-medium text-white">
                 Dashboard
@@ -211,89 +205,208 @@ export default function PricingPage() {
         </div>
       </nav>
 
-      <main className="px-4 pb-16 pt-8">
-        <div className="mx-auto max-w-2xl">
-          <FadeIn delay={0}>
-            <div className="mb-5 inline-flex items-center rounded-full border border-white/60 bg-white/55 px-4 py-1.5 text-xs font-semibold text-black/70 backdrop-blur-sm">
-              Simple monthly pricing
+      {/* Main minimal mobile topbar for context returning */}
+      <div className="md:hidden flex h-14 px-6 items-center justify-between w-full z-40 relative mt-2">
+        <Link to="/" className="flex items-center gap-2">
+          <img src="/subzero_logo_icon.png" alt="Subzro" className="h-6 w-6" />
+          <span className="text-[17px] font-semibold tracking-tight text-black flex items-center gap-2">
+            subzro
+            <span className="inline-flex items-center gap-1 rounded bg-[#f4fbf7] border border-[#42D587]/20 px-1.5 py-0.5 text-[9px] uppercase tracking-widest font-bold text-[#2e945c] shadow-[0_1px_2px_rgba(0,0,0,0.02)]">
+              Matcha Plan
+            </span>
+          </span>
+        </Link>
+      </div>
+
+      <main className="mx-auto w-full max-w-[420px] px-4 pt-4 sm:pt-14 flex flex-col items-center animate-in fade-in duration-500">
+        {/* Before & After Split Chart Card */}
+        <div className="relative z-10 w-full max-w-[360px] overflow-visible rounded-[28px] border border-white/80 bg-white/60 shadow-[0_24px_50px_-12px_rgba(0,0,0,0.06),0_0_20px_rgba(255,255,255,0.7)] backdrop-blur-[24px] mb-8">
+
+          {/* Mascot in the middle */}
+          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-20 pointer-events-none drop-shadow-lg flex items-center justify-center bg-white/60 backdrop-blur-xl rounded-[16px] w-[56px] h-[56px] border border-white shadow-lg overflow-hidden">
+            <img src="/mascot-subzro/mascotlaugh.webp" alt="Subzro Mascot" className="w-[48px] h-[48px] object-cover drop-shadow-sm scale-110 mt-1" />
+          </div>
+
+          <div className="flex w-full">
+            {/* Before Section */}
+            <div className="flex flex-1 flex-col pt-7 pb-6 pl-5 pr-4 border-r border-[#0000000A]">
+              <div className="mb-6 flex flex-col justify-center text-center items-center">
+                <span className="text-[17px] leading-none font-normal text-black/50 tracking-tight">Before</span>
+                <div className="flex items-center mt-1">
+                  <span className="text-[20px] font-semibold tracking-tight text-black opacity-90">Subzro</span>
+                </div>
+              </div>
+
+              {/* Chart Canvas */}
+              <div className="relative w-full rounded-[16px] bg-black/[0.025] border border-black/[0.04] p-2.5 pb-2 shadow-inner">
+                <div className="mb-[18px]">
+                  <p className="text-[8.5px] font-bold tracking-[0.06em] uppercase text-black/40 mb-[-2px]">Monthly Spends</p>
+                  <div className="flex items-baseline gap-[1px]">
+                    <span className="text-[22px] font-bold text-black/85 tracking-tighter leading-none">$239</span><span className="text-[11px] font-bold text-black/40">.00</span>
+                  </div>
+                </div>
+
+                {/* Bars */}
+                <div className="relative flex h-[78px] w-full items-end justify-between px-1 gap-[2px]">
+                  {/* dashed line */}
+                  <div className="absolute bottom-[20%] left-0 right-0 border-t border-dashed border-black/10 z-0"></div>
+
+                  <div className="relative z-10 flex h-[85%] w-[18%] flex-col justify-end gap-[1px]">
+                    <div className="h-[25%] w-full rounded-t-[2px] bg-[#FF7F7F]"></div>
+                    <div className="h-[35%] w-full bg-[#FFBC6B]"></div>
+                    <div className="h-[20%] w-full rounded-b-[2px] bg-[#A4A4A4]"></div>
+                  </div>
+                  <div className="relative z-10 flex h-[95%] w-[18%] flex-col justify-end gap-[1px]">
+                    <div className="h-[30%] w-full rounded-t-[2px] bg-[#FF7F7F]"></div>
+                    <div className="h-[45%] w-full bg-[#FFBC6B]"></div>
+                    <div className="h-[20%] w-full rounded-b-[2px] bg-[#A4A4A4]"></div>
+                  </div>
+                  <div className="relative z-10 flex h-[75%] w-[18%] flex-col justify-end gap-[1px]">
+                    <div className="h-[40%] w-full rounded-t-[2px] bg-[#FFBC6B]"></div>
+                    <div className="h-[40%] w-full bg-[#FF7F7F]"></div>
+                    <div className="h-[20%] w-full rounded-b-[2px] bg-[#A4A4A4]"></div>
+                  </div>
+                  <div className="relative z-10 flex h-[65%] w-[18%] flex-col justify-end gap-[1px]">
+                    <div className="h-[25%] w-full rounded-t-[2px] bg-[#FF7F7F]"></div>
+                    <div className="h-[55%] w-full bg-[#FFBC6B]"></div>
+                    <div className="h-[20%] w-full rounded-b-[2px] bg-[#A4A4A4]"></div>
+                  </div>
+                </div>
+
+                <div className="mt-2 flex w-full justify-between px-1 text-[8px] font-bold tracking-wider text-black/25">
+                  <span>W1</span><span>W2</span><span>W3</span><span>W4</span>
+                </div>
+              </div>
             </div>
-          </FadeIn>
 
-          <FadeIn delay={0.08}>
-            <section className="overflow-hidden rounded-3xl border border-white/45 bg-white/60 p-6 shadow-xl backdrop-blur-md sm:p-8">
-              <div className="mb-5">
-                <h1 className="text-3xl font-bold tracking-tight text-black/90 sm:text-4xl">
-                  Matcha Plan
-                </h1>
-                <p className="mt-2 text-sm text-black/65 sm:text-base">
-                  One clean subscription for full access. No setup complexity.
-                </p>
-                {checkoutSource === "subzro_onboarding" && (
-                  <div className="mt-3 inline-flex items-center gap-2 rounded-full border border-[#d7f0ff] bg-[#eef9ff] px-3 py-1.5 text-xs font-semibold text-black/70">
-                    Final onboarding step
-                  </div>
-                )}
+            {/* After Section */}
+            <div className="flex flex-1 flex-col pt-7 pb-6 pr-5 pl-4 relative overflow-hidden bg-white/30 rounded-r-[28px]">
+              <div className="absolute inset-0 bg-gradient-to-br from-[#cff2e1]/30 to-[#dff9e8]/50 blur-xl pointer-events-none" />
+
+              <div className="mb-6 flex flex-col justify-center text-center items-center relative z-10">
+                <span className="text-[17px] leading-none font-normal text-black/50 tracking-tight">After</span>
+                <div className="flex items-center mt-1">
+                  <span className="text-[20px] font-semibold tracking-tight text-black opacity-90">Subzro</span>
+                </div>
               </div>
 
-              <div className="rounded-2xl border border-white/55 bg-white/70 p-5">
-                <div className="flex items-end justify-between gap-4">
-                  <div>
-                    <p className="text-sm font-semibold uppercase tracking-wide text-black/55">
-                      Monthly
-                    </p>
-                    <p className="mt-1 text-4xl font-bold text-black/90">$4.99</p>
-                    <p className="text-sm text-black/60">per month</p>
-                  </div>
-                  <div className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-[#a7ffd6] to-[#ffe8b6] px-3 py-1.5 text-xs font-semibold text-black/70">
-                    Matcha money
+              {/* Chart Canvas */}
+              <div className="relative z-10 w-full rounded-[16px] bg-white border border-[#42D587]/40 p-2.5 pb-2 shadow-[0_8px_20px_0_rgba(66,213,135,0.15)] overflow-hidden scale-105 transform origin-center">
+                <div className="absolute inset-0 bg-gradient-to-t from-[#42D587]/[0.05] to-transparent pointer-events-none" />
+
+                <div className="mb-[18px]">
+                  <p className="text-[8.5px] font-bold tracking-[0.06em] uppercase text-black/40 mb-[-2px]">Monthly Spends</p>
+                  <div className="flex items-baseline gap-[1px]">
+                    <span className="text-[22px] font-bold text-[#2e945c] tracking-tighter leading-none">$32</span><span className="text-[11px] font-bold text-[#2e945c]/60">.00</span>
                   </div>
                 </div>
 
-                <div className="mt-4 rounded-xl border border-[#d6f5e5] bg-[#f6fff9] px-3 py-2">
-                  <div className="flex items-center gap-2">
-                    <div className="flex items-center gap-1 text-2xl">
-                      🍵🍵🍵
-                    </div>
-                    <p className="text-xs font-medium text-black/70 sm:text-sm">
-                      About the price of one cafe matcha each month.
-                    </p>
+                {/* Bars */}
+                <div className="relative flex h-[78px] w-full items-end justify-between px-1 gap-[2px]">
+                  <div className="absolute bottom-[20%] left-0 right-0 border-t border-dashed border-[#42D587]/30 z-0"></div>
+
+                  <div className="relative z-10 flex h-[20%] w-[18%] flex-col justify-end gap-[1px]">
+                    <div className="h-[100%] w-full rounded-[2px] bg-[#42D587] shadow-[0_2px_6px_rgba(66,213,135,0.4)]"></div>
+                  </div>
+                  <div className="relative z-10 flex h-[20%] w-[18%] flex-col justify-end gap-[1px]">
+                    <div className="h-[100%] w-full rounded-[2px] bg-[#42D587] shadow-[0_2px_6px_rgba(66,213,135,0.4)]"></div>
+                  </div>
+                  <div className="relative z-10 flex h-[20%] w-[18%] flex-col justify-end gap-[1px]">
+                    <div className="h-[100%] w-full rounded-[2px] bg-[#42D587] shadow-[0_2px_6px_rgba(66,213,135,0.4)]"></div>
+                  </div>
+                  <div className="relative z-10 flex h-[20%] w-[18%] flex-col justify-end gap-[1px]">
+                    <div className="h-[100%] w-full rounded-[2px] bg-[#42D587] shadow-[0_2px_6px_rgba(66,213,135,0.4)]"></div>
                   </div>
                 </div>
 
-                <ul className="mt-4 space-y-2 text-sm text-black/75">
-                  <li>Unlimited subscription tracking</li>
-                  <li>Usage insights and savings prompts</li>
-                  <li>Cancel-link helper and reminders</li>
-                  <li>Export and clean import support</li>
-                </ul>
+                <div className="mt-2 flex w-full justify-between px-1 text-[8px] font-bold tracking-wider text-black/25">
+                  <span>W1</span><span>W2</span><span>W3</span><span>W4</span>
+                </div>
               </div>
+            </div>
+          </div>
+        </div>
 
-              <button
-                type="button"
-                onClick={openCheckout}
-                disabled={isLoading}
-                className="mt-6 w-full rounded-full bg-gradient-to-r from-[#42d587] via-[#6ce0b8] to-[#ffbd67] px-6 py-4 text-base font-semibold text-black transition hover:brightness-105 disabled:cursor-not-allowed disabled:opacity-60"
-              >
-                <span className="inline-flex items-center justify-center gap-2">
-                  {isLoading
-                    ? "Opening checkout..."
-                    : "Subscribe for $4.99/month"}
-                </span>
-              </button>
+        <div className="mb-8 flex flex-col items-center gap-1.5 z-10 animate-in slide-in-from-bottom-4 fade-in duration-700 delay-100 fill-mode-both px-2">
+          <h1 className="text-[29px] leading-[1.12] font-bold tracking-tight text-black text-center">
+            Start your clean slate.<br />
+            <span className="bg-gradient-to-r from-[#42d587] via-[#3eb475] to-[#2e945c] bg-clip-text text-transparent">Gain $500+ back</span>
+          </h1>
+        </div>
 
-              <p className="mt-3 text-center text-xs text-black/55">
-                Secure checkout powered by Paddle.
+        {/* Replaced FadeIn directly with classes so they don't hide */}
+        <div className="w-full max-w-[320px] mx-auto flex flex-col gap-[26px] animate-in slide-in-from-bottom-4 fade-in duration-700 delay-200 fill-mode-both">
+          <div className="flex items-start gap-4">
+            <div className="flex h-[38px] w-[38px] shrink-0 items-center justify-center rounded-xl bg-white border border-black/10 shadow-sm relative overflow-hidden">
+              <div className="absolute inset-0 bg-gradient-to-br from-[#E8FAF0] to-transparent opacity-80"></div>
+              <ShieldCheckIcon className="h-5 w-5 text-[#2e945c] z-10" />
+            </div>
+            <div className="mt-[2px]">
+              <p className="text-[15px] leading-[1.35] text-black">
+                <span className="font-bold block tracking-tight">Total clarity. </span>
+                <span className="text-black/60 font-medium tracking-tight">Find sneaky charges before they hit your bank.</span>
               </p>
-              <div className="mt-4 flex flex-wrap justify-center gap-4 text-xs text-black/55">
-                <Link to="/impressum" className="hover:text-black/80">Impressum</Link>
-                <Link to="/terms" className="hover:text-black/80">Terms</Link>
-                <Link to="/privacy" className="hover:text-black/80">Privacy</Link>
-                <Link to="/refund" className="hover:text-black/80">Refunds</Link>
-              </div>
-            </section>
-          </FadeIn>
+            </div>
+          </div>
+
+          <div className="flex items-start gap-4">
+            <div className="flex h-[38px] w-[38px] shrink-0 items-center justify-center rounded-xl bg-white border border-black/10 shadow-sm relative overflow-hidden">
+              <div className="absolute inset-0 bg-gradient-to-br from-[#E8FAF0] to-transparent opacity-80"></div>
+              <BanknotesIcon className="h-5 w-5 text-[#2e945c] z-10" />
+            </div>
+            <div className="mt-[2px]">
+              <p className="text-[15px] leading-[1.35] text-black">
+                <span className="font-bold block tracking-tight">Own your money. </span>
+                <span className="text-black/60 font-medium tracking-tight">Only pay for the exact subscriptions you truly need.</span>
+              </p>
+            </div>
+          </div>
+
+          <div className="flex items-start gap-4">
+            <div className="flex h-[38px] w-[38px] shrink-0 items-center justify-center rounded-xl bg-white border border-black/10 shadow-sm relative overflow-hidden">
+              <div className="absolute inset-0 bg-gradient-to-br from-[#E8FAF0] to-transparent opacity-80"></div>
+              <SparklesIcon className="h-5 w-5 text-[#2e945c] z-10" />
+            </div>
+            <div className="mt-[2px]">
+              <p className="text-[15px] leading-[1.35] text-black">
+                <span className="font-bold block tracking-tight">Cancel painlessly. </span>
+                <span className="text-black/60 font-medium tracking-tight">We make ditching awful subscription services effortless.</span>
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <div className="mt-12 flex flex-col items-center pb-8 animate-in fade-in duration-700 delay-300 fill-mode-both">
+          <div className="flex items-center gap-1 mb-1.5">
+            {[1, 2, 3, 4, 5].map((i) => (
+              <StarIcon key={i} className="h-4 w-4 text-[#FFD60A]" />
+            ))}
+          </div>
+          <p className="text-[14px] font-bold text-black/80 tracking-tight">
+            4.8 Stars
+          </p>
         </div>
       </main>
+
+      {/* Sticky Bottom Bar */}
+      <div className="fixed bottom-0 left-0 right-0 z-50 flex flex-col items-center bg-white/70 px-5 pb-[34px] xl:pb-8 pt-5 backdrop-blur-[48px] border-t border-black/[0.04]">
+        <button
+          type="button"
+          onClick={openCheckout}
+          disabled={isLoading}
+          className="relative w-full max-w-[360px] rounded-full bg-gradient-to-r from-[#42d587] via-[#6ce0b8] to-[#ffbd67] py-[17px] text-center shadow-[0_8px_24px_-6px_rgba(66,213,135,0.4)] transition-all hover:brightness-105 active:scale-[0.98] disabled:opacity-60 disabled:scale-100 overflow-hidden"
+        >
+          <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent -translate-x-[100%] animate-[shimmer_2.5s_infinite]"></div>
+          <p className="text-[17px] font-bold tracking-wide text-black/90">
+            {isLoading ? "Opening checkout..." : "Continue"}
+          </p>
+        </button>
+        <div className="mt-4 flex gap-[18px] text-[11px] font-semibold text-black/30 tracking-wide uppercase">
+          <Link to="/impressum" className="hover:text-black/60 transition-colors">Impressum</Link>
+          <Link to="/terms" className="hover:text-black/60 transition-colors">Terms</Link>
+          <Link to="/privacy" className="hover:text-black/60 transition-colors">Privacy</Link>
+        </div>
+      </div>
     </div>
   );
 }

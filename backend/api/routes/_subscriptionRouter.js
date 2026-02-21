@@ -5,6 +5,7 @@ import {
   getSubscriptionById,
   postSubscription,
   putSubscriptionById,
+  postDummySubscriptions,
 } from "../controllers/_subscriptionController.js";
 import { checkBody, checkParamForId } from "../middleware/_requestChecker.js";
 import asyncWrap from "../utils/_asyncWrapper.js";
@@ -15,6 +16,9 @@ const subscriptionRouter = Router();
 subscriptionRouter.route("/").get(asyncWrap(getAllSubscriptions));
 
 subscriptionRouter.route("/").post(checkBody, asyncWrap(postSubscription));
+
+// ---- ROUTE: /api/subscriptions/dummy ----
+subscriptionRouter.route("/dummy").post(asyncWrap(postDummySubscriptions));
 
 // ---- ROUTE: /api/subscriptions/:id ----
 subscriptionRouter

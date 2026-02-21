@@ -106,6 +106,96 @@ export async function postSubscription(req, res, next) {
   res.status(201).location(location).end();
 }
 
+// ---- POST /api/subscriptions/dummy ----
+export async function postDummySubscriptions(req, res, next) {
+  const {
+    auth: { userId },
+  } = req;
+
+  console.info(
+    new Date().toISOString(),
+    "postDummySubscriptions, request for user",
+    userId,
+  );
+
+  try {
+    const Category = (await import("../models/_categorySchema.js")).default;
+    const categoriesDb = await Category.find({});
+
+    // Fallback if no category found
+    const defaultCat = "65085704f18207c1481e6642";
+
+    const popularSubs = [
+      { name: "Netflix", price: 15.49, interval: "monthly" },
+      { name: "Spotify Premium", price: 10.99, interval: "monthly" },
+      { name: "Amazon Prime", price: 139.00, interval: "yearly" },
+      { name: "Hulu", price: 7.99, interval: "monthly" },
+      { name: "Disney+", price: 10.99, interval: "monthly" },
+      { name: "Apple Music", price: 10.99, interval: "monthly" },
+      { name: "YouTube Premium", price: 13.99, interval: "monthly" },
+      { name: "ChatGPT Plus", price: 20.00, interval: "monthly" },
+      { name: "Claude Pro", price: 20.00, interval: "monthly" },
+      { name: "Gym Membership", price: 49.99, interval: "monthly" },
+      { name: "Internet", price: 69.99, interval: "monthly" },
+      { name: "Phone Bill", price: 45.00, interval: "monthly" },
+      { name: "Water", price: 30.00, interval: "monthly" },
+      { name: "Electricity", price: 80.00, interval: "monthly" },
+      { name: "HBO Max", price: 15.99, interval: "monthly" },
+      { name: "Strava", price: 59.99, interval: "yearly" },
+      { name: "Duolingo Super", price: 83.99, interval: "yearly" },
+      { name: "Notion Plus", price: 8.00, interval: "monthly" },
+      { name: "GitHub Copilot", price: 10.00, interval: "monthly" },
+      { name: "Xbox Game Pass", price: 16.99, interval: "monthly" },
+      { name: "PlayStation Plus", price: 79.99, interval: "yearly" },
+      { name: "Discord Nitro", price: 9.99, interval: "monthly" },
+    ];
+
+    const subsToCreate = popularSubs.map(sub => {
+      const daysAgo = Math.floor(Math.random() * 28);
+      const d = new Date();
+      d.setDate(d.getDate() - daysAgo);
+
+      const randomCategory = categoriesDb.length > 0
+        ? categoriesDb[Math.floor(Math.random() * categoriesDb.length)]._id
+        : defaultCat;
+
+      return {
+        userId,
+        name: sub.name,
+        price: sub.price,
+        interval: sub.interval,
+        category: randomCategory,
+        billing_date: d,
+        active: true,
+      };
+    });
+
+    const createdSubs = await Subscription.insertMany(subsToCreate);
+
+    const usagesToCreate = [];
+    createdSubs.forEach(sub => {
+      // Create some random usage records for the past few months
+      const usageCount = Math.floor(Math.random() * 3) + 1;
+      for (let i = 0; i < usageCount; i++) {
+        usagesToCreate.push({
+          userId,
+          subscriptionId: sub._id,
+          score: Math.floor(Math.random() * 100) + 1, // 1 to 100
+        });
+      }
+    });
+
+    if (usagesToCreate.length > 0) {
+      await Usage.insertMany(usagesToCreate);
+    }
+
+    return res.status(201).json({ success: true, count: createdSubs.length });
+  } catch (error) {
+    console.error("Error generating dummy subscriptions:", error);
+    return res.status(500).json({ error: "Failed to generate dummy subscriptions" });
+  }
+}
+
 // ---- GET /api/subscriptions/:id ----
 export async function getSubscriptionById(req, res, next) {
   const { userId } = req.auth;

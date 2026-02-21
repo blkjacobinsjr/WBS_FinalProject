@@ -1,10 +1,11 @@
 import { useState, useEffect, useMemo } from "react";
-import { UserButton, useUser } from "@clerk/clerk-react";
+import { UserButton, useUser, useAuth } from "@clerk/clerk-react";
 import { hasConfiguredAdminEmails, isAdminEmail } from "../utils/adminAccess";
 import {
   clearOnboardingEvents,
   readOnboardingEvents,
 } from "../utils/onboardingDebug";
+import ApiEndpoints from "../utils/ApiEndpoints";
 import {
   FORCE_FRESH_EMAIL_DEFAULTS,
   addForceFreshOnboardingEmail,
@@ -20,6 +21,7 @@ import {
 
 export default function SettingsTab({ onResetData, isResettingData }) {
   const { user } = useUser();
+  const { getToken } = useAuth();
   const [isDark, setIsDark] = useState(false);
   const [adminEvents, setAdminEvents] = useState([]);
   const [adminTab, setAdminTab] = useState("runs");
@@ -279,14 +281,12 @@ export default function SettingsTab({ onResetData, isResettingData }) {
           </div>
           <button
             onClick={() => setIsDark(!isDark)}
-            className={`relative h-7 w-12 rounded-full transition-colors ${
-              isDark ? "bg-green-600" : "bg-black/20 dark:bg-white/20"
-            }`}
+            className={`relative h-7 w-12 rounded-full transition-colors ${isDark ? "bg-green-600" : "bg-black/20 dark:bg-white/20"
+              }`}
           >
             <div
-              className={`absolute top-1 h-5 w-5 rounded-full bg-white shadow-sm transition-transform ${
-                isDark ? "left-6" : "left-1"
-              }`}
+              className={`absolute top-1 h-5 w-5 rounded-full bg-white shadow-sm transition-transform ${isDark ? "left-6" : "left-1"
+                }`}
             />
           </button>
         </div>
@@ -391,11 +391,10 @@ export default function SettingsTab({ onResetData, isResettingData }) {
                 key={tab.id}
                 type="button"
                 onClick={() => setAdminTab(tab.id)}
-                className={`rounded-lg px-2 py-1.5 text-xs font-semibold transition ${
-                  adminTab === tab.id
-                    ? "bg-black text-white"
-                    : "bg-white/70 text-black/70"
-                }`}
+                className={`rounded-lg px-2 py-1.5 text-xs font-semibold transition ${adminTab === tab.id
+                  ? "bg-black text-white"
+                  : "bg-white/70 text-black/70"
+                  }`}
               >
                 {tab.label}
               </button>
@@ -410,7 +409,7 @@ export default function SettingsTab({ onResetData, isResettingData }) {
 
           {adminTab === "runs" && (
             <div className="space-y-4">
-              <div className="grid gap-2 sm:grid-cols-3">
+              <div className="grid gap-2 sm:grid-cols-2">
                 <button
                   type="button"
                   onClick={openForcedOnboarding}
@@ -432,6 +431,32 @@ export default function SettingsTab({ onResetData, isResettingData }) {
                 >
                   Force paywall
                 </button>
+                <button
+                  type="button"
+                  onClick={async () => {
+                    try {
+                      setStatusNote("Generating dummy data...");
+                      const token = await getToken();
+                      const res = await fetch(ApiEndpoints.subscriptions + "/dummy", {
+                        method: "POST",
+                        headers: {
+                          "Authorization": `Bearer ${token}`
+                        }
+                      });
+                      if (res.ok) {
+                        setStatusNote("Sexy marketing data generated!");
+                        setTimeout(() => window.location.reload(), 1500);
+                      } else {
+                        setStatusNote("Failed to generate data");
+                      }
+                    } catch (err) {
+                      setStatusNote("Error generating data: " + err.message);
+                    }
+                  }}
+                  className="rounded-xl bg-gradient-to-r from-purple-500 to-pink-500 px-3 py-2 text-xs font-semibold text-white transition hover:opacity-90 shadow-sm"
+                >
+                  🔥 Populate Sexy Data
+                </button>
               </div>
 
               <div className="rounded-xl border border-white/60 bg-white/70 p-3">
@@ -440,29 +465,26 @@ export default function SettingsTab({ onResetData, isResettingData }) {
                 </p>
                 <div className="mt-2 flex flex-wrap gap-2">
                   <span
-                    className={`rounded-full px-2 py-1 text-[11px] font-medium ${
-                      adminStatus.hasOnboardingOpen
-                        ? "bg-green-100 text-green-700"
-                        : "bg-black/10 text-black/50"
-                    }`}
+                    className={`rounded-full px-2 py-1 text-[11px] font-medium ${adminStatus.hasOnboardingOpen
+                      ? "bg-green-100 text-green-700"
+                      : "bg-black/10 text-black/50"
+                      }`}
                   >
                     1. Onboarding opened
                   </span>
                   <span
-                    className={`rounded-full px-2 py-1 text-[11px] font-medium ${
-                      adminStatus.hasAutoCheckoutTrigger
-                        ? "bg-green-100 text-green-700"
-                        : "bg-black/10 text-black/50"
-                    }`}
+                    className={`rounded-full px-2 py-1 text-[11px] font-medium ${adminStatus.hasAutoCheckoutTrigger
+                      ? "bg-green-100 text-green-700"
+                      : "bg-black/10 text-black/50"
+                      }`}
                   >
                     2. Auto checkout triggered
                   </span>
                   <span
-                    className={`rounded-full px-2 py-1 text-[11px] font-medium ${
-                      adminStatus.hasCheckoutCompleted
-                        ? "bg-green-100 text-green-700"
-                        : "bg-black/10 text-black/50"
-                    }`}
+                    className={`rounded-full px-2 py-1 text-[11px] font-medium ${adminStatus.hasCheckoutCompleted
+                      ? "bg-green-100 text-green-700"
+                      : "bg-black/10 text-black/50"
+                      }`}
                   >
                     3. Checkout completed
                   </span>
