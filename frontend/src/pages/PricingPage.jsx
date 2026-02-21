@@ -10,36 +10,6 @@ const PADDLE_SCRIPT_ID = "paddle-js-v2";
 let paddleBootPromise = null;
 let paddleInitialized = false;
 
-function MatchaCupIcon({ className = "" }) {
-  return (
-    <svg
-      viewBox="0 0 64 64"
-      aria-hidden="true"
-      className={className}
-      fill="none"
-    >
-      <path
-        d="M16 20H44V38C44 45.732 37.732 52 30 52C22.268 52 16 45.732 16 38V20Z"
-        fill="#A7FFD6"
-        stroke="#315C4B"
-        strokeWidth="2"
-      />
-      <path
-        d="M44 24H49C53.418 24 57 27.582 57 32C57 36.418 53.418 40 49 40H44"
-        stroke="#315C4B"
-        strokeWidth="2"
-        strokeLinecap="round"
-      />
-      <path
-        d="M20 16C20 16 22 14 24 16C26 18 28 18 30 16"
-        stroke="#315C4B"
-        strokeWidth="2"
-        strokeLinecap="round"
-      />
-    </svg>
-  );
-}
-
 function loadPaddleScript() {
   if (window.Paddle) return Promise.resolve(window.Paddle);
 
@@ -100,7 +70,6 @@ export default function PricingPage() {
   const [searchParams] = useSearchParams();
   const [isPaddleReady, setIsPaddleReady] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const autoCheckoutRef = useRef(false);
 
   const paddleClientToken = import.meta.env.VITE_PADDLE_CLIENT_TOKEN;
   const paddlePriceId = import.meta.env.VITE_PADDLE_PRICE_ID_MATCHA_MONTHLY;
@@ -201,18 +170,6 @@ export default function PricingPage() {
     user?.primaryEmailAddress?.emailAddress,
   ]);
 
-  useEffect(() => {
-    if (!autoCheckout) return;
-    if (!isPaddleReady) return;
-    if (isLoading) return;
-    if (autoCheckoutRef.current) return;
-    autoCheckoutRef.current = true;
-    logOnboardingEvent("pricing_auto_checkout_triggered", {
-      source: checkoutSource,
-    });
-    openCheckout();
-  }, [autoCheckout, isLoading, isPaddleReady, openCheckout]);
-
   return (
     <div className="relative min-h-screen bg-[#edf6ff]">
       <div className="fixed inset-0 -z-20">
@@ -273,11 +230,6 @@ export default function PricingPage() {
                 </p>
                 {checkoutSource === "subzro_onboarding" && (
                   <div className="mt-3 inline-flex items-center gap-2 rounded-full border border-[#d7f0ff] bg-[#eef9ff] px-3 py-1.5 text-xs font-semibold text-black/70">
-                    <img
-                      src="/mascot-subzro/mascotwink.webp"
-                      alt="Subzro mascot"
-                      className="mascot-blink h-5 w-5"
-                    />
                     Final onboarding step
                   </div>
                 )}
@@ -293,21 +245,14 @@ export default function PricingPage() {
                     <p className="text-sm text-black/60">per month</p>
                   </div>
                   <div className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-[#a7ffd6] to-[#ffe8b6] px-3 py-1.5 text-xs font-semibold text-black/70">
-                    <img
-                      src="/mascot-subzro/mascotmove7.webp"
-                      alt=""
-                      className="mascot-slide h-5 w-5"
-                    />
                     Matcha money
                   </div>
                 </div>
 
                 <div className="mt-4 rounded-xl border border-[#d6f5e5] bg-[#f6fff9] px-3 py-2">
                   <div className="flex items-center gap-2">
-                    <div className="flex items-center gap-1">
-                      <MatchaCupIcon className="h-6 w-6 transition-transform duration-200 hover:scale-110" />
-                      <MatchaCupIcon className="h-6 w-6 opacity-75 transition-transform duration-200 hover:scale-110" />
-                      <MatchaCupIcon className="h-6 w-6 opacity-60 transition-transform duration-200 hover:scale-110" />
+                    <div className="flex items-center gap-1 text-2xl">
+                      🍵🍵🍵
                     </div>
                     <p className="text-xs font-medium text-black/70 sm:text-sm">
                       About the price of one cafe matcha each month.
@@ -326,17 +271,10 @@ export default function PricingPage() {
               <button
                 type="button"
                 onClick={openCheckout}
-                disabled={isLoading || !isPaddleReady}
+                disabled={isLoading}
                 className="mt-6 w-full rounded-full bg-gradient-to-r from-[#42d587] via-[#6ce0b8] to-[#ffbd67] px-6 py-4 text-base font-semibold text-black transition hover:brightness-105 disabled:cursor-not-allowed disabled:opacity-60"
               >
                 <span className="inline-flex items-center justify-center gap-2">
-                  {isLoading && (
-                    <img
-                      src="/mascot-subzro/mascotmove3.webp"
-                      alt=""
-                      className="mascot-slide h-6 w-6"
-                    />
-                  )}
                   {isLoading
                     ? "Opening checkout..."
                     : "Subscribe for $4.99/month"}

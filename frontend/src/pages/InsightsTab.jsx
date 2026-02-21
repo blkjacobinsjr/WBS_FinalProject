@@ -47,12 +47,12 @@ export default function InsightsTab() {
   const pieData = useMemo(() =>
     usedCategories?.length > 0 && subscriptions?.length > 0
       ? usedCategories.map((category) => ({
-          name: category.name,
-          value: category.totalCost,
-          subscriptions: subscriptions.filter(
-            (s) => s.category._id === category._id
-          ),
-        }))
+        name: category.name,
+        value: category.totalCost,
+        subscriptions: subscriptions.filter(
+          (s) => s.category._id === category._id
+        ),
+      }))
       : [],
     [usedCategories, subscriptions]
   );
@@ -310,7 +310,7 @@ export default function InsightsTab() {
         <p className="text-center text-xs text-black/40 dark:text-white/40">
           vs. Average Monthly Spend (€219)
         </p>
-        <div className="mt-4 flex items-center justify-center">
+        <div className="mt-4 flex min-h-[200px] w-full items-center justify-center">
           <Piechartwithneedle
             maxFirstSegment={219}
             needleValue={dashboardData?.totalCostPerMonth}
@@ -327,7 +327,7 @@ export default function InsightsTab() {
           <p className="text-center text-xs text-black/40 dark:text-white/40">
             Higher means more usage relative to cost
           </p>
-          <div className="mt-4 flex min-h-[200px] items-center justify-center">
+          <div className="mt-4 flex min-h-[200px] w-full items-center justify-center">
             <UsageRadarChart />
           </div>
         </div>
@@ -342,7 +342,7 @@ export default function InsightsTab() {
           <p className="text-center text-xs text-black/40 dark:text-white/40">
             How your money is distributed
           </p>
-          <div className="mt-4 flex min-h-[250px] items-center justify-center">
+          <div className="mt-4 flex min-h-[250px] w-full items-center justify-center">
             <UsedCategoriesPieChart pieData={pieData} />
           </div>
         </div>
@@ -357,7 +357,7 @@ export default function InsightsTab() {
           <p className="text-center text-xs text-black/40 dark:text-white/40">
             Individual subscription costs
           </p>
-          <div className="mt-4 flex min-h-[250px] items-center justify-center">
+          <div className="mt-4 flex min-h-[250px] w-full items-center justify-center">
             <CategoryPieChart />
           </div>
         </div>
