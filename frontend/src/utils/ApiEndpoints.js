@@ -4,9 +4,8 @@ export default class ApiEndpoints {
   static _generateEndpoints() {
     const { VITE_API_HOST, VITE_API_PORT, VITE_API_BASE } = import.meta.env;
 
-    const adjustedHost = `${VITE_API_HOST}${
-      VITE_API_PORT ? `:${VITE_API_PORT}` : ""
-    }`;
+    const adjustedHost = `${VITE_API_HOST}${VITE_API_PORT ? `:${VITE_API_PORT}` : ""
+      }`;
     const baseUrl = new URL(VITE_API_BASE, adjustedHost);
 
     if (!baseUrl) {
@@ -45,6 +44,10 @@ export default class ApiEndpoints {
 
   static get usedCategories() {
     return `${this.endpoints.categories}/used`;
+  }
+
+  static get seedCategories() {
+    return `${this.endpoints.categories}/seed`;
   }
 
   static get usages() {

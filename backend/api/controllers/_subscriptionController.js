@@ -46,37 +46,67 @@ export async function postSubscription(req, res, next) {
 
   let categoryId = body.category;
 
-  // If category is "None" or missing, let's use OpenRouter AI to auto-categorize
-  if (process.env.OPENROUTER_API_KEY && (!categoryId || categoryId === "65085704f18207c1481e6642")) {
+  // If category is missing or the old placeholder "None" ID, auto-categorize via OpenRouter
+  if (!categoryId || categoryId === "65085704f18207c1481e6642") {
     try {
       const Category = (await import("../models/_categorySchema.js")).default;
       const categories = await Category.find({});
-      const categoryNames = categories.map((c) => `ID: ${c._id}, Name: ${c.name}`).join("\n");
 
-      const prompt = `You are an AI categorizer. Given the subscription name "${body.name}", pick the single best category ID from the list below. Return ONLY the ID, nothing else. If you are not sure, return 65085704f18207c1481e6642.\n\n${categoryNames}`;
-
-      const aiResponse = await fetch("https://openrouter.ai/api/v1/chat/completions", {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${process.env.OPENROUTER_API_KEY}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          model: "openai/gpt-4o-mini",
-          messages: [{ role: "user", content: prompt }],
-          temperature: 0,
-        }),
-      });
-
-      if (aiResponse.ok) {
-        const data = await aiResponse.json();
-        const predictedId = data.choices?.[0]?.message?.content?.trim();
-        if (predictedId && categories.find((c) => c._id.toString() === predictedId)) {
-          categoryId = predictedId;
+      if (categories.length > 0) {
+        // Fast local keyword fallback first
+        const KEYWORD_MAP = {
+          Streaming: ["netflix", "hulu", "disney", "hbo", "max", "peacock", "paramount", "apple tv", "prime video", "crunchyroll"],
+          Music: ["spotify", "apple music", "tidal", "deezer", "youtube music", "amazon music", "soundcloud"],
+          Gaming: ["xbox", "playstation", "psn", "nintendo", "steam", "ea play", "ubisoft", "game pass"],
+          Productivity: ["notion", "slack", "monday", "asana", "trello", "zoom", "microsoft 365", "office 365", "google workspace", "dropbox", "evernote"],
+          "Cloud & Storage": ["icloud", "onedrive", "google one", "backblaze", "aws", "azure", "digitalocean", "vercel"],
+          "AI & Software": ["openai", "chatgpt", "claude", "midjourney", "adobe", "figma", "canva", "github", "gitlab", "1password", "grammarly"],
+          Entertainment: ["audible", "kindle", "scribd", "medium", "substack", "youtube premium", "patreon", "duolingo", "masterclass"],
+          Health: ["peloton", "headspace", "calm", "strava", "whoop", "fitbit", "myfitnesspal", "weight watchers"],
+          Finance: ["robinhood", "coinbase", "quickbooks", "freshbooks", "xero", "ynab"],
+          eCommerce: ["amazon", "prime", "ebay", "shopify", "etsy"],
+          VPN: ["nordvpn", "expressvpn", "surfshark", "protonvpn", "vpn"],
+          News: ["new york times", "nyt", "washington post", "bloomberg", "wsj", "economist"],
+        };
+        const lower = (body.name || "").toLowerCase();
+        for (const [catName, keywords] of Object.entries(KEYWORD_MAP)) {
+          if (keywords.some((kw) => lower.includes(kw))) {
+            const match = categories.find((c) => c.name === catName);
+            if (match) { categoryId = match._id; break; }
+          }
         }
+
+        // If still not matched, try OpenRouter
+        if (!categoryId && process.env.OPENROUTER_API_KEY) {
+          const categoryList = categories.map((c) => `ID: ${c._id}, Name: ${c.name}`).join("\n");
+          const prompt = `You are a subscription categorizer. Given subscription name "${body.name}", pick the SINGLE best category ID from this list:\n\n${categoryList}\n\nReturn ONLY the ID, nothing else.`;
+          const aiResponse = await fetch("https://openrouter.ai/api/v1/chat/completions", {
+            method: "POST",
+            headers: {
+              Authorization: `Bearer ${process.env.OPENROUTER_API_KEY}`,
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              model: "openai/gpt-4o-mini",
+              messages: [{ role: "user", content: prompt }],
+              temperature: 0,
+            }),
+          });
+
+          if (aiResponse.ok) {
+            const data = await aiResponse.json();
+            const predictedId = data.choices?.[0]?.message?.content?.trim();
+            if (predictedId && categories.find((c) => c._id.toString() === predictedId)) {
+              categoryId = predictedId;
+            }
+          }
+        }
+
+        // Last resort: first category
+        if (!categoryId) categoryId = categories[0]._id;
       }
     } catch (err) {
-      console.error("OpenRouter auto-categorization failed:", err);
+      console.error("Auto-categorization failed:", err);
     }
   }
 

@@ -459,6 +459,36 @@ export default function SettingsTab({ onResetData, isResettingData }) {
                 >
                   🔥 Populate Sexy Data
                 </button>
+                <button
+                  type="button"
+                  onClick={async () => {
+                    try {
+                      setStatusNote("Seeding categories + categorizing subs via AI...");
+                      const token = await getToken();
+                      const fetchUrl = import.meta.env.DEV
+                        ? "http://localhost:3001/api/categories/seed"
+                        : ApiEndpoints.seedCategories;
+                      const res = await fetch(fetchUrl, {
+                        method: "POST",
+                        headers: { Authorization: `Bearer ${token}` },
+                      });
+                      if (res.ok) {
+                        const data = await res.json();
+                        setStatusNote(`✅ ${data.categoriesSeeded} categories seeded · ${data.subscriptionsCategorized} subs categorized`);
+                        setTimeout(() => window.location.reload(), 2000);
+                      } else {
+                        const text = await res.text();
+                        setStatusNote("Failed: " + text);
+                      }
+                    } catch (err) {
+                      setStatusNote("Error: " + err.message);
+                    }
+                  }}
+                  className="rounded-xl bg-gradient-to-r from-emerald-500 to-teal-500 px-3 py-2 text-xs font-semibold text-white transition hover:opacity-90 shadow-sm"
+                >
+                  🏷 Fix Categories
+                </button>
+
               </div>
 
               <div className="rounded-xl border border-white/60 bg-white/70 p-3">
