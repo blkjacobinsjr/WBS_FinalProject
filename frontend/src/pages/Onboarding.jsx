@@ -10,7 +10,7 @@ import {
   readOnboardingCompletedAt,
 } from "../utils/onboardingState";
 
-const TOTAL_STEPS = 11;
+const TOTAL_STEPS = 12;
 const PAYOFF_CARD_COUNT = 4;
 const ENTER_EASE = [0.22, 1, 0.36, 1];
 const LOGO_DEV_TOKEN = "pk_fg7nZQ2oQQK-tZnjxKWfPQ";
@@ -24,17 +24,18 @@ const INTRO_FRAMES = [
   "/mascot-subzro/mascotwave.webp",
 ];
 const STEP_BACKGROUNDS = [
-  "from-[#071223] via-[#102039] to-[#1a3152]",
-  "from-[#09192f] via-[#172d4d] to-[#2b4a74]",
-  "from-[#0b1d37] via-[#1d3960] to-[#345b8a]",
-  "from-[#122744] via-[#24446d] to-[#3d6698]",
-  "from-[#173150] via-[#2a4b75] to-[#406c9c]",
-  "from-[#1b3554] via-[#2f4f79] to-[#4a77a5]",
-  "from-[#203a58] via-[#35567e] to-[#527faa]",
-  "from-[#24405f] via-[#395d86] to-[#5a88b1]",
-  "from-[#294565] via-[#3d6089] to-[#587fa8]",
-  "from-[#2f4c6d] via-[#446892] to-[#628bb3]",
-  "from-[#deeffc] via-[#edf7ff] to-[#f6fbff]",
+  "from-[#071223] via-[#102039] to-[#1a3152]", // 0 intro
+  "from-[#08152a] via-[#132644] to-[#213b5e]", // 1 greeting
+  "from-[#09192f] via-[#172d4d] to-[#2b4a74]", // 2
+  "from-[#0b1d37] via-[#1d3960] to-[#345b8a]", // 3
+  "from-[#122744] via-[#24446d] to-[#3d6698]", // 4
+  "from-[#173150] via-[#2a4b75] to-[#406c9c]", // 5
+  "from-[#1b3554] via-[#2f4f79] to-[#4a77a5]", // 6
+  "from-[#203a58] via-[#35567e] to-[#527faa]", // 7
+  "from-[#24405f] via-[#395d86] to-[#5a88b1]", // 8
+  "from-[#294565] via-[#3d6089] to-[#587fa8]", // 9
+  "from-[#2f4c6d] via-[#446892] to-[#628bb3]", // 10
+  "from-[#deeffc] via-[#edf7ff] to-[#f6fbff]", // 11
 ];
 const EVIDENCE_STEPS = [
   {
@@ -77,13 +78,13 @@ function institutionLogoUrl(domain) {
   return `https://img.logo.dev/${domain}?token=${LOGO_DEV_TOKEN}&format=png&size=256&retina=true`;
 }
 
-function StepProgress({ step, dark }) {
+function StepProgress({ step, total, dark }) {
   const visibleIndices = useMemo(() => {
     // Show window of 3: [prev, current, next]
     if (step === 0) return [0, 1, 2];
-    if (step === TOTAL_STEPS - 1) return [TOTAL_STEPS - 3, TOTAL_STEPS - 2, TOTAL_STEPS - 1];
+    if (step === total - 1) return [total - 3, total - 2, total - 1];
     return [step - 1, step, step + 1];
-  }, [step]);
+  }, [step, total]);
 
   return (
     <div className="flex items-center gap-2">
@@ -283,7 +284,7 @@ export default function Onboarding() {
 
   const userEmail = user?.primaryEmailAddress?.emailAddress || "";
   const isAdminUser = isAdminEmail(userEmail);
-  const isDarkStep = step <= 7;
+  const isDarkStep = step <= 8;
 
   const monthlyExposure = subscriptionCount * averagePrice;
   const yearlyExposure = monthlyExposure * 12;
@@ -306,7 +307,7 @@ export default function Onboarding() {
   );
 
   const profileStrength = useMemo(() => {
-    const completionScore = ((step + 1) / TOTAL_STEPS) * 50;
+    const completionScore = step === 0 ? 0 : (step / (TOTAL_STEPS - 1)) * 50;
     const goalScore = goal ? 20 : 0;
     const prescreenScore = riskViewed ? 10 : 0;
     const countScore = Math.min(15, Math.round(subscriptionCount / 2));
@@ -656,6 +657,60 @@ export default function Onboarding() {
         >
           Start
         </button>
+      </div>
+    );
+  }
+
+  function renderGreetingStep() {
+    return (
+      <div className="flex h-full flex-col">
+        <h2 className="text-3xl font-extrabold tracking-tight text-white">
+          Hi, I'm Zro
+        </h2>
+        <p className="mt-1 text-sm text-[#cde7ff]">Your personal finance pet.</p>
+
+        <div className="mt-12 flex flex-1 flex-col items-center">
+          <motion.div
+            initial={{ scale: 0.8, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            transition={{ delay: 0.2, type: "spring", stiffness: 200, damping: 15 }}
+            className="mb-8"
+          >
+            <img
+              src="/mascot-subzro/mascotsitsmile1.webp"
+              alt="Zro"
+              className="h-44 w-44 object-contain drop-shadow-[0_20px_50px_rgba(0,0,0,0.3)]"
+            />
+          </motion.div>
+
+          <motion.div
+            initial={{ y: 20, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            transition={{ delay: 0.4 }}
+            className="text-center px-4"
+          >
+            <p className="text-2xl font-semibold leading-tight text-white">
+              I'm here to help you <br />
+              <span className="bg-gradient-to-r from-[#7dc1ff] to-[#5adcb4] bg-clip-text text-transparent">
+                freeze wasteful spending
+              </span>
+            </p>
+            <p className="mt-6 text-base leading-relaxed text-[#cde7ff]">
+              Most people waste $2,400+ a year on recurring loops they don't even use.
+              I help you find them and gain control.
+            </p>
+          </motion.div>
+        </div>
+
+        <div className="mt-auto flex items-center justify-end pt-6">
+          <button
+            type="button"
+            onClick={nextStep}
+            className="rounded-full bg-white px-8 py-3 text-sm font-bold text-[#10223e] shadow-xl transition hover:scale-105 active:scale-95"
+          >
+            Let's begin
+          </button>
+        </div>
       </div>
     );
   }
@@ -1353,21 +1408,22 @@ export default function Onboarding() {
 
   function renderStepBody() {
     if (step === 0) return renderIntroStep();
-    if (step === 1) return renderEvidenceStep(0);
-    if (step === 2) return renderMissionStep();
-    if (step === 3) return renderSavingsGapStep();
-    if (step === 4) return renderAuditFrequencyStep();
-    if (step === 5) return renderSurpriseChargesStep();
-    if (step === 6) return renderRiskRevealStep();
-    if (step === 7) return renderEvidenceStep(1);
-    if (step === 8) return renderCountStep();
-    if (step === 9) return renderPriceStep();
+    if (step === 1) return renderGreetingStep();
+    if (step === 2) return renderEvidenceStep(0);
+    if (step === 3) return renderMissionStep();
+    if (step === 4) return renderSavingsGapStep();
+    if (step === 5) return renderAuditFrequencyStep();
+    if (step === 6) return renderSurpriseChargesStep();
+    if (step === 7) return renderRiskRevealStep();
+    if (step === 8) return renderEvidenceStep(1);
+    if (step === 9) return renderCountStep();
+    if (step === 10) return renderPriceStep();
     return renderPayoffStep();
   }
 
   const stepMascot = useMemo(() => {
     if (step === 0) return "/mascot-subzro/officiallogos/officialsubzromascot-removebg-preview.png";
-    if (step === 9) {
+    if (step === 10) {
       if (averagePrice <= 12) return "/mascot-subzro/officiallogos/expressions/mascotexpressioncalm.png";
       if (averagePrice <= 22) return "/mascot-subzro/officiallogos/expressions/mascotexpressionangry.png";
       if (averagePrice <= 32) return "/mascot-subzro/officiallogos/expressions/mascotexpressioncry.png";
@@ -1375,15 +1431,16 @@ export default function Onboarding() {
     }
 
     const mascotMap = {
-      1: "/mascot-subzro/mascotwinksmile.webp",
-      2: "/mascot-subzro/mascotsitsmilewave.webp",
-      3: "/mascot-subzro/mascotsleep.webp",
-      4: "/mascot-subzro/mascotmove12.webp",
-      5: "/mascot-subzro/mascotsitsmile1.webp",
-      6: "/mascot-subzro/mascotwinksmile.webp",
-      7: "/mascot-subzro/mascoteyesclosedsweat.webp",
-      8: "/mascot-subzro/mascotsitsmile2.webp",
-      10: "/mascot-subzro/mascotwave.webp",
+      1: "/mascot-subzro/mascotsitsmile1.webp",
+      2: "/mascot-subzro/mascotwinksmile.webp",
+      3: "/mascot-subzro/mascotsitsmilewave.webp",
+      4: "/mascot-subzro/mascotsleep.webp",
+      5: "/mascot-subzro/mascotmove12.webp",
+      6: "/mascot-subzro/mascotsitsmile1.webp",
+      7: "/mascot-subzro/mascotwinksmile.webp",
+      8: "/mascot-subzro/mascoteyesclosedsweat.webp",
+      9: "/mascot-subzro/mascotsitsmile2.webp",
+      11: "/mascot-subzro/mascotwave.webp",
     };
 
     return mascotMap[step] || "/mascot-subzro/mascotwink.webp";
@@ -1407,6 +1464,9 @@ export default function Onboarding() {
     step < TOTAL_STEPS - 1
       ? `bg-${step}`
       : `bg-${step}-${countdownDone ? "done" : countdownValue}`;
+
+  // Full-screen splash takeover — bypass entire layout
+  if (step === 0) return renderIntroStep();
 
   return (
     <div className="relative min-h-screen overflow-hidden">
@@ -1444,7 +1504,7 @@ export default function Onboarding() {
               </span>
             </Link>
             <div className="flex items-center gap-3">
-              <StepProgress step={step} dark={isDarkStep} />
+              <StepProgress step={step - 1} total={TOTAL_STEPS - 1} dark={isDarkStep} />
               <UserButton afterSignOutUrl={window.location.origin} />
             </div>
           </div>
@@ -1466,7 +1526,7 @@ export default function Onboarding() {
             {step !== 0 && (
               <div className="mb-3 flex items-center justify-between gap-4">
                 <p className={`text-xs font-semibold uppercase tracking-[0.2em] ${isDarkStep ? "text-[#d3ebff]" : "text-black/55"}`}>
-                  Step {step + 1} of {TOTAL_STEPS}
+                  Step {step} of {TOTAL_STEPS - 1}
                 </p>
                 <div className="flex items-center gap-2">
                   <AnimatePresence mode="wait" initial={false}>
@@ -1501,7 +1561,7 @@ export default function Onboarding() {
               </div>
             )}
 
-            {step === 2 && (
+            {step === 3 && (
               <div className="mb-3 rounded-xl bg-white/10 px-3 py-2 text-sm text-[#dbeeff]">
                 Zro tip: choose the one that sounds most like your real goal today.
               </div>
