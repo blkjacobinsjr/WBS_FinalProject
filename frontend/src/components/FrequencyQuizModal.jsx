@@ -249,41 +249,40 @@ export default function FrequencyQuizModal({
                     How often do you use this?
                   </p>
 
-                  {/* Tinder-style Rating Buttons */}
-                  <div className="mt-8 flex items-center justify-center gap-6">
-                    {/* Never - (Left / Red) */}
-                    <button
-                      onClick={() => setSelectedScore(1)}
-                      className="group flex flex-col items-center gap-2"
-                    >
-                      <div className="flex h-16 w-16 items-center justify-center rounded-full border-2 border-red-500 bg-white shadow-md transition-all active:scale-90 active:bg-red-50 dark:bg-gray-900 dark:active:bg-red-900/30">
-                        <span className="text-2xl">❄️</span>
-                      </div>
-                      <span className="text-xs font-semibold text-red-600 dark:text-red-400">Never</span>
-                    </button>
-
-                    {/* Sometimes - (Middle / Amber) */}
-                    <button
-                      onClick={() => setSelectedScore(3)}
-                      className="group flex flex-col items-center gap-2"
-                    >
-                      <div className="flex h-14 w-14 items-center justify-center rounded-full border-2 border-amber-500 bg-white shadow-md transition-all active:scale-90 active:bg-amber-50 dark:bg-gray-900 dark:active:bg-amber-900/30">
-                        <span className="text-xl">📆</span>
-                      </div>
-                      <span className="text-[10px] font-semibold text-amber-600 dark:text-amber-400">Sometimes</span>
-                    </button>
-
-                    {/* Always - (Right / Blue) */}
-                    <button
-                      onClick={() => setSelectedScore(5)}
-                      className="group flex flex-col items-center gap-2"
-                    >
-                      <div className="flex h-16 w-16 items-center justify-center rounded-full border-2 border-blue-500 bg-white shadow-md transition-all active:scale-90 active:bg-blue-50 dark:bg-gray-900 dark:active:bg-blue-900/30">
-                        <span className="text-2xl">🔥</span>
-                      </div>
-                      <span className="text-xs font-semibold text-blue-600 dark:text-blue-400">Always</span>
-                    </button>
-                  </div>
+                  {/* Rating options - Frequency-based */}
+                  <RadioGroup
+                    value={selectedScore}
+                    onChange={(val) => setSelectedScore(Number(val))}
+                    className="space-y-2"
+                  >
+                    {frequencyOptions.map((option) => (
+                      <RadioGroup.Option
+                        key={option.value}
+                        value={option.value}
+                        className={({ checked }) =>
+                          `cursor-pointer rounded-xl px-4 py-3 transition-all active:scale-[0.98] ${
+                            checked
+                              ? "bg-gradient-to-r from-blue-500 to-cyan-500 text-white shadow-lg"
+                              : "bg-blue-50 text-blue-900 dark:bg-blue-900/30 dark:text-blue-300"
+                          }`
+                        }
+                      >
+                        {({ checked }) => (
+                          <div className="flex items-center gap-3">
+                            <div className={`text-lg ${checked ? "" : "grayscale"}`}>
+                              {option.emoji}
+                            </div>
+                            <div className="flex-1">
+                              <span className="text-sm font-semibold">{option.label}</span>
+                              <span className={`ml-2 text-xs ${checked ? "text-white/80" : "opacity-60"}`}>
+                                {option.desc}
+                              </span>
+                            </div>
+                          </div>
+                        )}
+                      </RadioGroup.Option>
+                    ))}
+                  </RadioGroup>
 
                   {/* Skip button */}
                   {unratedNotifications?.length > 1 && (
