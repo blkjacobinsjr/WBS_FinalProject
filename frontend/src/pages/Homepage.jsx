@@ -456,6 +456,15 @@ export default function Homepage() {
                     />
                   </div>
 
+                  <div className="absolute inset-x-2 bottom-0 z-[1]">
+                    <img
+                      src="/newproductscreenshots/3Ddashboardlandscape.png"
+                      alt="Subzro Dashboard preview"
+                      className="w-full rounded-xl opacity-95 drop-shadow-[0_20px_35px_rgba(0,0,0,0.22)]"
+                      loading="lazy"
+                    />
+                  </div>
+
                   <div className="absolute inset-0 pointer-events-none">
                     <InteractiveLogosphere isMobile={true} />
                   </div>
