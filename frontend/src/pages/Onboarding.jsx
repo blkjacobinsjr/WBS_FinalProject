@@ -14,11 +14,9 @@ const TOTAL_STEPS = 11;
 const PAYOFF_CARD_COUNT = 4;
 const ENTER_EASE = [0.22, 1, 0.36, 1];
 const LOGO_DEV_TOKEN = "pk_fg7nZQ2oQQK-tZnjxKWfPQ";
-const INTRO_LINES = [
-  "hey. i'm zro.",
-  "born for cold mountains and clean signals.",
-  "i sniff out recurring charges people forget.",
-  "let's get your subscriptions to subzro.",
+const SPLASH_LOGOS = [
+  "netflix.com", "spotify.com", "amazon.com",
+  "youtube.com", "disneyplus.com", "adobe.com",
 ];
 const INTRO_FRAMES = [
   "/mascot-subzro/mascotmove10.webp",
@@ -112,14 +110,14 @@ function StepProgress({ step, dark }) {
                 mass: 0.8
               }}
               className={`h-1.5 rounded-full ${isDone
-                  ? "bg-[#26c06f]"
-                  : isActive
-                    ? dark
-                      ? "bg-[#7dc1ff] shadow-[0_0_15px_rgba(125,193,255,0.4)]"
-                      : "bg-[#2b63a4] shadow-[0_0_15px_rgba(43,99,164,0.3)]"
-                    : dark
-                      ? "bg-white/20"
-                      : "bg-black/15"
+                ? "bg-[#26c06f]"
+                : isActive
+                  ? dark
+                    ? "bg-[#7dc1ff] shadow-[0_0_15px_rgba(125,193,255,0.4)]"
+                    : "bg-[#2b63a4] shadow-[0_0_15px_rgba(43,99,164,0.3)]"
+                  : dark
+                    ? "bg-white/20"
+                    : "bg-black/15"
                 }`}
             />
           );
@@ -137,8 +135,8 @@ function OptionCard({ title, subtitle, selected, onClick, mascot }) {
       whileTap={{ scale: 0.985 }}
       transition={{ type: "spring", stiffness: 420, damping: 30, mass: 0.6 }}
       className={`w-full rounded-2xl border px-4 py-4 text-left transition ${selected
-          ? "border-[#8ce0b5] bg-[#edfff6] shadow-[0_8px_24px_rgba(20,149,90,0.10)]"
-          : "border-white/75 bg-white/80 hover:bg-white"
+        ? "border-[#8ce0b5] bg-[#edfff6] shadow-[0_8px_24px_rgba(20,149,90,0.10)]"
+        : "border-white/75 bg-white/80 hover:bg-white"
         }`}
     >
       <div className="flex items-center gap-3">
@@ -274,11 +272,7 @@ export default function Onboarding() {
   const [auditInteracted, setAuditInteracted] = useState(false);
   const [surpriseInteracted, setSurpriseInteracted] = useState(false);
   const [riskViewed, setRiskViewed] = useState(false);
-  const [typedText, setTypedText] = useState("");
-  const [introReplayKey, setIntroReplayKey] = useState(0);
-  const [introFrame, setIntroFrame] = useState(0);
-  const [introLine, setIntroLine] = useState(0);
-  const [introReady, setIntroReady] = useState(false);
+  const [splashReady, setSplashReady] = useState(false);
   const [countInteracted, setCountInteracted] = useState(false);
   const [priceInteracted, setPriceInteracted] = useState(false);
   const [countdownValue, setCountdownValue] = useState(3);
@@ -287,7 +281,6 @@ export default function Onboarding() {
   const [payoffTitle, setPayoffTitle] = useState("");
   const [payoffTransitioning, setPayoffTransitioning] = useState(false);
 
-  const firstName = user?.firstName || "there";
   const userEmail = user?.primaryEmailAddress?.emailAddress || "";
   const isAdminUser = isAdminEmail(userEmail);
   const isDarkStep = step <= 7;
@@ -381,53 +374,10 @@ export default function Onboarding() {
 
   useEffect(() => {
     if (step !== 0) return;
-
-    setTypedText("");
-    setIntroFrame(0);
-    setIntroLine(0);
-    setIntroReady(false);
-
-    let lineIndex = 0;
-    let charIndex = 0;
-    let typingTimer;
-    let holdTimer;
-    const frameTimers = [
-      setTimeout(() => setIntroFrame(1), 760),
-      setTimeout(() => setIntroFrame(2), 1580),
-    ];
-
-    function typeNext() {
-      const line = INTRO_LINES[lineIndex];
-
-      if (charIndex <= line.length) {
-        setTypedText(line.slice(0, charIndex));
-        charIndex += 1;
-        typingTimer = setTimeout(typeNext, 52);
-        return;
-      }
-
-      holdTimer = setTimeout(() => {
-        lineIndex += 1;
-        if (lineIndex >= INTRO_LINES.length) {
-          setIntroReady(true);
-          return;
-        }
-
-        setIntroLine(lineIndex);
-        setTypedText("");
-        charIndex = 0;
-        typeNext();
-      }, 920);
-    }
-
-    typingTimer = setTimeout(typeNext, 420);
-
-    return () => {
-      clearTimeout(typingTimer);
-      clearTimeout(holdTimer);
-      frameTimers.forEach((timer) => clearTimeout(timer));
-    };
-  }, [introReplayKey, step]);
+    setSplashReady(false);
+    const t = setTimeout(() => setSplashReady(true), SPLASH_LOGOS.length * 220 + 400);
+    return () => clearTimeout(t);
+  }, [step]);
 
   useEffect(() => {
     if (step !== TOTAL_STEPS - 1) return;
@@ -525,61 +475,187 @@ export default function Onboarding() {
   }
 
   function renderIntroStep() {
+    // Spark-inspired full-screen peephole splash
+    // Logos are massive blobs at viewport edges, creating a star-shaped opening
+    // Progressive disclosure: nothing shown until the sequence finishes
+    const LOGO_SIZE = 220; // massive, fills edges
+    const COUNT = SPLASH_LOGOS.length;
+    const STAGGER = 280; // ms between each logo
+    const LOGO_PHASE = COUNT * STAGGER + 600; // total time for logos to settle
+    const CENTER_DELAY = LOGO_PHASE; // mascot appears after logos
+    const BUTTON_DELAY = CENTER_DELAY + 900; // button last
+
+    // Positions: edge-anchored like Spark's colored blobs forming a star opening
+    // Each logo sits at a viewport edge, partially off-screen
+    const positions = [
+      { top: '-6%', left: '-8%' },  // top-left
+      { top: '-6%', right: '-8%' },  // top-right
+      { top: '28%', left: '-12%' },  // mid-left
+      { top: '28%', right: '-12%' },  // mid-right
+      { bottom: '-4%', left: '-8%' }, // bottom-left
+      { bottom: '-4%', right: '-8%' }, // bottom-right
+    ];
+
     return (
-      <div className="flex h-full flex-col">
-        <div className="flex items-start justify-between gap-4">
-          <h1 className="bg-gradient-to-r from-[#8fc4ff] via-white to-[#d6ecff] bg-clip-text text-4xl font-extrabold tracking-tight text-transparent">
-            Welcome, {firstName}
-          </h1>
-          <motion.img
-            key={introFrame}
-            initial={{ opacity: 0, x: 20, scale: 0.9 }}
-            animate={{ opacity: 1, x: 0, scale: 1 }}
-            transition={{ duration: 0.42, ease: ENTER_EASE }}
-            src={INTRO_FRAMES[introFrame]}
-            alt="Zro intro frame"
-            className="h-20 w-20 rounded-2xl border border-white/35 bg-white/10 p-2"
-          />
-        </div>
+      <div
+        className="fixed inset-0 z-[100] flex items-center justify-center overflow-hidden"
+        style={{ background: 'linear-gradient(145deg, #071223 0%, #0e1e33 50%, #142a47 100%)' }}
+      >
+        <style>{`
+          @keyframes splashBlobIn {
+            0%   { opacity: 0; transform: scale(3.5) rotate(calc(var(--rot) - 180deg)); }
+            40%  { opacity: 1; }
+            70%  { transform: scale(1.06) rotate(calc(var(--rot) + 4deg)); }
+            85%  { transform: scale(0.97) rotate(calc(var(--rot) - 2deg)); }
+            100% { opacity: 1; transform: scale(1) rotate(var(--rot)); }
+          }
+          @keyframes splashCenterIn {
+            0%   { opacity: 0; transform: scale(0.5); filter: blur(20px); }
+            60%  { opacity: 1; filter: blur(2px); }
+            80%  { transform: scale(1.04); filter: blur(0); }
+            100% { opacity: 1; transform: scale(1); filter: blur(0); }
+          }
+          @keyframes splashPulse {
+            0%,100% { text-shadow: 0 0 24px rgba(125,193,255,0.3); }
+            50%     { text-shadow: 0 0 48px rgba(125,193,255,0.7), 0 0 80px rgba(90,220,180,0.3); }
+          }
+          @keyframes splashTagline {
+            0%   { opacity: 0; transform: translateY(12px); filter: blur(8px); }
+            100% { opacity: 1; transform: translateY(0); filter: blur(0); }
+          }
+          @keyframes splashBtnIn {
+            0%   { opacity: 0; transform: translateY(24px) scale(0.9); }
+            100% { opacity: 1; transform: translateY(0) scale(1); }
+          }
+          @keyframes splashColorShift {
+            0%,100% { color: #e5f4ff; }
+            25%     { color: #7dc1ff; }
+            50%     { color: #5adcb4; }
+            75%     { color: #f0b4ff; }
+          }
+          .splash-blob {
+            position: absolute;
+            width: ${LOGO_SIZE}px;
+            height: ${LOGO_SIZE}px;
+            border-radius: 48px;
+            overflow: hidden;
+            opacity: 0;
+            animation: splashBlobIn 1s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+            box-shadow:
+              0 12px 48px rgba(0,0,0,0.4),
+              0 0 0 1px rgba(255,255,255,0.08) inset,
+              0 0 80px rgba(125,193,255,0.12);
+          }
+          .splash-blob img {
+            width: 100%; height: 100%;
+            object-fit: cover;
+            border-radius: 48px;
+          }
+        `}</style>
 
-        <div className="relative mt-4 rounded-2xl border border-white/20 bg-white/10 p-4 font-mono text-lg leading-relaxed text-[#e5f4ff] backdrop-blur-sm">
-          <button
-            type="button"
-            onClick={() => setIntroReplayKey((value) => value + 1)}
-            className="absolute right-3 top-3 h-7 w-7 rounded-full border border-white/25 bg-white/8 text-sm text-white/80 transition hover:bg-white/15"
-            aria-label="Replay intro"
-            title="Replay intro"
-          >
-            ↻
-          </button>
-          <p className="min-h-[3.5rem]">
-            {typedText}
-            {!introReady && <span className="animate-pulse">|</span>}
-          </p>
-          <div className="mt-3 flex gap-1">
-            {INTRO_LINES.map((_, index) => (
-              <span
-                key={index}
-                className={`h-1.5 rounded-full transition-all ${index <= introLine ? "w-5 bg-white/85" : "w-2 bg-white/30"
-                  }`}
+        {/* Massive edge-anchored logo blobs */}
+        {SPLASH_LOGOS.map((domain, i) => {
+          const pos = positions[i] || positions[i % positions.length];
+          const rotation = (i % 2 === 0 ? 8 : -8) + i * 3;
+          return (
+            <div
+              key={domain}
+              className="splash-blob"
+              style={{
+                ...pos,
+                '--rot': `${rotation}deg`,
+                animationDelay: `${i * STAGGER}ms`,
+              }}
+            >
+              <img
+                src={`https://img.logo.dev/${domain}?token=${LOGO_DEV_TOKEN}&format=png&size=256&retina=true`}
+                alt={domain.split('.')[0]}
+                loading="eager"
               />
-            ))}
-          </div>
-        </div>
+            </div>
+          );
+        })}
 
-        <p className="mt-3 text-sm text-[#cbe7ff]">
-          Dense coat. Cold nose. Built to detect hidden subscription drag.
-        </p>
-
-        <div className="mt-auto pt-6 flex justify-end">
-          <button
-            type="button"
-            onClick={nextStep}
-            className="rounded-full bg-white px-6 py-2 text-sm font-semibold text-[#0f2039]"
+        {/* Center content: mascot + brand — appears after logos settle */}
+        <div
+          style={{
+            opacity: 0,
+            animation: `splashCenterIn 0.9s cubic-bezier(0.22,1,0.36,1) ${CENTER_DELAY}ms forwards`,
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            zIndex: 10,
+            position: 'relative',
+          }}
+        >
+          <img
+            src="/mascot-subzro/officiallogos/officialsubzromascot-removebg-preview.png"
+            alt="Zro"
+            style={{
+              width: 88,
+              height: 88,
+              objectFit: 'contain',
+              filter: 'drop-shadow(0 4px 24px rgba(125,193,255,0.5))',
+            }}
+          />
+          <h1
+            style={{
+              marginTop: 12,
+              fontSize: '3rem',
+              fontWeight: 900,
+              letterSpacing: '-0.03em',
+              color: '#fff',
+              animation: `splashPulse 3s ease-in-out ${CENTER_DELAY + 400}ms infinite`,
+            }}
           >
-            Start
-          </button>
+            subzro
+          </h1>
+          <p
+            style={{
+              marginTop: 8,
+              fontSize: 15,
+              fontWeight: 500,
+              letterSpacing: '0.06em',
+              opacity: 0,
+              animation: `splashTagline 0.6s ease-out ${CENTER_DELAY + 500}ms forwards`,
+            }}
+          >
+            {'cold nose. hot savings.'.split('').map((ch, ci) => (
+              <span
+                key={ci}
+                style={{
+                  animation: `splashColorShift 2.8s ease-in-out ${ci * 0.08}s infinite`,
+                }}
+              >{ch}</span>
+            ))}
+          </p>
         </div>
+
+        {/* Start button — only appears last, after everything */}
+        <button
+          type="button"
+          onClick={nextStep}
+          style={{
+            position: 'absolute',
+            bottom: 'max(env(safe-area-inset-bottom, 24px), 48px)',
+            left: '50%',
+            transform: 'translateX(-50%)',
+            opacity: 0,
+            animation: `splashBtnIn 0.5s cubic-bezier(0.22,1,0.36,1) ${BUTTON_DELAY}ms forwards`,
+            borderRadius: 999,
+            background: '#fff',
+            padding: '14px 40px',
+            fontSize: 16,
+            fontWeight: 700,
+            color: '#0f2039',
+            border: 'none',
+            cursor: 'pointer',
+            boxShadow: '0 8px 32px rgba(0,0,0,0.25), 0 0 60px rgba(125,193,255,0.15)',
+            zIndex: 20,
+          }}
+        >
+          Start
+        </button>
       </div>
     );
   }
@@ -762,8 +838,8 @@ export default function Onboarding() {
                   setAuditInteracted(true);
                 }}
                 className={`rounded-xl border px-3 py-3 text-sm font-semibold transition ${auditCadence === option.value
-                    ? "border-white/50 bg-white/20 text-white"
-                    : "border-white/20 bg-white/8 text-[#dbeeff]"
+                  ? "border-white/50 bg-white/20 text-white"
+                  : "border-white/20 bg-white/8 text-[#dbeeff]"
                   }`}
               >
                 {option.label}
@@ -785,8 +861,8 @@ export default function Onboarding() {
             onClick={nextStep}
             disabled={!auditInteracted}
             className={`rounded-full px-6 py-2 text-sm font-semibold transition ${auditInteracted
-                ? "bg-white text-[#10223e]"
-                : "cursor-not-allowed bg-white/30 text-white/70"
+              ? "bg-white text-[#10223e]"
+              : "cursor-not-allowed bg-white/30 text-white/70"
               }`}
           >
             Continue
@@ -854,8 +930,8 @@ export default function Onboarding() {
             onClick={nextStep}
             disabled={!surpriseInteracted}
             className={`rounded-full px-6 py-2 text-sm font-semibold transition ${surpriseInteracted
-                ? "bg-white text-[#10223e]"
-                : "cursor-not-allowed bg-white/30 text-white/70"
+              ? "bg-white text-[#10223e]"
+              : "cursor-not-allowed bg-white/30 text-white/70"
               }`}
           >
             Continue
@@ -978,8 +1054,8 @@ export default function Onboarding() {
             onClick={nextStep}
             disabled={!goal}
             className={`rounded-full px-6 py-2 text-sm font-semibold transition ${goal
-                ? "bg-white text-[#10223e]"
-                : "cursor-not-allowed bg-white/30 text-white/70"
+              ? "bg-white text-[#10223e]"
+              : "cursor-not-allowed bg-white/30 text-white/70"
               }`}
           >
             Continue
@@ -1049,8 +1125,8 @@ export default function Onboarding() {
             onClick={nextStep}
             disabled={!countInteracted}
             className={`rounded-full px-6 py-2 text-sm font-medium transition ${countInteracted
-                ? "bg-black text-white"
-                : "cursor-not-allowed bg-black/20 text-black/45"
+              ? "bg-black text-white"
+              : "cursor-not-allowed bg-black/20 text-black/45"
               }`}
           >
             Continue
@@ -1146,8 +1222,8 @@ export default function Onboarding() {
                 <span
                   key={index}
                   className={`h-2.5 rounded-full transition-all duration-200 ${countdownValue <= 2 - index
-                      ? "w-8 bg-[#1ab86d]"
-                      : "w-3 bg-black/20"
+                    ? "w-8 bg-[#1ab86d]"
+                    : "w-3 bg-black/20"
                     }`}
                 />
               ))}
@@ -1290,7 +1366,7 @@ export default function Onboarding() {
   }
 
   const stepMascot = useMemo(() => {
-    if (step === 0) return INTRO_FRAMES[introFrame];
+    if (step === 0) return "/mascot-subzro/officiallogos/officialsubzromascot-removebg-preview.png";
     if (step === 9) {
       if (averagePrice <= 12) return "/mascot-subzro/officiallogos/expressions/mascotexpressioncalm.png";
       if (averagePrice <= 22) return "/mascot-subzro/officiallogos/expressions/mascotexpressionangry.png";
@@ -1311,7 +1387,7 @@ export default function Onboarding() {
     };
 
     return mascotMap[step] || "/mascot-subzro/mascotwink.webp";
-  }, [step, averagePrice, introFrame]);
+  }, [step, averagePrice]);
 
   const calibrationBackgrounds = {
     3: "from-[#355476] via-[#4f749c] to-[#7098bf]",
@@ -1350,72 +1426,80 @@ export default function Onboarding() {
         <div className="absolute bottom-10 right-8 h-56 w-56 rounded-full bg-[#b6ffe1]/18 blur-3xl" />
       </div>
 
-      <nav
-        className={`sticky top-0 z-40 border-b backdrop-blur-md ${isDarkStep ? "border-white/15 bg-[#0b1a30]/35" : "border-white/30 bg-white/55"
-          }`}
-      >
-        <div className="mx-auto flex h-14 max-w-5xl items-center justify-between px-4">
-          <Link to="/" className="flex items-center gap-2">
-            <img
-              src="/subzero_logo_icon.png"
-              alt="Subzro"
-              className="h-7 w-7 rounded-full object-cover"
-            />
-            <span className={`text-lg font-semibold ${isDarkStep ? "text-white" : "text-black/80"}`}>
-              subzro
-            </span>
-          </Link>
-          <div className="flex items-center gap-3">
-            <StepProgress step={step} dark={isDarkStep} />
-            <UserButton afterSignOutUrl={window.location.origin} />
+      {/* Hide nav entirely on splash step for full immersion */}
+      {step !== 0 && (
+        <nav
+          className={`sticky top-0 z-40 border-b backdrop-blur-md ${isDarkStep ? "border-white/15 bg-[#0b1a30]/35" : "border-white/30 bg-white/55"
+            }`}
+        >
+          <div className="mx-auto flex h-14 max-w-5xl items-center justify-between px-4">
+            <Link to="/" className="flex items-center gap-2">
+              <img
+                src="/subzero_logo_icon.png"
+                alt="Subzro"
+                className="h-7 w-7 rounded-full object-cover"
+              />
+              <span className={`text-lg font-semibold ${isDarkStep ? "text-white" : "text-black/80"}`}>
+                subzro
+              </span>
+            </Link>
+            <div className="flex items-center gap-3">
+              <StepProgress step={step} dark={isDarkStep} />
+              <UserButton afterSignOutUrl={window.location.origin} />
+            </div>
           </div>
-        </div>
-      </nav>
+        </nav>
+      )}
 
-      <main className="px-4 pb-6 pt-4">
-        <div className="mx-auto max-w-2xl">
+      <main className={step === 0 ? '' : 'px-4 pb-6 pt-4'}>
+        <div className={step === 0 ? '' : 'mx-auto max-w-2xl'}>
           <section
-            className={`relative flex flex-col overflow-hidden rounded-3xl border p-5 shadow-xl sm:p-6 ${isDarkStep
+            className={step === 0
+              ? ''
+              : `relative flex flex-col overflow-hidden rounded-3xl border p-5 shadow-xl sm:p-6 ${isDarkStep
                 ? "border-white/20 bg-[#0b1a30]/70 text-white"
                 : "border-white/60 bg-white/78 text-black/90"
               }`}
-            style={{ minHeight: "calc(100vh - 168px)" }}
+            style={step === 0 ? {} : { minHeight: "calc(100vh - 168px)" }}
           >
-            <div className="mb-3 flex items-center justify-between gap-4">
-              <p className={`text-xs font-semibold uppercase tracking-[0.2em] ${isDarkStep ? "text-[#d3ebff]" : "text-black/55"}`}>
-                Step {step + 1} of {TOTAL_STEPS}
-              </p>
-              <div className="flex items-center gap-2">
-                <AnimatePresence mode="wait" initial={false}>
-                  <motion.img
-                    key={stepMascot}
-                    initial={{ opacity: 0, scale: 0.8, rotate: -10 }}
-                    animate={{ opacity: 1, scale: 1, rotate: 0 }}
-                    exit={{ opacity: 0, scale: 0.8, rotate: 10 }}
-                    transition={{
-                      type: "spring",
-                      stiffness: 450,
-                      damping: 25,
-                      mass: 0.5
-                    }}
-                    src={stepMascot}
-                    alt="Zro guide"
-                    className={`h-8 w-8 rounded-xl p-0.5 ${isDarkStep ? "border border-white/25 bg-white/10" : "bg-[#ecf8ff]"
-                      }`}
-                  />
-                </AnimatePresence>
-                {isForced && (
-                  <div
-                    className={`rounded-full border px-2 py-1 text-[10px] font-semibold uppercase tracking-wider ${isDarkStep
+            {/* Hide step header on splash for clean full-screen animation */}
+            {step !== 0 && (
+              <div className="mb-3 flex items-center justify-between gap-4">
+                <p className={`text-xs font-semibold uppercase tracking-[0.2em] ${isDarkStep ? "text-[#d3ebff]" : "text-black/55"}`}>
+                  Step {step + 1} of {TOTAL_STEPS}
+                </p>
+                <div className="flex items-center gap-2">
+                  <AnimatePresence mode="wait" initial={false}>
+                    <motion.img
+                      key={stepMascot}
+                      initial={{ opacity: 0, scale: 0.8, rotate: -10 }}
+                      animate={{ opacity: 1, scale: 1, rotate: 0 }}
+                      exit={{ opacity: 0, scale: 0.8, rotate: 10 }}
+                      transition={{
+                        type: "spring",
+                        stiffness: 450,
+                        damping: 25,
+                        mass: 0.5
+                      }}
+                      src={stepMascot}
+                      alt="Zro guide"
+                      className={`h-8 w-8 rounded-xl p-0.5 ${isDarkStep ? "border border-white/25 bg-white/10" : "bg-[#ecf8ff]"
+                        }`}
+                    />
+                  </AnimatePresence>
+                  {isForced && (
+                    <div
+                      className={`rounded-full border px-2 py-1 text-[10px] font-semibold uppercase tracking-wider ${isDarkStep
                         ? "border-white/35 bg-white/10 text-white"
                         : "border-[#cbe9ff] bg-[#eef8ff] text-black/60"
-                      }`}
-                  >
-                    Admin forced run
-                  </div>
-                )}
+                        }`}
+                    >
+                      Admin forced run
+                    </div>
+                  )}
+                </div>
               </div>
-            </div>
+            )}
 
             {step === 2 && (
               <div className="mb-3 rounded-xl bg-white/10 px-3 py-2 text-sm text-[#dbeeff]">

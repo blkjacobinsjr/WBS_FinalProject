@@ -1,7 +1,76 @@
 import { Dialog, Transition } from "@headlessui/react";
-import { Fragment, useCallback, useEffect, useRef, useState } from "react";
+import { Fragment, useCallback, useEffect, useRef, useState, useSyncExternalStore } from "react";
 import { useDataContext } from "../contexts/dataContext";
 import eventEmitter from "../utils/EventEmitter";
+
+// ─── Theme helper ─────────────────────────────────────────────────────────────
+function useDark() {
+  return useSyncExternalStore(
+    (cb) => {
+      const obs = new MutationObserver(cb);
+      obs.observe(document.documentElement, { attributes: true, attributeFilter: ["class"] });
+      return () => obs.disconnect();
+    },
+    () => document.documentElement.classList.contains("dark")
+  );
+}
+
+const T = {
+  light: {
+    panel: "#f5f5f7",
+    card: "linear-gradient(160deg, #e8ecf4 0%, #dce3ef 50%, #c9d6e8 100%)",
+    cardShadowTop: "0 20px 60px rgba(0,0,0,0.12), 0 4px 20px rgba(0,0,0,0.08)",
+    cardShadow: "0 8px 24px rgba(0,0,0,0.06)",
+    text: "#1a1a1a",
+    textSub: "rgba(0,0,0,0.5)",
+    textMuted: "rgba(0,0,0,0.35)",
+    textHint: "rgba(0,0,0,0.25)",
+    glass: "rgba(0,0,0,0.04)",
+    glassBorder: "rgba(0,0,0,0.08)",
+    questionBg: "rgba(0,0,0,0.05)",
+    questionBorder: "rgba(0,0,0,0.08)",
+    questionText: "rgba(0,0,0,0.7)",
+    headerBorder: "rgba(0,0,0,0.06)",
+    closeBg: "rgba(0,0,0,0.06)",
+    closeText: "rgba(0,0,0,0.5)",
+    doneBg: "rgba(0,0,0,0.06)",
+    doneBorder: "rgba(0,0,0,0.1)",
+    doneText: "rgba(0,0,0,0.6)",
+    titleText: "rgba(0,0,0,0.85)",
+    progressBg: "rgba(0,0,0,0.06)",
+    backdrop: "rgba(255,255,255,0.6)",
+    logoBorder: "1px solid rgba(0,0,0,0.08)",
+    logoShadow: "0 8px 32px rgba(0,0,0,0.08)",
+    noSubText: "rgba(0,0,0,0.4)",
+  },
+  dark: {
+    panel: "#0d0d0d",
+    card: "linear-gradient(160deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%)",
+    cardShadowTop: "0 20px 60px rgba(0,0,0,0.4), 0 4px 20px rgba(0,0,0,0.3)",
+    cardShadow: "0 8px 24px rgba(0,0,0,0.2)",
+    text: "#fff",
+    textSub: "rgba(255,255,255,0.55)",
+    textMuted: "rgba(255,255,255,0.35)",
+    textHint: "rgba(255,255,255,0.3)",
+    glass: "rgba(255,255,255,0.08)",
+    glassBorder: "rgba(255,255,255,0.12)",
+    questionBg: "rgba(255,255,255,0.07)",
+    questionBorder: "rgba(255,255,255,0.1)",
+    questionText: "rgba(255,255,255,0.85)",
+    headerBorder: "rgba(255,255,255,0.06)",
+    closeBg: "rgba(255,255,255,0.08)",
+    closeText: "rgba(255,255,255,0.7)",
+    doneBg: "rgba(255,255,255,0.1)",
+    doneBorder: "rgba(255,255,255,0.15)",
+    doneText: "rgba(255,255,255,0.8)",
+    titleText: "rgba(255,255,255,0.9)",
+    progressBg: "rgba(255,255,255,0.08)",
+    backdrop: "rgba(0,0,0,0.75)",
+    logoBorder: "1px solid rgba(255,255,255,0.12)",
+    logoShadow: "0 8px 32px rgba(0,0,0,0.3)",
+    noSubText: "rgba(255,255,255,0.4)",
+  },
+};
 
 // ─── Tinder Card Component ────────────────────────────────────────────────────
 // Emil Kowalski's key insights applied:
@@ -11,7 +80,7 @@ import eventEmitter from "../utils/EventEmitter";
 //  4. Spring settle via CSS transition re-enable after drag ends
 //  5. will-change:transform on the card, removed after settle
 
-function SwipeCard({ notification, onSwipe, isTop, stackIndex }) {
+function SwipeCard({ notification, onSwipe, isTop, stackIndex, c }) {
   const cardRef = useRef(null);
   const startXRef = useRef(0);
   const currentXRef = useRef(0);
@@ -129,10 +198,8 @@ function SwipeCard({ notification, onSwipe, isTop, stackIndex }) {
           height: "100%",
           borderRadius: 20,
           overflow: "hidden",
-          background: "linear-gradient(160deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%)",
-          boxShadow: isTop
-            ? "0 20px 60px rgba(0,0,0,0.4), 0 4px 20px rgba(0,0,0,0.3)"
-            : "0 8px 24px rgba(0,0,0,0.2)",
+          background: c.card,
+          boxShadow: isTop ? c.cardShadowTop : c.cardShadow,
           position: "relative",
           display: "flex",
           flexDirection: "column",
@@ -193,14 +260,14 @@ function SwipeCard({ notification, onSwipe, isTop, stackIndex }) {
           width: 96,
           height: 96,
           borderRadius: 24,
-          background: "rgba(255,255,255,0.08)",
+          background: c.glass,
           backdropFilter: "blur(12px)",
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
           overflow: "hidden",
-          border: "1px solid rgba(255,255,255,0.12)",
-          boxShadow: "0 8px 32px rgba(0,0,0,0.3)",
+          border: c.logoBorder,
+          boxShadow: c.logoShadow,
         }}>
           {logoUrl ? (
             <img
@@ -223,18 +290,17 @@ function SwipeCard({ notification, onSwipe, isTop, stackIndex }) {
         {/* Name */}
         <div style={{ textAlign: "center" }}>
           <p style={{
-            color: "#fff",
+            color: c.text,
             fontSize: 28,
             fontWeight: 800,
             letterSpacing: -0.5,
             marginBottom: 8,
-            textShadow: "0 2px 8px rgba(0,0,0,0.3)",
           }}>
             {sub?.name}
           </p>
           {sub?.price && (
             <p style={{
-              color: "rgba(255,255,255,0.55)",
+              color: c.textSub,
               fontSize: 16,
               fontWeight: 500,
             }}>
@@ -245,14 +311,14 @@ function SwipeCard({ notification, onSwipe, isTop, stackIndex }) {
 
         {/* Question */}
         <div style={{
-          background: "rgba(255,255,255,0.07)",
+          background: c.questionBg,
           backdropFilter: "blur(8px)",
           borderRadius: 16,
           padding: "14px 24px",
-          border: "1px solid rgba(255,255,255,0.1)",
+          border: `1px solid ${c.questionBorder}`,
         }}>
           <p style={{
-            color: "rgba(255,255,255,0.85)",
+            color: c.questionText,
             fontSize: 15,
             fontWeight: 600,
             textAlign: "center",
@@ -269,7 +335,7 @@ function SwipeCard({ notification, onSwipe, isTop, stackIndex }) {
             bottom: 20,
             left: 0, right: 0,
             textAlign: "center",
-            color: "rgba(255,255,255,0.3)",
+            color: c.textHint,
             fontSize: 12,
             fontWeight: 500,
             letterSpacing: 0.5,
@@ -318,6 +384,8 @@ export default function UsageModal({
   notificationId,
   manualSubscriptions = null,
 }) {
+  const isDark = useDark();
+  const c = isDark ? T.dark : T.light;
   const { notifications } = useDataContext();
 
   const [currentNotification, setCurrentNotification] = useState(null);
@@ -421,7 +489,7 @@ export default function UsageModal({
           <div style={{
             position: "fixed",
             inset: 0,
-            background: "rgba(0,0,0,0.75)",
+            background: c.backdrop,
             backdropFilter: "blur(8px)",
           }} />
         </Transition.Child>
@@ -441,7 +509,7 @@ export default function UsageModal({
             inset: 0,
             display: "flex",
             flexDirection: "column",
-            background: "#0d0d0d",
+            background: c.panel,
           }}>
             {/* Header */}
             <div style={{
@@ -449,25 +517,25 @@ export default function UsageModal({
               alignItems: "center",
               justifyContent: "space-between",
               padding: "16px 16px 12px",
-              borderBottom: "1px solid rgba(255,255,255,0.06)",
+              borderBottom: `1px solid ${c.headerBorder}`,
             }}>
               <button
                 onClick={onClose}
                 style={{
                   width: 40, height: 40,
                   borderRadius: "50%",
-                  background: "rgba(255,255,255,0.08)",
+                  background: c.closeBg,
                   border: "none",
                   cursor: "pointer",
                   display: "flex", alignItems: "center", justifyContent: "center",
-                  color: "rgba(255,255,255,0.7)",
+                  color: c.closeText,
                   fontSize: 18,
                 }}
               >
                 ✕
               </button>
               <Dialog.Title style={{
-                color: "rgba(255,255,255,0.9)",
+                color: c.titleText,
                 fontSize: 16,
                 fontWeight: 700,
                 letterSpacing: 0.3,
@@ -478,10 +546,10 @@ export default function UsageModal({
                 onClick={onClose}
                 style={{
                   borderRadius: 20,
-                  background: "rgba(255,255,255,0.1)",
-                  border: "1px solid rgba(255,255,255,0.15)",
+                  background: c.doneBg,
+                  border: `1px solid ${c.doneBorder}`,
                   padding: "6px 16px",
-                  color: "rgba(255,255,255,0.8)",
+                  color: c.doneText,
                   fontSize: 13,
                   fontWeight: 600,
                   cursor: "pointer",
@@ -495,7 +563,7 @@ export default function UsageModal({
             {initialTotal > 1 && !isDone && (
               <div style={{
                 height: 3,
-                background: "rgba(255,255,255,0.08)",
+                background: c.progressBg,
                 position: "relative",
               }}>
                 <div style={{
@@ -530,8 +598,8 @@ export default function UsageModal({
                   animation: "fadeIn 0.4s ease",
                 }}>
                   <div style={{ fontSize: 64 }}>🎉</div>
-                  <p style={{ color: "#fff", fontSize: 22, fontWeight: 800 }}>All done!</p>
-                  <p style={{ color: "rgba(255,255,255,0.5)", fontSize: 14 }}>
+                  <p style={{ color: c.text, fontSize: 22, fontWeight: 800 }}>All done!</p>
+                  <p style={{ color: c.textSub, fontSize: 14 }}>
                     Check Insights for your recommendations
                   </p>
                   <button
@@ -557,7 +625,7 @@ export default function UsageModal({
                   {/* Counter */}
                   {initialTotal > 1 && (
                     <p style={{
-                      color: "rgba(255,255,255,0.35)",
+                      color: c.textMuted,
                       fontSize: 12,
                       fontWeight: 600,
                       letterSpacing: 1,
@@ -584,6 +652,7 @@ export default function UsageModal({
                           onSwipe={handleSwipe}
                           isTop={stackIndex === 0}
                           stackIndex={stackIndex}
+                          c={c}
                         />
                       );
                     })}
@@ -639,7 +708,7 @@ export default function UsageModal({
                   </div>
                 </>
               ) : (
-                <p style={{ color: "rgba(255,255,255,0.4)", fontSize: 14 }}>No subscriptions to review.</p>
+                <p style={{ color: c.noSubText, fontSize: 14 }}>No subscriptions to review.</p>
               )}
             </div>
 
