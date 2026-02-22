@@ -18,8 +18,8 @@ const LOGO_DOMAINS = [
   "bumble.com", "hellofresh.com", "audible.com", "masterclass.com"
 ];
 
-function InteractiveLogosphere() {
-  // Mouse interactivity state
+function InteractiveLogosphere({ isMobile = false }) {
+  const { scrollY } = useScroll();
   const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
   const handleMouseMove = (e) => {
     const { clientX, clientY } = e;
@@ -38,6 +38,9 @@ function InteractiveLogosphere() {
   // Smoothen the interactions
   const smoothMouseX = useSpring(mousePos.x, { damping: 35, stiffness: 100 });
   const smoothMouseY = useSpring(mousePos.y, { damping: 35, stiffness: 100 });
+
+  // Scroll parallax for mobile/desktop
+  const scrollParallax = useTransform(scrollY, [0, 500], [0, -100]);
 
   return (
     <div className="absolute inset-0 z-0 pointer-events-none overflow-hidden">
@@ -88,7 +91,8 @@ function InteractiveLogosphere() {
               filter: `blur(${blur}px)`,
               zIndex,
               x: useTransform(smoothMouseX, (x) => x * depth),
-              y: useTransform(smoothMouseY, (y) => y * depth),
+              y: useTransform(smoothMouseY, (y) => y * depth + (isMobile ? i * -2 : 0)),
+              translateY: isMobile ? scrollParallax : 0
             }}
             animate={{
               y: [0, -20, 0],
@@ -436,7 +440,27 @@ export default function Homepage() {
                 </div>
               </FadeIn>
 
+              {/* Mobile Easter Egg: Leaning mascot & logosphere stacked below text */}
+              <FadeIn delay={0.7} className="lg:hidden relative mt-12 h-[350px] w-full">
+                <div className="relative h-full w-full overflow-hidden rounded-2xl">
+                  {/* The Leaning Mascot - Mobile version (Left Aligned) */}
+                  <div className="absolute top-[15%] left-[-5%] z-0 w-[65%] transform -rotate-6 opacity-0 animate-[fadeIn_1.5s_ease-out_1s_forwards]">
+                    <img
+                      src="/mascot-subzro/officiallogos/officialsubzromascot-removebg-preview (1).png"
+                      alt=""
+                      className="w-full filter brightness-105 contrast-110 saturate-125 animate-float-slow"
+                      style={{
+                        maskImage: 'linear-gradient(to top, black 80%, transparent 100%)',
+                        filter: 'blur(0.5px) drop-shadow(0 0 15px rgba(255,255,255,0.2))'
+                      }}
+                    />
+                  </div>
 
+                  <div className="absolute inset-0 pointer-events-none">
+                    <InteractiveLogosphere isMobile={true} />
+                  </div>
+                </div>
+              </FadeIn>
             </div>
 
             {/* Right: hero screenshot - Desktop only */}
