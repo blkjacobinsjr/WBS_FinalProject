@@ -133,7 +133,7 @@ export default function HomeTab() {
       {/* Charts Row */}
       <div className="grid grid-cols-2 gap-2 sm:gap-4">
         {subscriptions?.length > 0 && (
-          <div className="rounded-2xl bg-white/40 p-3 sm:p-5 backdrop-blur-sm dark:bg-white/10 glow-xs min-w-0 flex flex-col items-center justify-start">
+          <div className="rounded-2xl bg-white/40 p-3 sm:p-5 backdrop-blur-sm dark:bg-white/10 glow-xs min-w-0 flex flex-col items-center justify-start lg:col-span-2">
             <p className="text-center text-[11px] sm:text-sm font-bold text-black/80 dark:text-white/80">
               Highest Spend
             </p>
@@ -143,7 +143,7 @@ export default function HomeTab() {
           </div>
         )}
         {(dashboardData?.totalCostPerMonth > 0 || subscriptions?.length > 0) && (
-          <div className="rounded-2xl bg-white/40 p-3 sm:p-5 backdrop-blur-sm dark:bg-white/10 glow-xs min-w-0 flex flex-col items-center justify-start">
+          <div className="rounded-2xl bg-white/40 p-3 sm:p-5 backdrop-blur-sm dark:bg-white/10 glow-xs min-w-0 flex flex-col items-center justify-start lg:col-span-2">
             <p className="text-center text-[11px] sm:text-sm font-bold text-black/80 dark:text-white/80">
               Spend-O-Meter
             </p>

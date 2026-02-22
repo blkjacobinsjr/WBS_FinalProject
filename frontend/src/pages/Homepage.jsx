@@ -456,13 +456,46 @@ export default function Homepage() {
                     />
                   </div>
 
-                  <div className="absolute inset-x-2 bottom-0 z-[1]">
-                    <img
-                      src="/newproductscreenshots/3Ddashboardlandscape.png"
-                      alt="Subzro Dashboard preview"
-                      className="w-full rounded-xl opacity-95 drop-shadow-[0_20px_35px_rgba(0,0,0,0.22)]"
-                      loading="lazy"
-                    />
+                  <div className="absolute inset-x-2 top-1/2 z-[1] -translate-y-1/2">
+                    <div className="relative h-[230px] w-full overflow-hidden rounded-2xl isolate">
+                      <img
+                        src="/newproductscreenshots/3Ddashboardlandscape.png"
+                        alt=""
+                        aria-hidden="true"
+                        className="absolute inset-[-8%] h-[116%] w-[116%] object-cover scale-[1.22] blur-2xl opacity-58"
+                        style={{ objectPosition: "center 50%" }}
+                        loading="lazy"
+                      />
+                      <img
+                        src="/newproductscreenshots/3Ddashboardlandscape.png"
+                        alt="Subzro Dashboard preview"
+                        className="absolute inset-0 h-full w-full object-cover scale-[1.18] drop-shadow-[0_20px_35px_rgba(0,0,0,0.22)]"
+                        style={{
+                          objectPosition: "center 50%",
+                          WebkitMaskImage: "linear-gradient(to bottom, transparent 0%, rgba(0,0,0,0.45) 12%, black 28%, black 72%, rgba(0,0,0,0.45) 88%, transparent 100%)",
+                          maskImage: "linear-gradient(to bottom, transparent 0%, rgba(0,0,0,0.45) 12%, black 28%, black 72%, rgba(0,0,0,0.45) 88%, transparent 100%)",
+                        }}
+                        loading="lazy"
+                      />
+                      <div
+                        className="pointer-events-none absolute inset-x-0 top-0 h-20"
+                        style={{
+                          backdropFilter: "blur(8px)",
+                          WebkitBackdropFilter: "blur(8px)",
+                          WebkitMaskImage: "linear-gradient(to bottom, black 0%, transparent 100%)",
+                          maskImage: "linear-gradient(to bottom, black 0%, transparent 100%)",
+                        }}
+                      />
+                      <div
+                        className="pointer-events-none absolute inset-x-0 bottom-0 h-20"
+                        style={{
+                          backdropFilter: "blur(8px)",
+                          WebkitBackdropFilter: "blur(8px)",
+                          WebkitMaskImage: "linear-gradient(to top, black 0%, transparent 100%)",
+                          maskImage: "linear-gradient(to top, black 0%, transparent 100%)",
+                        }}
+                      />
+                    </div>
                   </div>
 
                   <div className="absolute inset-0 pointer-events-none">
