@@ -2,6 +2,7 @@ import { Dialog, RadioGroup, Transition } from "@headlessui/react";
 import { Fragment, useEffect, useRef, useState } from "react";
 import { useDataContext } from "../contexts/dataContext";
 import eventEmitter from "../utils/EventEmitter";
+import useAppHaptics from "../hooks/useAppHaptics";
 
 export default function FrequencyQuizModal({
   opened,
@@ -9,6 +10,7 @@ export default function FrequencyQuizModal({
   notificationId,
   manualSubscriptions = null,
 }) {
+  const haptics = useAppHaptics();
   const { notifications } = useDataContext();
 
   const [selectedScore, setSelectedScore] = useState(null);
@@ -27,8 +29,15 @@ export default function FrequencyQuizModal({
   useEffect(() => {
     if (!opened) {
       setIsInitialized(false);
+      return;
     }
-  }, [opened]);
+    haptics.openSheet();
+  }, [haptics, opened]);
+
+  function handleClose() {
+    haptics.closeSheet();
+    onClose();
+  }
 
   useEffect(() => {
     if (!opened || isInitialized) return;
@@ -90,6 +99,7 @@ export default function FrequencyQuizModal({
     if (direction !== 1 && direction !== -1) return;
 
     if (selectedScore) {
+      haptics.dragCommit();
       const selectedSubscriptionId =
         unratedNotifications[currentIndex].subscriptionId._id;
 
@@ -106,7 +116,8 @@ export default function FrequencyQuizModal({
       setCompletedCount((prev) => prev + 1);
 
       if (filtered.length === 0) {
-        setTimeout(() => onClose(), 300);
+        haptics.success();
+        setTimeout(() => handleClose(), 300);
         return;
       }
 
@@ -117,6 +128,7 @@ export default function FrequencyQuizModal({
     }
 
     if (unratedNotifications.length > 1) {
+      haptics.selection();
       const newIndex = currentIndex + direction;
       if (newIndex > unratedNotifications.length - 1) {
         setCurrentNotification(unratedNotifications[0]);
@@ -133,13 +145,14 @@ export default function FrequencyQuizModal({
 
   function handleDoneClick() {
     if (selectedScore) {
+      haptics.confirm();
       eventEmitter.emit(
         "useScoreSelected",
         currentNotification.subscriptionId._id,
         selectedScore
       );
     }
-    onClose();
+    handleClose();
   }
 
   const frequencyOptions = [
@@ -152,7 +165,7 @@ export default function FrequencyQuizModal({
 
   return (
     <Transition show={opened} as={Fragment}>
-      <Dialog as="div" className="relative z-50" onClose={onClose}>
+      <Dialog as="div" className="relative z-50" onClose={handleClose}>
         {/* Backdrop */}
         <Transition.Child
           as={Fragment}
@@ -180,7 +193,7 @@ export default function FrequencyQuizModal({
             {/* Header */}
             <div className="flex items-center justify-between border-b border-black/5 bg-white/60 px-4 py-4 backdrop-blur-xl dark:border-white/10 dark:bg-black/60">
               <button
-                onClick={onClose}
+                onClick={handleClose}
                 className="flex h-10 w-10 items-center justify-center rounded-full bg-black/5 dark:bg-white/10"
               >
                 <svg
@@ -252,7 +265,10 @@ export default function FrequencyQuizModal({
                   {/* Rating options - Frequency-based */}
                   <RadioGroup
                     value={selectedScore}
-                    onChange={(val) => setSelectedScore(Number(val))}
+                    onChange={(val) => {
+                      haptics.selection();
+                      setSelectedScore(Number(val));
+                    }}
                     className="space-y-2"
                   >
                     {frequencyOptions.map((option) => (
@@ -304,7 +320,7 @@ export default function FrequencyQuizModal({
                     Check Insights to see your results
                   </p>
                   <button
-                    onClick={onClose}
+                    onClick={handleClose}
                     className="mt-4 rounded-full bg-black px-6 py-2 text-sm font-medium text-white dark:bg-white dark:text-black"
                   >
                     See Results

@@ -3,8 +3,10 @@ import { Fragment, useEffect, useState } from "react"; // Added useRef import
 import { useDataContext } from "../contexts/dataContext";
 import eventEmitter from "../utils/EventEmitter";
 import SubscriptionListCard from "./SubscriptionListCard";
+import useAppHaptics from "../hooks/useAppHaptics";
 
 export default function SearchModal() {
+  const haptics = useAppHaptics();
   // ---- CONTEXT ----
   const { subscriptions } = useDataContext();
 
@@ -34,9 +36,15 @@ export default function SearchModal() {
 
   // close search modal and open subscription
   function searchResultClickHandler(subscription) {
+    haptics.confirm();
     setSearchInput("");
     setIsOpen(false);
     eventEmitter.emit("openSubscriptionForm", subscription, "show");
+  }
+
+  function handleClose() {
+    haptics.closeSheet();
+    setIsOpen(false);
   }
 
   // Set up keyboard shortcut and such
@@ -63,6 +71,12 @@ export default function SearchModal() {
 
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, []);
+
+  useEffect(() => {
+    if (isOpen) {
+      haptics.openSheet();
+    }
+  }, [haptics, isOpen]);
 
   return (
     <>
@@ -112,7 +126,7 @@ export default function SearchModal() {
         <Dialog
           as="div"
           className="fixed inset-0 z-50 flex h-full w-full items-start justify-center pt-20 sm:pt-32"
-          onClose={() => setIsOpen(false)}
+          onClose={handleClose}
         >
           <Transition.Child
             as={Fragment}
@@ -160,7 +174,7 @@ export default function SearchModal() {
                 />
 
                 <button
-                  onClick={() => setIsOpen(false)}
+                  onClick={handleClose}
                   className="rounded border border-black/20 bg-gray-300/25 px-2 py-1 text-sm font-semibold uppercase shadow-inner"
                   type="button"
                 >

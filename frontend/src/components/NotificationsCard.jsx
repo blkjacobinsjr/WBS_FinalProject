@@ -1,6 +1,8 @@
 import eventEmitter from "../utils/EventEmitter";
+import useAppHaptics from "../hooks/useAppHaptics";
 
 export default function NotificationsCard({ notification }) {
+  const haptics = useAppHaptics();
   const subscription = notification?.subscriptionId;
 
   return (
@@ -8,9 +10,10 @@ export default function NotificationsCard({ notification }) {
       <div className="flex w-full items-center justify-start rounded-lg border border-black/25">
         <button
           className="h-full w-full rounded-l-lg p-2 text-left hover:bg-gray-300/25"
-          onClick={() =>
-            eventEmitter.emit("notificationClicked", notification?._id)
-          }
+          onClick={() => {
+            haptics.confirm();
+            eventEmitter.emit("notificationClicked", notification?._id);
+          }}
         >
           <div className="text-xs text-gray-500">How often do you use...</div>
           <div>{subscription.name}</div>
@@ -19,9 +22,10 @@ export default function NotificationsCard({ notification }) {
         </button>
         <button
           className="flex h-full items-center justify-center place-self-end rounded-r-lg p-2 hover:bg-gray-300/25"
-          onClick={() =>
-            eventEmitter.emit("markNotificationAsRead", notification?._id)
-          }
+          onClick={() => {
+            haptics.selection();
+            eventEmitter.emit("markNotificationAsRead", notification?._id);
+          }}
         >
           <svg
             xmlns="http://www.w3.org/2000/svg"

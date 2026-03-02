@@ -1,6 +1,6 @@
 import { UserButton, useUser } from "@clerk/clerk-react";
 import { AnimatePresence, motion } from "framer-motion";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { isAdminEmail } from "../utils/adminAccess";
 import { logOnboardingEvent } from "../utils/onboardingDebug";
@@ -9,6 +9,7 @@ import {
   markOnboardingCompletedAt,
   readOnboardingCompletedAt,
 } from "../utils/onboardingState";
+import useAppHaptics from "../hooks/useAppHaptics";
 
 const TOTAL_STEPS = 12;
 const PAYOFF_CARD_COUNT = 4;
@@ -251,6 +252,7 @@ function AnimatedCurrency({ value, active, className, duration = 900 }) {
 }
 
 export default function Onboarding() {
+  const haptics = useAppHaptics();
   const { user } = useUser();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
@@ -281,6 +283,7 @@ export default function Onboarding() {
   const [revealCount, setRevealCount] = useState(0);
   const [payoffTitle, setPayoffTitle] = useState("");
   const [payoffTransitioning, setPayoffTransitioning] = useState(false);
+  const priceStepRef = useRef(null);
 
   const userEmail = user?.primaryEmailAddress?.emailAddress || "";
   const isAdminUser = isAdminEmail(userEmail);
@@ -351,6 +354,49 @@ export default function Onboarding() {
     "/dashboard?checkout=success&from=onboarding",
   );
 
+  function triggerOnboardingHaptic(key, input, cooldownMs = 120) {
+    haptics.fire(`onboarding-${key}`, input, cooldownMs);
+  }
+
+  function onboardingAdvanceHaptic() {
+    triggerOnboardingHaptic(
+      "advance",
+      [
+        { duration: 36, intensity: 1 },
+        { delay: 45, duration: 30, intensity: 0.88 },
+      ],
+      170,
+    );
+  }
+
+  function onboardingBackHaptic() {
+    triggerOnboardingHaptic("back", "medium", 120);
+  }
+
+  function onboardingChoiceHaptic() {
+    triggerOnboardingHaptic("choice", "heavy", 110);
+  }
+
+  function onboardingSliderHaptic() {
+    triggerOnboardingHaptic("slider", "medium", 85);
+  }
+
+  function onboardingRevealHaptic() {
+    triggerOnboardingHaptic(
+      "reveal",
+      [
+        { duration: 42, intensity: 1 },
+        { delay: 65, duration: 38, intensity: 0.92 },
+        { delay: 95, duration: 52, intensity: 1 },
+      ],
+      320,
+    );
+  }
+
+  function onboardingWarningHaptic() {
+    triggerOnboardingHaptic("warning", "warning", 260);
+  }
+
   useEffect(() => {
     const completedAt = readOnboardingCompletedAt(userEmail);
     const forceFresh = isForceFreshOnboardingEmail(userEmail);
@@ -394,6 +440,7 @@ export default function Onboarding() {
       if (current <= 0) {
         setCountdownValue(0);
         setCountdownDone(true);
+        haptics.fire("onboarding-countdown-finish", "success", 260);
         clearInterval(interval);
         return;
       }
@@ -402,7 +449,7 @@ export default function Onboarding() {
     }, 620);
 
     return () => clearInterval(interval);
-  }, [step]);
+  }, [haptics, step]);
 
   useEffect(() => {
     if (step !== TOTAL_STEPS - 1 || !countdownDone) return;
@@ -425,6 +472,7 @@ export default function Onboarding() {
     const interval = setInterval(() => {
       current += 1;
       setRevealCount(current);
+      haptics.fire(`onboarding-payoff-card-${current}`, "soft", 180);
       if (current >= PAYOFF_CARD_COUNT) clearInterval(interval);
     }, 260);
 
@@ -432,7 +480,7 @@ export default function Onboarding() {
       clearTimeout(titleTimer);
       clearInterval(interval);
     };
-  }, [countdownDone, step]);
+  }, [countdownDone, haptics, step]);
 
   function markOnboardingCompleted(reason) {
     markOnboardingCompletedAt(userEmail, new Date().toISOString());
@@ -440,14 +488,17 @@ export default function Onboarding() {
   }
 
   function nextStep() {
+    onboardingAdvanceHaptic();
     setStep((current) => Math.min(TOTAL_STEPS - 1, current + 1));
   }
 
   function previousStep() {
+    onboardingBackHaptic();
     setStep((current) => Math.max(0, current - 1));
   }
 
   function revealPayoffStep() {
+    onboardingRevealHaptic();
     setPayoffTransitioning(true);
     setTimeout(() => {
       setStep(TOTAL_STEPS - 1);
@@ -456,6 +507,7 @@ export default function Onboarding() {
   }
 
   function continueToCheckout() {
+    onboardingRevealHaptic();
     markOnboardingCompleted("checkout_handoff");
     logOnboardingEvent("onboarding_continue_checkout_clicked", {
       source,
@@ -471,6 +523,7 @@ export default function Onboarding() {
   }
 
   function skipToApp() {
+    onboardingWarningHaptic();
     markOnboardingCompleted("manual_skip");
     navigate("/dashboard");
   }
@@ -889,6 +942,7 @@ export default function Onboarding() {
                 key={option.value}
                 type="button"
                 onClick={() => {
+                  onboardingChoiceHaptic();
                   setAuditCadence(option.value);
                   setAuditInteracted(true);
                 }}
@@ -949,6 +1003,7 @@ export default function Onboarding() {
             <button
               type="button"
               onClick={() => {
+                onboardingSliderHaptic();
                 setSurpriseInteracted(true);
                 setSurpriseRenewals((value) => Math.max(0, value - 1));
               }}
@@ -962,6 +1017,7 @@ export default function Onboarding() {
             <button
               type="button"
               onClick={() => {
+                onboardingSliderHaptic();
                 setSurpriseInteracted(true);
                 setSurpriseRenewals((value) => Math.min(8, value + 1));
               }}
@@ -1084,14 +1140,20 @@ export default function Onboarding() {
             title="Cut waste"
             subtitle="Find and freeze low-value recurring charges"
             selected={goal === "cut"}
-            onClick={() => setGoal("cut")}
+            onClick={() => {
+              onboardingChoiceHaptic();
+              setGoal("cut");
+            }}
             mascot="/mascot-subzro/mascotmove5.webp"
           />
           <OptionCard
             title="Gain control"
             subtitle="Build a clean live view of your money flow"
             selected={goal === "control"}
-            onClick={() => setGoal("control")}
+            onClick={() => {
+              onboardingChoiceHaptic();
+              setGoal("control");
+            }}
             mascot="/mascot-subzro/mascotsitsmilewave.webp"
           />
         </div>
@@ -1142,6 +1204,7 @@ export default function Onboarding() {
               type="button"
               whileTap={{ scale: 0.95 }}
               onClick={() => {
+                onboardingSliderHaptic();
                 setCountInteracted(true);
                 setSubscriptionCount((value) => Math.max(3, value - 1));
               }}
@@ -1153,6 +1216,7 @@ export default function Onboarding() {
               type="button"
               whileTap={{ scale: 0.95 }}
               onClick={() => {
+                onboardingSliderHaptic();
                 setCountInteracted(true);
                 setSubscriptionCount((value) => Math.min(24, value + 1));
               }}
@@ -1212,8 +1276,13 @@ export default function Onboarding() {
             max="40"
             value={averagePrice}
             onChange={(event) => {
+              const value = Number(event.target.value);
+              if (priceStepRef.current !== value) {
+                onboardingSliderHaptic();
+                priceStepRef.current = value;
+              }
               setPriceInteracted(true);
-              setAveragePrice(Number(event.target.value));
+              setAveragePrice(value);
             }}
             className="mt-4 w-full"
           />

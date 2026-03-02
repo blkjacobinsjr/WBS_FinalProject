@@ -18,8 +18,10 @@ import {
   readOnboardingCompletedAt,
   removeForceFreshOnboardingEmail,
 } from "../utils/onboardingState";
+import useAppHaptics from "../hooks/useAppHaptics";
 
 export default function SettingsTab({ onResetData, isResettingData }) {
+  const haptics = useAppHaptics();
   const { user } = useUser();
   const { getToken } = useAuth();
   const [isDark, setIsDark] = useState(false);
@@ -58,53 +60,62 @@ export default function SettingsTab({ onResetData, isResettingData }) {
   function addTargetForceFresh() {
     const email = resolveTargetEmail();
     if (!email) {
+      haptics.error();
       note("Enter a valid email.");
       return;
     }
 
     addForceFreshOnboardingEmail(email);
     refreshAdminState();
+    haptics.success();
     note(`Force-fresh onboarding enabled for ${email}.`);
   }
 
   function removeTargetForceFresh() {
     const email = resolveTargetEmail();
     if (!email) {
+      haptics.error();
       note("Enter a valid email.");
       return;
     }
 
     if (FORCE_FRESH_EMAIL_DEFAULTS.includes(email)) {
+      haptics.warning();
       note(`${email} is in code defaults. Remove it in onboardingState.js.`);
       return;
     }
 
     removeForceFreshOnboardingEmail(email);
     refreshAdminState();
+    haptics.success();
     note(`Force-fresh onboarding removed for ${email}.`);
   }
 
   function clearTargetCompletion() {
     const email = resolveTargetEmail();
     if (!email) {
+      haptics.error();
       note("Enter a valid email.");
       return;
     }
 
     clearOnboardingCompletedAt(email);
     refreshAdminState();
+    haptics.success();
     note(`Completion state cleared for ${email}.`);
   }
 
   function markTargetCompletedNow() {
     const email = resolveTargetEmail();
     if (!email) {
+      haptics.error();
       note("Enter a valid email.");
       return;
     }
 
     markOnboardingCompletedAt(email, new Date().toISOString());
     refreshAdminState();
+    haptics.success();
     note(`Completion state set for ${email}.`);
   }
 
@@ -175,15 +186,18 @@ export default function SettingsTab({ onResetData, isResettingData }) {
   );
 
   function clearAdminEvents() {
+    haptics.warning();
     clearOnboardingEvents();
     setAdminEvents([]);
   }
 
   function openForcedOnboarding() {
+    haptics.confirm();
     window.location.assign("/onboarding?force=1&source=admin");
   }
 
   function openForcedPaywall() {
+    haptics.confirm();
     const returnTo = encodeURIComponent(
       "/dashboard?checkout=success&from=admin-panel",
     );
@@ -193,7 +207,28 @@ export default function SettingsTab({ onResetData, isResettingData }) {
   }
 
   function openForcedOnboardingPaywallStep() {
+    haptics.confirm();
     window.location.assign("/onboarding?force=1&source=admin&step=10");
+  }
+
+  function handleDarkModeToggle() {
+    haptics.selection();
+    setIsDark((value) => !value);
+  }
+
+  function handleResetDataClick() {
+    haptics.warning();
+    onResetData();
+  }
+
+  function handleAdminTabChange(tabId) {
+    haptics.selection();
+    setAdminTab(tabId);
+  }
+
+  function setTargetEmailPreset(email) {
+    haptics.selection();
+    setTargetEmail(email);
   }
 
   function formatEventTime(timestamp) {
@@ -280,7 +315,7 @@ export default function SettingsTab({ onResetData, isResettingData }) {
             </div>
           </div>
           <button
-            onClick={() => setIsDark(!isDark)}
+            onClick={handleDarkModeToggle}
             className={`relative h-7 w-12 rounded-full transition-colors ${isDark ? "bg-green-600" : "bg-black/20 dark:bg-white/20"
               }`}
           >
@@ -298,7 +333,7 @@ export default function SettingsTab({ onResetData, isResettingData }) {
           Data
         </p>
         <button
-          onClick={onResetData}
+          onClick={handleResetDataClick}
           disabled={isResettingData}
           className="flex w-full items-center justify-between rounded-xl bg-red-50 px-4 py-3 transition-all active:scale-[0.98] disabled:opacity-50 dark:bg-red-900/20"
         >
@@ -390,7 +425,7 @@ export default function SettingsTab({ onResetData, isResettingData }) {
               <button
                 key={tab.id}
                 type="button"
-                onClick={() => setAdminTab(tab.id)}
+                onClick={() => handleAdminTabChange(tab.id)}
                 className={`rounded-lg px-2 py-1.5 text-xs font-semibold transition ${adminTab === tab.id
                   ? "bg-black text-white"
                   : "bg-white/70 text-black/70"
@@ -434,24 +469,30 @@ export default function SettingsTab({ onResetData, isResettingData }) {
                 <button
                   type="button"
                   onClick={async () => {
+                    haptics.confirm();
                     try {
                       setStatusNote("Generating dummy data...");
                       const token = await getToken();
                       // Try hitting localhost directly since the backend changes might only exist locally
-                      const fetchUrl = import.meta.env.DEV ? "http://localhost:3001/api/subscriptions/dummy" : ApiEndpoints.subscriptions + "/dummy";
+                      const fetchUrl = import.meta.env.DEV
+                        ? "http://localhost:3001/api/subscriptions/dummy"
+                        : ApiEndpoints.subscriptions + "/dummy";
                       const res = await fetch(fetchUrl, {
                         method: "POST",
                         headers: {
-                          "Authorization": `Bearer ${token}`
-                        }
+                          Authorization: `Bearer ${token}`,
+                        },
                       });
                       if (res.ok) {
+                        haptics.success();
                         setStatusNote("Sexy marketing data generated!");
                         setTimeout(() => window.location.reload(), 1500);
                       } else {
+                        haptics.error();
                         setStatusNote("Failed to generate data");
                       }
                     } catch (err) {
+                      haptics.error();
                       setStatusNote("Error generating data: " + err.message);
                     }
                   }}
@@ -462,6 +503,7 @@ export default function SettingsTab({ onResetData, isResettingData }) {
                 <button
                   type="button"
                   onClick={async () => {
+                    haptics.confirm();
                     try {
                       setStatusNote("Seeding categories + categorizing subs via AI...");
                       const token = await getToken();
@@ -474,13 +516,16 @@ export default function SettingsTab({ onResetData, isResettingData }) {
                       });
                       if (res.ok) {
                         const data = await res.json();
+                        haptics.success();
                         setStatusNote(`✅ ${data.categoriesSeeded} categories seeded · ${data.subscriptionsCategorized} subs categorized`);
                         setTimeout(() => window.location.reload(), 2000);
                       } else {
+                        haptics.error();
                         const text = await res.text();
                         setStatusNote("Failed: " + text);
                       }
                     } catch (err) {
+                      haptics.error();
                       setStatusNote("Error: " + err.message);
                     }
                   }}
@@ -540,7 +585,10 @@ export default function SettingsTab({ onResetData, isResettingData }) {
                   />
                   <button
                     type="button"
-                    onClick={refreshAdminState}
+                    onClick={() => {
+                      haptics.selection();
+                      refreshAdminState();
+                    }}
                     className="rounded-lg bg-black/10 px-3 py-2 text-xs font-semibold text-black/70"
                   >
                     Refresh
@@ -549,14 +597,14 @@ export default function SettingsTab({ onResetData, isResettingData }) {
                 <div className="mt-2 flex flex-wrap gap-2">
                   <button
                     type="button"
-                    onClick={() => setTargetEmail("lil.dippel@gmail.com")}
+                    onClick={() => setTargetEmailPreset("lil.dippel@gmail.com")}
                     className="rounded-full border border-black/10 bg-white px-2 py-1 text-[11px] text-black/70"
                   >
                     lil.dippel@gmail.com
                   </button>
                   <button
                     type="button"
-                    onClick={() => setTargetEmail(userEmail)}
+                    onClick={() => setTargetEmailPreset(userEmail)}
                     className="rounded-full border border-black/10 bg-white px-2 py-1 text-[11px] text-black/70"
                   >
                     current user
@@ -673,7 +721,10 @@ export default function SettingsTab({ onResetData, isResettingData }) {
                 <div className="flex gap-2">
                   <button
                     type="button"
-                    onClick={loadAdminEvents}
+                    onClick={() => {
+                      haptics.selection();
+                      loadAdminEvents();
+                    }}
                     className="rounded-md bg-black/10 px-2 py-1 text-[11px] font-semibold text-black/70"
                   >
                     Refresh

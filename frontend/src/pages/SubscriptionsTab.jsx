@@ -2,8 +2,10 @@ import { useState, useMemo, useCallback } from "react";
 import { useDataContext } from "../contexts/dataContext";
 import SubscriptionListCard from "../components/SubscriptionListCard";
 import eventEmitter from "../utils/EventEmitter";
+import useAppHaptics from "../hooks/useAppHaptics";
 
 export default function SubscriptionsTab({ onOpenBulkImport }) {
+  const haptics = useAppHaptics();
   const { subscriptions, usedCategories } = useDataContext();
   const [selectedCategory, setSelectedCategory] = useState("all");
   const [searchQuery, setSearchQuery] = useState("");
@@ -25,8 +27,22 @@ export default function SubscriptionsTab({ onOpenBulkImport }) {
   }, []);
 
   const handleAddSubscription = useCallback(() => {
+    haptics.confirm();
     eventEmitter.emit("openSubscriptionForm", null, "add");
-  }, []);
+  }, [haptics]);
+
+  const handleCategoryChange = useCallback(
+    (categoryId) => {
+      haptics.selection();
+      setSelectedCategory(categoryId);
+    },
+    [haptics],
+  );
+
+  const handleBulkImportClick = useCallback(() => {
+    haptics.confirm();
+    onOpenBulkImport();
+  }, [haptics, onOpenBulkImport]);
 
   return (
     <div className="flex flex-col gap-4 pb-24">
@@ -60,7 +76,7 @@ export default function SubscriptionsTab({ onOpenBulkImport }) {
       {/* Category Pills */}
       <div className="no-scrollbar flex gap-2 overflow-x-auto pb-1" role="tablist" aria-label="Filter by category">
         <button
-          onClick={() => setSelectedCategory("all")}
+          onClick={() => handleCategoryChange("all")}
           role="tab"
           aria-selected={selectedCategory === "all"}
           className={`shrink-0 rounded-full px-4 py-1.5 text-xs font-medium transition-all duration-150 ease-out active:scale-95 ${
@@ -74,7 +90,7 @@ export default function SubscriptionsTab({ onOpenBulkImport }) {
         {usedCategories?.map((cat) => (
           <button
             key={cat._id}
-            onClick={() => setSelectedCategory(cat._id)}
+            onClick={() => handleCategoryChange(cat._id)}
             role="tab"
             aria-selected={selectedCategory === cat._id}
             className={`shrink-0 rounded-full px-4 py-1.5 text-xs font-medium transition-all duration-150 ease-out active:scale-95 ${
@@ -140,7 +156,7 @@ export default function SubscriptionsTab({ onOpenBulkImport }) {
 
       {/* Bulk Import Card */}
       <button
-        onClick={onOpenBulkImport}
+        onClick={handleBulkImportClick}
         aria-label="Import subscriptions from bank statement PDF"
         className="flex items-center gap-3 rounded-xl bg-white/40 p-4 text-left backdrop-blur-sm transition-all duration-150 ease-out hover:-translate-y-0.5 hover:bg-white/60 active:scale-[0.98] dark:bg-white/10 dark:hover:bg-white/15"
       >

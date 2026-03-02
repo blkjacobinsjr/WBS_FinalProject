@@ -8,6 +8,7 @@ import CategoryIcon from "./CategoryIcon";
 import { createSubscriptionBody } from "../utils/schemaBuilder";
 import { resolveCancelLink } from "../utils/cancelProviders";
 import LoadingButton from "./LoadingButton";
+import useAppHaptics from "../hooks/useAppHaptics";
 
 export default function SubscriptionForm({
   mode,
@@ -15,6 +16,7 @@ export default function SubscriptionForm({
   opened,
   onClose,
 }) {
+  const haptics = useAppHaptics();
   const { allCategories } = useDataContext();
 
   const billingCycles = ["month", "year"];
@@ -38,7 +40,19 @@ export default function SubscriptionForm({
     setSelectedBillingCycle(subscription?.interval ?? "month");
   }, [allCategories, subscription]);
 
+  useEffect(() => {
+    if (opened) {
+      haptics.openSheet();
+    }
+  }, [haptics, opened]);
+
+  function handleClose() {
+    haptics.closeSheet();
+    onClose();
+  }
+
   function switchMode(mode) {
+    haptics.selection();
     eventEmitter.emit("changeFormMode", mode);
   }
 
@@ -46,6 +60,7 @@ export default function SubscriptionForm({
     const cleanPrice = parseFloat(priceRef.current.value.replace(",", "."));
 
     if (isNaN(cleanPrice)) {
+      haptics.error();
       toast.error("Price must be a valid number");
       return;
     }
@@ -62,6 +77,7 @@ export default function SubscriptionForm({
 
   async function handleAddSubscription() {
     if (!nameRef.current?.value || !priceRef.current?.value) {
+      haptics.error();
       toast.error("Enter a name and price");
       return;
     }
@@ -69,6 +85,7 @@ export default function SubscriptionForm({
     const newSubscription = createSubscriptionDataFromForm();
     if (!newSubscription) return;
 
+    haptics.confirm();
     setPendingAction("add");
 
     try {
@@ -81,15 +98,17 @@ export default function SubscriptionForm({
       if (!successful) {
         throw new Error("Unable to save subscription");
       }
+      haptics.success();
       toast.success("Subscription added");
     } catch (error) {
+      haptics.error();
       toast.error(error.message);
     } finally {
       eventEmitter.emit("refetchData");
       setPendingAction(null);
     }
 
-    onClose();
+    handleClose();
   }
 
   async function handleSaveEditSubscription() {
@@ -99,25 +118,29 @@ export default function SubscriptionForm({
     if (!updatedSubscription) return;
     updatedSubscription._id = subscription._id;
 
+    haptics.confirm();
     setPendingAction("save");
 
     try {
       const abortController = new AbortController();
       await updateSubscription(updatedSubscription, abortController);
+      haptics.success();
       toast.success("Subscription saved");
     } catch (error) {
+      haptics.error();
       toast.error(error.message);
     } finally {
       eventEmitter.emit("refetchData");
       setPendingAction(null);
     }
 
-    onClose();
+    handleClose();
   }
 
   async function handleDeleteSubscription() {
     if (!subscription._id) return;
 
+    haptics.warning();
     setPendingAction("delete");
 
     try {
@@ -131,15 +154,17 @@ export default function SubscriptionForm({
       if (!successful) {
         throw new Error("Unable to delete subscription");
       }
+      haptics.success();
       toast.success("Subscription deleted");
     } catch (error) {
+      haptics.error();
       toast.error(error.message);
     } finally {
       eventEmitter.emit("refetchData");
       setPendingAction(null);
     }
 
-    onClose();
+    handleClose();
   }
 
   const title =
@@ -156,7 +181,7 @@ export default function SubscriptionForm({
 
   return (
     <Transition show={opened} as={Fragment}>
-      <Dialog as="div" className="relative z-50" onClose={onClose}>
+      <Dialog as="div" className="relative z-50" onClose={handleClose}>
         {/* Backdrop */}
         <Transition.Child
           as={Fragment}
@@ -184,7 +209,7 @@ export default function SubscriptionForm({
             {/* Header */}
             <div className="flex items-center justify-between border-b border-black/5 bg-white/60 px-4 py-4 backdrop-blur-xl dark:border-white/10 dark:bg-black/60">
               <button
-                onClick={onClose}
+                onClick={handleClose}
                 className="flex h-10 w-10 items-center justify-center rounded-full bg-black/5 dark:bg-white/10"
               >
                 <svg
@@ -296,7 +321,10 @@ export default function SubscriptionForm({
                   {(mode === "add" || mode === "edit") ? (
                     <Listbox
                       value={selectedCategory}
-                      onChange={setSelectedCategory}
+                      onChange={(value) => {
+                        haptics.selection();
+                        setSelectedCategory(value);
+                      }}
                     >
                       <div className="relative">
                         <Listbox.Button className="flex items-center gap-2 text-sm font-medium text-black/80 dark:text-white/80">
@@ -358,7 +386,10 @@ export default function SubscriptionForm({
                   {(mode === "add" || mode === "edit") ? (
                     <Listbox
                       value={selectedBillingCycle}
-                      onChange={setSelectedBillingCycle}
+                      onChange={(value) => {
+                        haptics.selection();
+                        setSelectedBillingCycle(value);
+                      }}
                     >
                       <div className="relative">
                         <Listbox.Button className="flex items-center gap-2 text-sm font-medium text-black/80 dark:text-white/80">
@@ -405,6 +436,7 @@ export default function SubscriptionForm({
                   href={cancelInfo.link}
                   target="_blank"
                   rel="noopener noreferrer"
+                  onClick={haptics.warning}
                   className="mb-4 flex items-center justify-between rounded-2xl bg-gradient-to-r from-red-500 to-rose-500 px-4 py-4 shadow-lg transition-all active:scale-[0.98]"
                 >
                   <div className="flex items-center gap-3">

@@ -2,6 +2,7 @@ import { useRef, useState, useCallback, useMemo } from "react";
 import CategoryIcon from "./CategoryIcon";
 import SubscriptionLogo from "./SubscriptionLogos";
 import eventEmitter from "../utils/EventEmitter";
+import useAppHaptics from "../hooks/useAppHaptics";
 
 const SWIPE_THRESHOLD = 100;
 const MAX_SWIPE_DISTANCE = 150;
@@ -14,11 +15,13 @@ export default function SubscriptionListCard({
   style,
   enableDelete = true,
 }) {
+  const haptics = useAppHaptics();
   const [swipeX, setSwipeX] = useState(0);
   const [isSwiping, setIsSwiping] = useState(false);
   const touchStartX = useRef(0);
   const touchStartY = useRef(0);
   const isHorizontalSwipe = useRef(null);
+  const thresholdCrossed = useRef(false);
 
   const displayName = useMemo(() => {
     const cleanName = subscription?.name
@@ -31,23 +34,31 @@ export default function SubscriptionListCard({
 
   const handleDelete = useCallback((e) => {
     e.stopPropagation();
+    haptics.warning();
     eventEmitter.emit("deleteSubscription", subscription);
-  }, [subscription]);
+  }, [haptics, subscription]);
 
   const handleKeyDown = useCallback((e) => {
     if (!enableDelete) return;
     // Delete on Backspace or Delete key when focused
     if (e.key === "Backspace" || e.key === "Delete") {
       e.preventDefault();
+      haptics.warning();
       eventEmitter.emit("deleteSubscription", subscription);
     }
-  }, [enableDelete, subscription]);
+  }, [enableDelete, haptics, subscription]);
+
+  const handleCardClick = useCallback(() => {
+    haptics.tap();
+    clickHandler?.();
+  }, [clickHandler, haptics]);
 
   function handleTouchStart(e) {
     if (!enableDelete) return;
     touchStartX.current = e.touches[0].clientX;
     touchStartY.current = e.touches[0].clientY;
     isHorizontalSwipe.current = null;
+    thresholdCrossed.current = false;
     setIsSwiping(true);
   }
 
@@ -65,6 +76,14 @@ export default function SubscriptionListCard({
     // Only handle horizontal swipes (left only)
     if (isHorizontalSwipe.current && deltaX < 0) {
       setSwipeX(Math.max(deltaX, -MAX_SWIPE_DISTANCE)); // Limit swipe distance
+      if (deltaX < -SWIPE_THRESHOLD) {
+        if (!thresholdCrossed.current) {
+          thresholdCrossed.current = true;
+          haptics.dragThreshold();
+        }
+      } else {
+        thresholdCrossed.current = false;
+      }
     }
   }
 
@@ -75,15 +94,20 @@ export default function SubscriptionListCard({
     if (swipeX < -SWIPE_THRESHOLD) {
       // Swipe past threshold - delete
       setSwipeX(-MAX_SWIPE_DISTANCE); // Animate to full reveal
+      haptics.dragCommit();
       setTimeout(() => {
         eventEmitter.emit("deleteSubscription", subscription);
         setSwipeX(0);
       }, 150);
     } else {
       // Spring back
+      if (Math.abs(swipeX) > 16) {
+        haptics.dragSnapBack();
+      }
       setSwipeX(0);
     }
     isHorizontalSwipe.current = null;
+    thresholdCrossed.current = false;
   }
 
   // Memoize style object to prevent re-renders
@@ -97,7 +121,7 @@ export default function SubscriptionListCard({
     <div
       className={`group relative grid w-full min-w-0 cursor-pointer grid-cols-[2.5rem_minmax(0,1fr)_auto] items-center gap-3 rounded-xl border border-white/30 bg-white/40 p-3 backdrop-blur-sm transition-colors duration-150 hover:bg-white/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-500/50 dark:border-white/10 dark:bg-white/10 dark:hover:bg-white/15 ${className}`}
       key={subscription?._id}
-      onClick={clickHandler}
+      onClick={handleCardClick}
       onKeyDown={handleKeyDown}
       onTouchStart={handleTouchStart}
       onTouchMove={handleTouchMove}

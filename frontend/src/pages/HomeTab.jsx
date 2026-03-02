@@ -7,6 +7,7 @@ import SubscriptionListCard from "../components/SubscriptionListCard";
 import HighestSpendOrbit from "../components/charts/HighestSpendOrbit";
 import Piechartwithneedle from "../components/charts/Piechartwithneedle";
 import eventEmitter from "../utils/EventEmitter";
+import useAppHaptics from "../hooks/useAppHaptics";
 
 // Daily rotating insights - FOMO Punch + Variable Rewards
 const dailyInsights = [
@@ -32,6 +33,7 @@ function getGreeting() {
 }
 
 export default function HomeTab() {
+  const haptics = useAppHaptics();
   const { user } = useUser();
   const { subscriptions, dashboardData, notifications, usedCategories } = useDataContext();
 
@@ -54,9 +56,15 @@ export default function HomeTab() {
   const handleAlertsClick = useCallback(() => {
     const firstNotificationId = notifications?.[0]?._id;
     if (firstNotificationId) {
+      haptics.confirm();
       eventEmitter.emit("notificationClicked", firstNotificationId);
     }
-  }, [notifications]);
+  }, [haptics, notifications]);
+
+  const handleSeeAllClick = useCallback(() => {
+    haptics.switchTab();
+    eventEmitter.emit("switchTab", "subscriptions");
+  }, [haptics]);
 
   const pieData = useMemo(() =>
     usedCategories?.length > 0 && subscriptions?.length > 0
@@ -168,7 +176,7 @@ export default function HomeTab() {
               Recent Subscriptions
             </h2>
             <button
-              onClick={() => eventEmitter.emit("switchTab", "subscriptions")}
+              onClick={handleSeeAllClick}
               className="text-xs font-medium text-black/40 hover:text-black/60 dark:text-white/40 dark:hover:text-white/60"
             >
               See all

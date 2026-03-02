@@ -2,8 +2,10 @@ import { Popover } from "@headlessui/react";
 import NotificationsCard from "./NotificationsCard";
 import { useDataContext } from "../contexts/dataContext";
 import { useEffect, useState } from "react";
+import useAppHaptics from "../hooks/useAppHaptics";
 
 export default function Notifications() {
+  const haptics = useAppHaptics();
   // STOP PINGING ANIMATION AFTER HOW MANY SECONDS
   const STOP_PING_AFTER_SECONDS = 16;
 
@@ -29,7 +31,10 @@ export default function Notifications() {
 
   return (
     <Popover className="relative">
-      <Popover.Button className="relative rounded-full border border-black/25 bg-white/25 p-1 hover:bg-white/75">
+      <Popover.Button
+        onClick={haptics.tap}
+        className="relative rounded-full border border-black/25 bg-white/25 p-1 hover:bg-white/75"
+      >
         {/* SVG Icon */}
         <svg
           xmlns="http://www.w3.org/2000/svg"

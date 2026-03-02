@@ -2,6 +2,7 @@ import { Dialog, Transition } from "@headlessui/react";
 import { Fragment, useCallback, useEffect, useRef, useState, useSyncExternalStore } from "react";
 import { useDataContext } from "../contexts/dataContext";
 import eventEmitter from "../utils/EventEmitter";
+import useAppHaptics from "../hooks/useAppHaptics";
 
 // ─── Theme helper ─────────────────────────────────────────────────────────────
 function useDark() {
@@ -80,12 +81,21 @@ const T = {
 //  4. Spring settle via CSS transition re-enable after drag ends
 //  5. will-change:transform on the card, removed after settle
 
-function SwipeCard({ notification, onSwipe, isTop, stackIndex, c }) {
+function SwipeCard({
+  notification,
+  onSwipe,
+  onThresholdCross,
+  onSnapBack,
+  isTop,
+  stackIndex,
+  c,
+}) {
   const cardRef = useRef(null);
   const startXRef = useRef(0);
   const currentXRef = useRef(0);
   const draggingRef = useRef(false);
   const rafRef = useRef(null);
+  const thresholdPassedRef = useRef(false);
 
   const SWIPE_THRESHOLD = 80; // px to commit a swipe
   const MAX_ROTATE = 12; // degrees
@@ -123,6 +133,7 @@ function SwipeCard({ notification, onSwipe, isTop, stackIndex, c }) {
     draggingRef.current = true;
     startXRef.current = e.clientX;
     currentXRef.current = 0;
+    thresholdPassedRef.current = false;
     const card = cardRef.current;
     if (card) {
       card.style.transition = "none";
@@ -132,12 +143,23 @@ function SwipeCard({ notification, onSwipe, isTop, stackIndex, c }) {
 
   const onPointerMove = useCallback((e) => {
     if (!draggingRef.current) return;
-    currentXRef.current = e.clientX - startXRef.current;
+    const x = e.clientX - startXRef.current;
+    currentXRef.current = x;
+
+    if (Math.abs(x) > SWIPE_THRESHOLD) {
+      if (!thresholdPassedRef.current) {
+        thresholdPassedRef.current = true;
+        onThresholdCross?.(x > 0 ? "right" : "left");
+      }
+    } else {
+      thresholdPassedRef.current = false;
+    }
+
     if (rafRef.current) cancelAnimationFrame(rafRef.current);
     rafRef.current = requestAnimationFrame(() => {
-      applyTransform(currentXRef.current, true);
+      applyTransform(x, true);
     });
-  }, [applyTransform]);
+  }, [applyTransform, onThresholdCross]);
 
   const onPointerUp = useCallback(() => {
     if (!draggingRef.current) return;
@@ -161,8 +183,12 @@ function SwipeCard({ notification, onSwipe, isTop, stackIndex, c }) {
         if (likeStamp) { likeStamp.style.transition = "opacity 0.3s"; likeStamp.style.opacity = "0"; }
         if (nopeStamp) { nopeStamp.style.transition = "opacity 0.3s"; nopeStamp.style.opacity = "0"; }
       }
+      if (Math.abs(x) > 16) {
+        onSnapBack?.();
+      }
     }
-  }, [commitSwipe]);
+    thresholdPassedRef.current = false;
+  }, [commitSwipe, onSnapBack]);
 
   const sub = notification?.subscriptionId;
   const LOGO_DEV_TOKEN = "pk_fg7nZQ2oQQK-tZnjxKWfPQ";
@@ -384,6 +410,7 @@ export default function UsageModal({
   notificationId,
   manualSubscriptions = null,
 }) {
+  const haptics = useAppHaptics();
   const isDark = useDark();
   const c = isDark ? T.dark : T.light;
   const { notifications } = useDataContext();
@@ -404,8 +431,10 @@ export default function UsageModal({
     if (!opened) {
       setIsInitialized(false);
       setIsDone(false);
+      return;
     }
-  }, [opened]);
+    haptics.openSheet();
+  }, [haptics, opened]);
 
   useEffect(() => {
     if (!opened || isInitialized) return;
@@ -445,9 +474,15 @@ export default function UsageModal({
   // Use a ref so SwipeCard's commitSwipe always calls the latest version
   const handleSwipeRef = useRef(null);
   const handleSwipe = useCallback((score) => {
+    haptics.dragCommit();
     const snap = handleSwipeRef.current;
     if (snap) snap(score);
-  }, []);
+  }, [haptics]);
+
+  const handleClose = useCallback(() => {
+    haptics.closeSheet();
+    onClose();
+  }, [haptics, onClose]);
 
   // Keep ref up to date with current state
   useEffect(() => {
@@ -462,20 +497,21 @@ export default function UsageModal({
       setUnratedNotifications(filtered);
       setCompletedCount((prev) => prev + 1);
       if (filtered.length === 0) {
+        haptics.success();
         setTimeout(() => setIsDone(true), 320);
         return;
       }
       const nextIndex = Math.min(idx, filtered.length - 1);
       setCurrentNotification(filtered[nextIndex]);
     };
-  }, [currentNotification, unratedNotifications]);
+  }, [currentNotification, haptics, unratedNotifications]);
 
   // Show up to 3 stacked cards
   const visibleCards = unratedNotifications.slice(currentIndex, currentIndex + 3);
 
   return (
     <Transition show={opened} as={Fragment}>
-      <Dialog as="div" style={{ position: "relative", zIndex: 50 }} onClose={onClose}>
+      <Dialog as="div" style={{ position: "relative", zIndex: 50 }} onClose={handleClose}>
         {/* Backdrop */}
         <Transition.Child
           as={Fragment}
@@ -520,7 +556,7 @@ export default function UsageModal({
               borderBottom: `1px solid ${c.headerBorder}`,
             }}>
               <button
-                onClick={onClose}
+                onClick={handleClose}
                 style={{
                   width: 40, height: 40,
                   borderRadius: "50%",
@@ -543,7 +579,7 @@ export default function UsageModal({
                 Joy Check
               </Dialog.Title>
               <button
-                onClick={onClose}
+                onClick={handleClose}
                 style={{
                   borderRadius: 20,
                   background: c.doneBg,
@@ -603,7 +639,7 @@ export default function UsageModal({
                     Check Insights for your recommendations
                   </p>
                   <button
-                    onClick={onClose}
+                    onClick={handleClose}
                     style={{
                       marginTop: 8,
                       borderRadius: 24,
@@ -650,6 +686,8 @@ export default function UsageModal({
                           key={notification._id}
                           notification={notification}
                           onSwipe={handleSwipe}
+                          onThresholdCross={haptics.dragThreshold}
+                          onSnapBack={haptics.dragSnapBack}
                           isTop={stackIndex === 0}
                           stackIndex={stackIndex}
                           c={c}
@@ -674,6 +712,7 @@ export default function UsageModal({
                     {unratedNotifications?.length > 1 && (
                       <ActionButton
                         onClick={() => {
+                          haptics.selection();
                           const nextIdx = currentIndex + 1 >= unratedNotifications.length ? 0 : currentIndex + 1;
                           setCurrentNotification(unratedNotifications[nextIdx]);
                         }}

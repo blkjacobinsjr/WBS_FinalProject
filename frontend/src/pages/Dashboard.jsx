@@ -23,10 +23,12 @@ import useDataFetching from "../hooks/useDataFetching";
 import useNotifications from "../hooks/useNotifications";
 import useSubscription from "../hooks/useSubscription";
 import useUsage from "../hooks/useUsage";
+import useAppHaptics from "../hooks/useAppHaptics";
 import eventEmitter from "../utils/EventEmitter";
 import { createUsageBody } from "../utils/schemaBuilder";
 
 function Dashboard() {
+  const haptics = useAppHaptics();
   // ---- PAGE INFORMATION ----
   const { pageId } = useParams();
   const { user } = useUser();
@@ -318,6 +320,7 @@ function Dashboard() {
 
   // ---- MORE FUNCTIONS ----
   async function handleResetData() {
+    haptics.warning();
     setIsResettingData(true);
 
     try {
@@ -341,8 +344,10 @@ function Dashboard() {
       setUsedCategories(updatedUsedCategories || []);
       setDashboardData(updatedDashboardData || {});
 
+      haptics.success();
       toast.success("Data reset");
     } catch (error) {
+      haptics.error();
       toast.error("Reset failed");
     } finally {
       setIsResettingData(false);
@@ -369,6 +374,7 @@ function Dashboard() {
           redirectOnComplete={false}
           onBack={() => setShowBulkImport(false)}
           onComplete={() => {
+            haptics.switchTab();
             setShowBulkImport(false);
             setActiveTab("subscriptions");
           }}

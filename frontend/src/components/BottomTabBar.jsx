@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { useCallback } from "react";
+import useAppHaptics from "../hooks/useAppHaptics";
 
 const tabs = [
   {
@@ -89,6 +90,20 @@ const tabs = [
 ];
 
 export default function BottomTabBar({ activeTab, onTabChange }) {
+  const haptics = useAppHaptics();
+
+  const handleTabClick = useCallback(
+    (tabId) => {
+      if (tabId === activeTab) {
+        haptics.tap();
+      } else {
+        haptics.switchTab();
+      }
+      onTabChange(tabId);
+    },
+    [activeTab, haptics, onTabChange],
+  );
+
   return (
     <nav className="fixed bottom-0 left-0 right-0 z-50 border-t border-black/10 bg-white/60 backdrop-blur-xl dark:border-white/10 dark:bg-black/60">
       <div className="mx-auto flex max-w-lg items-center justify-around px-2 py-2">
@@ -97,7 +112,7 @@ export default function BottomTabBar({ activeTab, onTabChange }) {
           return (
             <button
               key={tab.id}
-              onClick={() => onTabChange(tab.id)}
+              onClick={() => handleTabClick(tab.id)}
               className={`flex flex-1 flex-col items-center gap-0.5 rounded-xl px-3 py-2 transition-all active:scale-95 ${
                 isActive
                   ? "text-black dark:text-white"
