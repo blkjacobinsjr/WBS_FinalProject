@@ -75,6 +75,13 @@ function formatMoney(value) {
   return value.toLocaleString("en-US");
 }
 
+function nowMs() {
+  if (typeof performance !== "undefined" && performance.now) {
+    return performance.now();
+  }
+  return Date.now();
+}
+
 function institutionLogoUrl(domain) {
   return `https://img.logo.dev/${domain}?token=${LOGO_DEV_TOKEN}&format=png&size=256&retina=true`;
 }
@@ -222,8 +229,19 @@ function getPrescreenSignal(auditCadence, surpriseRenewals) {
   };
 }
 
-function AnimatedCurrency({ value, active, className, duration = 900 }) {
+function AnimatedCurrency({
+  value,
+  active,
+  className,
+  duration = 900,
+  onMilestone,
+}) {
   const [displayValue, setDisplayValue] = useState(0);
+  const onMilestoneRef = useRef(onMilestone);
+
+  useEffect(() => {
+    onMilestoneRef.current = onMilestone;
+  }, [onMilestone]);
 
   useEffect(() => {
     if (!active) {
@@ -232,12 +250,23 @@ function AnimatedCurrency({ value, active, className, duration = 900 }) {
     }
 
     let frameId;
-    const start = performance.now();
+    const start = nowMs();
+    let didEmitMid = false;
+    let didEmitEnd = false;
 
     function tick(now) {
       const progress = Math.min(1, (now - start) / duration);
       const eased = 1 - (1 - progress) ** 3;
       setDisplayValue(Math.round(value * eased));
+
+      if (!didEmitMid && progress >= 0.45) {
+        didEmitMid = true;
+        onMilestoneRef.current?.("mid");
+      }
+      if (!didEmitEnd && progress >= 0.98) {
+        didEmitEnd = true;
+        onMilestoneRef.current?.("end");
+      }
 
       if (progress < 1) {
         frameId = requestAnimationFrame(tick);
@@ -284,6 +313,7 @@ export default function Onboarding() {
   const [payoffTitle, setPayoffTitle] = useState("");
   const [payoffTransitioning, setPayoffTransitioning] = useState(false);
   const priceStepRef = useRef(null);
+  const priceHapticStateRef = useRef({ value: averagePrice, at: 0 });
 
   const userEmail = user?.primaryEmailAddress?.emailAddress || "";
   const isAdminUser = isAdminEmail(userEmail);
@@ -381,6 +411,43 @@ export default function Onboarding() {
     triggerOnboardingHaptic("slider", "medium", 85);
   }
 
+  function onboardingPriceScrubHaptic(nextValue) {
+    const now = nowMs();
+    const previous = priceHapticStateRef.current;
+    const deltaValue = Math.abs(nextValue - previous.value);
+    const deltaTime = now - previous.at;
+    priceHapticStateRef.current = { value: nextValue, at: now };
+
+    if (deltaValue === 0) return;
+    if (deltaTime <= 0 || previous.at === 0) {
+      onboardingSliderHaptic();
+      return;
+    }
+
+    const velocity = deltaValue / Math.max(16, deltaTime);
+    if (velocity >= 0.12) {
+      triggerOnboardingHaptic(
+        "price-scrub-rapid",
+        [
+          { duration: 20, intensity: 0.82 },
+          { delay: 26, duration: 14, intensity: 0.62 },
+        ],
+        26,
+      );
+      return;
+    }
+    if (velocity >= 0.06) {
+      triggerOnboardingHaptic(
+        "price-scrub-medium",
+        [{ duration: 18, intensity: 0.66 }],
+        40,
+      );
+      return;
+    }
+
+    onboardingSliderHaptic();
+  }
+
   function onboardingRevealHaptic() {
     triggerOnboardingHaptic(
       "reveal",
@@ -427,6 +494,11 @@ export default function Onboarding() {
   }, [step]);
 
   useEffect(() => {
+    if (step !== 10) return;
+    priceHapticStateRef.current = { value: averagePrice, at: 0 };
+  }, [averagePrice, step]);
+
+  useEffect(() => {
     if (step !== TOTAL_STEPS - 1) return;
 
     setRevealCount(0);
@@ -440,12 +512,24 @@ export default function Onboarding() {
       if (current <= 0) {
         setCountdownValue(0);
         setCountdownDone(true);
-        haptics.fire("onboarding-countdown-finish", "success", 260);
+        haptics.fire(
+          "onboarding-countdown-finish",
+          [
+            { duration: 34, intensity: 0.95 },
+            { delay: 55, duration: 44, intensity: 1 },
+          ],
+          280,
+        );
         clearInterval(interval);
         return;
       }
 
       setCountdownValue(current);
+      if (current === 1) {
+        haptics.fire("onboarding-countdown-tick-1", "medium", 180);
+      } else {
+        haptics.fire(`onboarding-countdown-tick-${current}`, "selection", 180);
+      }
     }, 620);
 
     return () => clearInterval(interval);
@@ -473,7 +557,10 @@ export default function Onboarding() {
       current += 1;
       setRevealCount(current);
       haptics.fire(`onboarding-payoff-card-${current}`, "soft", 180);
-      if (current >= PAYOFF_CARD_COUNT) clearInterval(interval);
+      if (current >= PAYOFF_CARD_COUNT) {
+        haptics.fire("onboarding-payoff-all-visible", "medium", 260);
+        clearInterval(interval);
+      }
     }, 260);
 
     return () => {
@@ -1278,7 +1365,7 @@ export default function Onboarding() {
             onChange={(event) => {
               const value = Number(event.target.value);
               if (priceStepRef.current !== value) {
-                onboardingSliderHaptic();
+                onboardingPriceScrubHaptic(value);
                 priceStepRef.current = value;
               }
               setPriceInteracted(true);
@@ -1404,6 +1491,17 @@ export default function Onboarding() {
                     value={card.value}
                     active={revealCount > index}
                     duration={index === 3 ? 1200 : 850}
+                    onMilestone={(phase) => {
+                      if (phase === "mid") {
+                        haptics.fire(`onboarding-payoff-count-mid-${index}`, "selection", 150);
+                      } else {
+                        haptics.fire(
+                          `onboarding-payoff-count-end-${index}`,
+                          index === 2 ? "soft" : "selection",
+                          220,
+                        );
+                      }
+                    }}
                     className={`mt-1 font-mono text-3xl font-extrabold ${card.valueClassName}`}
                   />
                 </motion.div>

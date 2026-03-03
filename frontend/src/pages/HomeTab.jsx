@@ -1,4 +1,4 @@
-import { useMemo, useCallback } from "react";
+import { useMemo, useCallback, useEffect, useRef } from "react";
 import { useUser } from "@clerk/clerk-react";
 import { useDataContext } from "../contexts/dataContext";
 import FinancialResetCard from "../components/FinancialResetCard";
@@ -36,6 +36,11 @@ export default function HomeTab() {
   const haptics = useAppHaptics();
   const { user } = useUser();
   const { subscriptions, dashboardData, notifications, usedCategories } = useDataContext();
+  const animationCueRef = useRef({
+    hero: false,
+    orbit: false,
+    meter: false,
+  });
 
   const greeting = useMemo(() => getGreeting(), []);
   const firstName = user?.firstName || "there";
@@ -78,6 +83,47 @@ export default function HomeTab() {
       : [],
     [usedCategories, subscriptions]
   );
+
+  useEffect(() => {
+    if (!animationCueRef.current.hero && (dashboardData?.totalCostPerMonth || 0) > 0) {
+      animationCueRef.current.hero = true;
+      const timer = setTimeout(() => {
+        haptics.fire("home-hero-entry", "selection", 360);
+      }, 280);
+      return () => clearTimeout(timer);
+    }
+    return undefined;
+  }, [dashboardData?.totalCostPerMonth, haptics]);
+
+  useEffect(() => {
+    if (!animationCueRef.current.orbit && subscriptions?.length > 0) {
+      animationCueRef.current.orbit = true;
+      const timer = setTimeout(() => {
+        haptics.fire("home-orbit-entry", "soft", 420);
+      }, 380);
+      return () => clearTimeout(timer);
+    }
+    return undefined;
+  }, [haptics, subscriptions?.length]);
+
+  useEffect(() => {
+    const hasMeter = (dashboardData?.totalCostPerMonth || 0) > 0 || (subscriptions?.length || 0) > 0;
+    if (!animationCueRef.current.meter && hasMeter) {
+      animationCueRef.current.meter = true;
+      const timer = setTimeout(() => {
+        haptics.fire(
+          "home-meter-entry",
+          [
+            { duration: 16, intensity: 0.52 },
+            { delay: 34, duration: 12, intensity: 0.42 },
+          ],
+          520,
+        );
+      }, 520);
+      return () => clearTimeout(timer);
+    }
+    return undefined;
+  }, [dashboardData?.totalCostPerMonth, haptics, subscriptions?.length]);
 
 
   return (

@@ -1,4 +1,4 @@
-import { useCallback } from "react";
+import { useCallback, useRef } from "react";
 import useAppHaptics from "../hooks/useAppHaptics";
 
 const tabs = [
@@ -91,13 +91,23 @@ const tabs = [
 
 export default function BottomTabBar({ activeTab, onTabChange }) {
   const haptics = useAppHaptics();
+  const lastPressRef = useRef({ tabId: null, at: 0 });
 
-  const handleTabClick = useCallback(
+  const activateTab = useCallback(
     (tabId) => {
+      const now = Date.now();
+      if (
+        lastPressRef.current.tabId === tabId &&
+        now - lastPressRef.current.at < 220
+      ) {
+        return;
+      }
+      lastPressRef.current = { tabId, at: now };
+
       if (tabId === activeTab) {
-        haptics.tap();
+        haptics.fire("tab-reselect", "selection", 70);
       } else {
-        haptics.switchTab();
+        haptics.fire("tab-switch-press", "light", 80);
       }
       onTabChange(tabId);
     },
@@ -105,15 +115,26 @@ export default function BottomTabBar({ activeTab, onTabChange }) {
   );
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 z-50 border-t border-black/10 bg-white/60 backdrop-blur-xl dark:border-white/10 dark:bg-black/60">
+    <nav
+      className="fixed bottom-0 left-0 right-0 z-50 border-t border-black/10 bg-white/60 backdrop-blur-xl dark:border-white/10 dark:bg-black/60"
+      style={{ paddingBottom: "env(safe-area-inset-bottom)" }}
+    >
       <div className="mx-auto flex max-w-lg items-center justify-around px-2 py-2">
         {tabs.map((tab) => {
           const isActive = activeTab === tab.id;
           return (
             <button
               key={tab.id}
-              onClick={() => handleTabClick(tab.id)}
-              className={`flex flex-1 flex-col items-center gap-0.5 rounded-xl px-3 py-2 transition-all active:scale-95 ${
+              type="button"
+              onPointerUp={(event) => {
+                if (event.pointerType === "touch") {
+                  event.preventDefault();
+                  activateTab(tab.id);
+                }
+              }}
+              onClick={() => activateTab(tab.id)}
+              style={{ touchAction: "manipulation" }}
+              className={`flex min-h-[52px] flex-1 flex-col items-center justify-center gap-0.5 rounded-xl px-3 py-2.5 transition-all active:scale-95 ${
                 isActive
                   ? "text-black dark:text-white"
                   : "text-black/40 hover:text-black/60 dark:text-white/40 dark:hover:text-white/60"
@@ -130,8 +151,6 @@ export default function BottomTabBar({ activeTab, onTabChange }) {
           );
         })}
       </div>
-      {/* Safe area padding for iOS */}
-      <div className="h-[env(safe-area-inset-bottom)]" />
     </nav>
   );
 }
