@@ -1,4 +1,5 @@
 import { useCallback, useMemo, useRef } from "react";
+import { haptic as iosHaptic, supportsHaptics as iosSupportsHaptics } from "ios-haptics";
 import { useWebHaptics } from "web-haptics/react";
 
 function nowMs() {
@@ -8,21 +9,90 @@ function nowMs() {
   return Date.now();
 }
 
+function isLikelyIOS() {
+  if (typeof navigator === "undefined") return false;
+  const ua = navigator.userAgent || "";
+  if (/iP(hone|ad|od)/.test(ua)) return true;
+  return navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1;
+}
+
+function countPatternPulses(input) {
+  if (typeof input === "number") return input > 0 ? 1 : 0;
+  if (typeof input === "string") {
+    if (input === "error") return 3;
+    if (input === "success" || input === "warning" || input === "nudge") return 2;
+    return 1;
+  }
+
+  if (Array.isArray(input)) {
+    if (input.length === 0) return 0;
+    if (typeof input[0] === "number") {
+      let count = 0;
+      for (let i = 0; i < input.length; i += 2) {
+        if ((input[i] || 0) > 0) count += 1;
+      }
+      return count;
+    }
+    return input.filter((step) => (step?.duration || 0) > 0).length;
+  }
+
+  if (input?.pattern && Array.isArray(input.pattern)) {
+    return countPatternPulses(input.pattern);
+  }
+
+  return 1;
+}
+
+function triggerIosFallback(input) {
+  try {
+    const pulseCount = Math.min(3, Math.max(0, countPatternPulses(input)));
+    if (pulseCount <= 0) return;
+    if (pulseCount === 1) {
+      iosHaptic();
+      return;
+    }
+    if (pulseCount === 2) {
+      iosHaptic.confirm();
+      return;
+    }
+    iosHaptic.error();
+  } catch {
+    // no-op
+  }
+}
+
 export default function useAppHaptics(options) {
   const { trigger, isSupported: hasVibrationApi } = useWebHaptics(options);
-  const isSupported = hasVibrationApi;
+  const canUseIosFallback = useMemo(() => {
+    if (typeof window === "undefined" || hasVibrationApi) return false;
+    return Boolean(iosSupportsHaptics && isLikelyIOS());
+  }, [hasVibrationApi]);
+  const isSupported = hasVibrationApi || canUseIosFallback;
   const lastTriggerRef = useRef({});
 
   const fire = useCallback(
     (key, input, cooldownMs = 80) => {
-      if (!trigger) return;
+      if (!trigger && !canUseIosFallback) return;
       const t = nowMs();
       const previous = lastTriggerRef.current[key] ?? -Infinity;
       if (t - previous < cooldownMs) return;
       lastTriggerRef.current[key] = t;
-      trigger(input);
+
+      if (hasVibrationApi && trigger) {
+        trigger(input);
+        return;
+      }
+
+      if (canUseIosFallback) {
+        triggerIosFallback(input);
+        return;
+      }
+
+      if (trigger) {
+        trigger(input);
+      }
     },
-    [trigger],
+    [canUseIosFallback, hasVibrationApi, trigger],
   );
 
   const tap = useCallback(() => {
