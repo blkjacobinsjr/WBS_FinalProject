@@ -47,9 +47,9 @@ function getActionForMode({
 }) {
   if (!totalSubscriptions) {
     return {
-      type: "add",
-      label: "Add subscription",
-      helper: "Give the dashboard something to control.",
+      type: "reset",
+      label: "Financial reset",
+      helper: "Upload a statement to instantly find subscriptions.",
     };
   }
 
@@ -93,17 +93,7 @@ function getActionForMode({
 }
 
 export function getInitialControlHeroMode(search = "") {
-  if (!search) return "recover";
-
-  const params = new URLSearchParams(search);
-  const fromOnboarding = params.get("from") === "onboarding";
-  const checkoutSuccess = params.get("checkout") === "success";
-
-  if (fromOnboarding && checkoutSuccess) {
-    return "recover";
-  }
-
-  return "recover";
+  return "spend";
 }
 
 export function createDashboardHeroModel({
@@ -140,11 +130,11 @@ export function createDashboardHeroModel({
   const biggestLeak =
     dashboardData?.barelyUsedMostExpensive?.name
       ? {
-          ...dashboardData.barelyUsedMostExpensive,
-          monthlyPrice:
-            Number(dashboardData.barelyUsedMostExpensive.monthlyPrice) ||
-            toMonthlyPrice(dashboardData.barelyUsedMostExpensive),
-        }
+        ...dashboardData.barelyUsedMostExpensive,
+        monthlyPrice:
+          Number(dashboardData.barelyUsedMostExpensive.monthlyPrice) ||
+          toMonthlyPrice(dashboardData.barelyUsedMostExpensive),
+      }
       : sortedByMonthly[0] || null;
 
   const mostUsed =
@@ -172,28 +162,28 @@ export function createDashboardHeroModel({
   const orbitBadges = [
     biggestLeak?.name
       ? {
-          key: "leak",
-          label: getCompactLabel(biggestLeak.name),
-          value: biggestLeak.monthlyPrice || toMonthlyPrice(biggestLeak),
-          tone: "slate",
-        }
+        key: "leak",
+        label: getCompactLabel(biggestLeak.name),
+        value: biggestLeak.monthlyPrice || toMonthlyPrice(biggestLeak),
+        tone: "slate",
+      }
       : null,
     mostUsed?.name
       ? {
-          key: "most",
-          label: getCompactLabel(mostUsed.name),
-          value: toMonthlyPrice(mostUsed),
-          tone: "sky",
-        }
+        key: "most",
+        label: getCompactLabel(mostUsed.name),
+        value: toMonthlyPrice(mostUsed),
+        tone: "sky",
+      }
       : null,
     futureValue10y > 0
       ? {
-          key: "future",
-          label: "10Y",
-          value: Math.round(futureValue10y / 1000),
-          suffix: "k",
-          tone: "emerald",
-        }
+        key: "future",
+        label: "10Y",
+        value: Math.round(futureValue10y / 1000),
+        suffix: "k",
+        tone: "emerald",
+      }
       : null,
   ].filter(Boolean);
 
@@ -214,8 +204,8 @@ export function createDashboardHeroModel({
         ? spendGap > 0
           ? `You are €${Math.abs(spendGap).toLocaleString()} above the current reference line.`
           : spendGap < 0
-          ? `You are €${Math.abs(spendGap).toLocaleString()} below the current reference line.`
-          : "You are sitting exactly on the current reference line."
+            ? `You are €${Math.abs(spendGap).toLocaleString()} below the current reference line.`
+            : "You are sitting exactly on the current reference line."
         : "The reference line becomes useful once spend data lands.",
       action: getActionForMode({
         totalSubscriptions,

@@ -46,8 +46,8 @@ export default function InsightDecisionMatrix({
       monthlyPrice: toMonthlyPrice(subscription),
       score:
         subscription.score === undefined ||
-        subscription.score === null ||
-        subscription.score === 0
+          subscription.score === null ||
+          subscription.score === 0
           ? null
           : Number(subscription.score),
     }))
@@ -82,7 +82,7 @@ export default function InsightDecisionMatrix({
     const x = (subscription.monthlyPrice / maxPrice) * 68 + 14;
     const y = 78 - Math.min(72, (subscription.score / 5) * 64);
     const zone = getZone(subscription, maxPrice);
-    const size = 44 + Math.round((subscription.monthlyPrice / maxPrice) * 18);
+    const size = 32 + Math.round((subscription.monthlyPrice / maxPrice) * 12);
 
     return {
       ...subscription,
@@ -167,14 +167,17 @@ export default function InsightDecisionMatrix({
             >
               <div className="relative">
                 <div
-                  className={`grid place-items-center rounded-full border border-white/80 bg-white/88 ring-4 ${zoneStyle.ring} ${zoneStyle.glow} dark:border-white/12 dark:bg-slate-950/80`}
+                  className={`grid place-items-center rounded-full bg-white shadow-sm ring-2 dark:bg-slate-900 ${subscription.zone === 'keep' ? 'ring-emerald-400/80 shadow-emerald-500/20' :
+                      subscription.zone === 'review' ? 'ring-amber-400/80 shadow-amber-500/20' :
+                        'ring-rose-400/80 shadow-rose-500/20'
+                    }`}
                   style={{
                     width: `${subscription.size}px`,
                     height: `${subscription.size}px`,
                   }}
                   title={`${subscription.name} • €${subscription.monthlyPrice.toFixed(2)}`}
                 >
-                  <div className="grid h-[58%] w-[58%] place-items-center rounded-full bg-slate-950/5 text-slate-700 dark:bg-white/10 dark:text-white/80">
+                  <div className="grid h-[85%] w-[85%] place-items-center rounded-full bg-transparent overflow-hidden">
                     <SubscriptionLogo subscriptionName={subscription.name} />
                   </div>
                 </div>

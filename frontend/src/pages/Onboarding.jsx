@@ -11,7 +11,13 @@ import {
 } from "../utils/onboardingState";
 import useAppHaptics from "../hooks/useAppHaptics";
 
-const TOTAL_STEPS = 12;
+import { useDataContext } from "../contexts/dataContext";
+import BulkImport from "./BulkImport";
+import Piechartwithneedle from "../components/charts/Piechartwithneedle";
+import UsageRadarChart from "../components/charts/UsageRadarChart";
+import HighestSpendOrbit from "../components/charts/HighestSpendOrbit";
+
+const TOTAL_STEPS = 13;
 const PAYOFF_CARD_COUNT = 4;
 const ENTER_EASE = [0.22, 1, 0.36, 1];
 const LOGO_DEV_TOKEN = "pk_fg7nZQ2oQQK-tZnjxKWfPQ";
@@ -281,6 +287,7 @@ function AnimatedCurrency({
 }
 
 export default function Onboarding() {
+  const { subscriptions, dashboardData } = useDataContext();
   const haptics = useAppHaptics();
   const { user } = useUser();
   const navigate = useNavigate();
@@ -1391,11 +1398,48 @@ export default function Onboarding() {
           </button>
           <button
             type="button"
-            onClick={revealPayoffStep}
+            onClick={nextStep}
             className={`rounded-full px-6 py-2 text-sm font-medium text-white ${priceInteracted ? "bg-black" : "animate-pulse bg-black/85"
               }`}
           >
-            Reveal payoff
+            Continue
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  function renderBulkImportStep() {
+    return (
+      <div className="flex h-full flex-col">
+        <h2 className="text-3xl font-extrabold tracking-tight text-white">
+          Financial reset
+        </h2>
+        <p className="mt-1 text-sm text-[#cde7ff]">Upload a statement. We instantly extract and analyze.</p>
+
+        <div className="mt-4 flex-1 overflow-auto rounded-2xl border border-white/15 bg-white/10 p-2 shadow-xl shadow-black/30 backdrop-blur">
+          <BulkImport
+            embedded
+            redirectOnComplete={false}
+            deferCompleteUntilReview
+            onComplete={revealPayoffStep}
+          />
+        </div>
+
+        <div className="mt-auto flex items-center justify-between pt-6">
+          <button
+            type="button"
+            onClick={previousStep}
+            className="rounded-full border border-white/35 bg-white/10 px-5 py-2 text-sm font-medium text-white"
+          >
+            Back
+          </button>
+          <button
+            type="button"
+            onClick={revealPayoffStep}
+            className="rounded-full bg-white/20 px-6 py-2 text-sm font-semibold text-white/90 transition hover:bg-white/30"
+          >
+            Skip for now
           </button>
         </div>
       </div>
@@ -1525,7 +1569,65 @@ export default function Onboarding() {
               </motion.div>
             </div>
 
-            <p className="mt-3 text-xs text-black/55">getting your subscriptions to subzro.</p>
+            <div className="mt-6">
+              <p className="text-center text-xs font-semibold uppercase tracking-wider text-black/45 mb-4">
+                Your full dashboard is ready
+              </p>
+              <div className="relative overflow-hidden rounded-2xl bg-white/30 p-4 border border-white/50 shadow-inner">
+                <div className="grid grid-cols-2 gap-3 filter blur-md opacity-70 pointer-events-none select-none mix-blend-multiply">
+                  {/* Spend-O-Meter */}
+                  <div className="rounded-xl bg-white/50 p-2 flex flex-col items-center">
+                    <p className="text-[9px] font-semibold text-slate-800">Spend-O-Meter</p>
+                    <div className="h-[80px] w-full mt-1">
+                      <Piechartwithneedle maxFirstSegment={200} needleValue={dashboardData?.totalCostPerMonth || averagePrice * subscriptionCount} />
+                    </div>
+                  </div>
+                  {/* Usage vs Cost */}
+                  <div className="rounded-xl bg-white/50 p-2 flex flex-col items-center">
+                    <p className="text-[9px] font-semibold text-slate-800">Category Usage vs. Cost</p>
+                    <div className="h-[80px] w-full mt-1 overflow-hidden flex items-center justify-center">
+                      <UsageRadarChart />
+                    </div>
+                  </div>
+                  {/* Highest Spend */}
+                  <div className="rounded-xl bg-white/50 p-2 flex flex-col items-center">
+                    <p className="text-[9px] font-semibold text-slate-800">Highest Spend</p>
+                    <div className="h-[80px] w-full mt-1 overflow-hidden flex items-center justify-center">
+                      <HighestSpendOrbit data={subscriptions?.length ? subscriptions.slice(0, 5).map(s => ({ ...s, value: s.price || s.monthlyPrice || 0 })).sort((a, b) => b.value - a.value) : []} />
+                    </div>
+                  </div>
+                  {/* All Subscriptions (Ranked) */}
+                  <div className="rounded-xl bg-white/50 p-2 flex flex-col items-stretch justify-center gap-1.5">
+                    <p className="text-[9px] font-semibold text-slate-800 mb-0.5 text-center">All Subscriptions</p>
+                    {[
+                      { name: "Netflix", color: "bg-red-500", w: "w-full" },
+                      { name: "Spotify", color: "bg-green-500", w: "w-[75%]" },
+                      { name: "Amazon", color: "bg-blue-500", w: "w-[50%]" },
+                    ].map((mock, i) => (
+                      <div key={i} className="flex justify-between items-center text-[7px] font-bold text-slate-800">
+                        <div className="flex gap-1 items-center flex-1">
+                          <div className={`h-1.5 w-1.5 rounded-sm ${mock.color}`}></div>
+                          <span>{mock.name}</span>
+                        </div>
+                        <div className="w-8 h-1 bg-slate-200 rounded-full overflow-hidden">
+                          <div className={`h-full ${mock.color} ${mock.w}`}></div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="absolute inset-0 flex flex-col items-center justify-center bg-white/10 backdrop-blur-[2px]">
+                  <div className="rounded-2xl bg-white/95 p-5 shadow-2xl text-center max-w-[220px] transition hover:scale-105" onClick={continueToCheckout} style={{ cursor: "pointer" }}>
+                    <p className="text-base font-extrabold text-[#112a46] mb-1">Results Locked</p>
+                    <p className="text-[11px] text-[#2c4e70] mb-3 leading-tight">Your actual metrics are analyzed. Continue to see them and freeze leaks instantly.</p>
+                    <button type="button" className="w-full rounded-full bg-gradient-to-r from-[#173759] to-[#2b63a4] py-2.5 text-xs font-bold text-white shadow-md">
+                      Reveal Dashboard
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
           </>
         )}
 
@@ -1585,6 +1687,7 @@ export default function Onboarding() {
     if (step === 8) return renderEvidenceStep(1);
     if (step === 9) return renderCountStep();
     if (step === 10) return renderPriceStep();
+    if (step === 11) return renderBulkImportStep();
     return renderPayoffStep();
   }
 

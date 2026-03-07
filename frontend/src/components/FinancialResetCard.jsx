@@ -1,10 +1,17 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import eventEmitter from "../utils/EventEmitter";
 import FinancialResetFlow from "./FinancialResetFlow";
 import LoadingButton from "./LoadingButton";
 
 export default function FinancialResetCard() {
   const [open, setOpen] = useState(false);
   const [isOpening, setIsOpening] = useState(false);
+
+  useEffect(() => {
+    const handleOpen = () => setOpen(true);
+    eventEmitter.on("openFinancialReset", handleOpen);
+    return () => eventEmitter.off("openFinancialReset", handleOpen);
+  }, []);
 
   return (
     <>

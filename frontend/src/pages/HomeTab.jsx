@@ -106,6 +106,10 @@ export default function HomeTab() {
         case "add":
           handleAddSubscriptionClick();
           return;
+        case "reset":
+          haptics.confirm();
+          eventEmitter.emit("openFinancialReset");
+          return;
         case "frequency":
           haptics.confirm();
           eventEmitter.emit("openFrequencyQuiz");
