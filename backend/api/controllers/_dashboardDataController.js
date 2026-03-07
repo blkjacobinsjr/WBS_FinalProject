@@ -1,10 +1,14 @@
-import Subscription from "../models/_subscriptionSchema.js";
+import dotenv from "dotenv";
 import {
-  mostUsedSubscriptionAggregate,
-  potentialMonthlySavingsAggregate,
-  totalMonthlyCostAggregate,
-  barelyUsedMostExpensiveAggregate,
-} from "../data/_aggregates.js";
+  buildDashboardData,
+  getDashboardBootstrap,
+  getHydratedSubscriptions,
+} from "../services/_dashboardBootstrapService.js";
+
+dotenv.config();
+
+const parsedDaysAgo = Number.parseInt(process.env.NOTIFICATION_DAYS_AGO, 10);
+const notificationDelayDays = Number.isFinite(parsedDaysAgo) ? parsedDaysAgo : 7;
 
 /**
  * Returns consolidated dashboard data
@@ -18,44 +22,8 @@ export async function getDashboardData(req, res, next) {
     userId,
   );
 
-  // get all the aggregates!
-  const mostUsedAggregate = mostUsedSubscriptionAggregate(userId);
-  const leastUsedAggregate = mostUsedSubscriptionAggregate(userId, 1);
-  const totalCostAggregate = totalMonthlyCostAggregate(userId);
-  const potentialSavingsAggregate = potentialMonthlySavingsAggregate(userId);
-  const barelyUsedAggregate = barelyUsedMostExpensiveAggregate(userId);
-
-  const [
-    mostUsedResult,
-    leastUsedResult,
-    totalCostResult,
-    potentialSavingsResult,
-    barelyUsedResult,
-  ] = await Promise.all([
-    Subscription.aggregate(mostUsedAggregate),
-    Subscription.aggregate(leastUsedAggregate),
-    Subscription.aggregate(totalCostAggregate),
-    Subscription.aggregate(potentialSavingsAggregate),
-    Subscription.aggregate(barelyUsedAggregate),
-  ]);
-
-  // all results here are arrays with exactly one object in them
-  // TODO: More error handling. Probably...
-  const mostUsed = mostUsedResult[0] ?? {};
-  const leastUsed = leastUsedResult[0] ?? {};
-  const totalCost = totalCostResult[0] ?? { totalCostPerMonth: 0 };
-  const potentialSavings = potentialSavingsResult[0] ?? {
-    potentialMonthlySavings: 0,
-  };
-  const barelyUsedMostExpensive = barelyUsedResult[0] ?? {};
-
-  const dashboardData = {
-    mostUsed,
-    leastUsed,
-    barelyUsedMostExpensive,
-    ...totalCost,
-    ...potentialSavings,
-  };
+  const subscriptions = await getHydratedSubscriptions(userId);
+  const dashboardData = buildDashboardData(subscriptions);
 
   res.status(200).json(dashboardData);
 }
@@ -72,9 +40,8 @@ export async function getMostUsedSubscription(req, res, next) {
     userId,
   );
 
-  const aggregate = mostUsedSubscriptionAggregate(userId);
-
-  const [result] = await Subscription.aggregate(aggregate);
+  const subscriptions = await getHydratedSubscriptions(userId);
+  const { mostUsed: result } = buildDashboardData(subscriptions);
 
   res.status(200).json(result);
 }
@@ -91,9 +58,9 @@ export async function getPotentialMonthlySavings(req, res, next) {
     userId,
   );
 
-  const aggregate = potentialMonthlySavingsAggregate(userId);
-
-  const [result] = await Subscription.aggregate(aggregate);
+  const subscriptions = await getHydratedSubscriptions(userId);
+  const { potentialMonthlySavings } = buildDashboardData(subscriptions);
+  const result = { potentialMonthlySavings };
 
   res.status(200).json(result);
 }
@@ -110,9 +77,29 @@ export async function getTotalMonthlyCost(req, res, next) {
     userId,
   );
 
-  const aggregate = totalMonthlyCostAggregate(userId);
-
-  const [result] = await Subscription.aggregate(aggregate);
+  const subscriptions = await getHydratedSubscriptions(userId);
+  const { totalCostPerMonth } = buildDashboardData(subscriptions);
+  const result = { totalCostPerMonth };
 
   res.status(200).json(result);
+}
+
+/**
+ * Returns the full dashboard bootstrap payload in one response
+ */
+export async function getDashboardBootstrapData(req, res, next) {
+  const { userId } = req.auth;
+
+  console.info(
+    new Date().toISOString(),
+    "getDashboardBootstrapData, request for user",
+    userId,
+  );
+
+  const bootstrapData = await getDashboardBootstrap(
+    userId,
+    notificationDelayDays,
+  );
+
+  res.status(200).json(bootstrapData);
 }

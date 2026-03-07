@@ -17,4 +17,7 @@ const usageSchema = new Schema(
   { timestamps: true },
 );
 
+usageSchema.index({ subscriptionId: 1, createdAt: -1 });
+usageSchema.index({ userId: 1, subscriptionId: 1, createdAt: -1 });
+
 export default mongoose.model("Usage", usageSchema);

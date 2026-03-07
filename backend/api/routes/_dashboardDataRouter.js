@@ -1,6 +1,7 @@
 import { Router } from "express";
 import {
   getDashboardData,
+  getDashboardBootstrapData,
   getTotalMonthlyCost,
   getPotentialMonthlySavings,
   getMostUsedSubscription,
@@ -11,6 +12,9 @@ const dashboardDataRouter = Router();
 
 // ---- ROUTE: /api/dashboard ----
 dashboardDataRouter.route("/").get(asyncWrap(getDashboardData));
+
+// ---- ROUTE: /api/dashboard/bootstrap ----
+dashboardDataRouter.route("/bootstrap").get(asyncWrap(getDashboardBootstrapData));
 
 // ---- ROUTE: /api/dashboard/mostUsed ----
 dashboardDataRouter.route("/mostUsed").get(asyncWrap(getMostUsedSubscription));

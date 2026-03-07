@@ -20,4 +20,7 @@ const subscriptionSchema = new Schema(
   { timestamps: true },
 );
 
+subscriptionSchema.index({ userId: 1, createdAt: -1 });
+subscriptionSchema.index({ userId: 1, category: 1 });
+
 export default mongoose.model("Subscription", subscriptionSchema);

@@ -1,8 +1,8 @@
 import Subscription from "../models/_subscriptionSchema.js";
 import Notification from "../models/_notificatonSchema.js";
 import Usage from "../models/_usageSchema.js";
-import { fullSubscriptionData } from "../data/_aggregates.js";
 import { startSession } from "mongoose";
+import { getHydratedSubscriptions } from "../services/_dashboardBootstrapService.js";
 
 // ---- GET /api/subscriptions ----
 export async function getAllSubscriptions(req, res, next) {
@@ -16,11 +16,7 @@ export async function getAllSubscriptions(req, res, next) {
     userId,
   );
 
-  // NOTE: We will rarely if ever need to only get subscription data, so let's
-  // always fetch 'supscription data plus'
-  const fullDataAggregate = fullSubscriptionData(userId);
-
-  const subscriptions = await Subscription.aggregate(fullDataAggregate);
+  const subscriptions = await getHydratedSubscriptions(userId);
 
   // const subscriptions = await Subscription.find({ userId }).populate(
   //   "category",

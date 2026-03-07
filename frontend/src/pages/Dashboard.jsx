@@ -1,6 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { Link, useParams } from "react-router-dom";
-import { useUser } from "@clerk/clerk-react";
+import { Link } from "react-router-dom";
 import { toast } from "sonner";
 
 import ErrorDisplay from "../components/ErrorDisplay";
@@ -17,7 +16,6 @@ import SettingsTab from "./SettingsTab";
 import BulkImport from "./BulkImport";
 
 import { useDataContext } from "../contexts/dataContext";
-import useCategory from "../hooks/useCategory";
 import useDashboard from "../hooks/useDashboard";
 import useDataFetching from "../hooks/useDataFetching";
 import useNotifications from "../hooks/useNotifications";
@@ -29,15 +27,13 @@ import { createUsageBody } from "../utils/schemaBuilder";
 
 function Dashboard() {
   const haptics = useAppHaptics();
-  // ---- PAGE INFORMATION ----
-  const { pageId } = useParams();
-  const { user } = useUser();
 
   // ---- CONTEXT ----
   const {
     subscriptions,
     setSubscriptions,
     allCategories,
+    setAllCategories,
     usedCategories,
     setUsedCategories,
     dashboardData,
@@ -78,11 +74,22 @@ function Dashboard() {
   // ---- CUSTOM HOOKS ----
   const { loading, error, errorMessage, refetchData } = useDataFetching();
   const { createUsage } = useUsage();
-  const { getAllSubscriptions, deleteSubscription } = useSubscription();
-  const { getUsedCategories } = useCategory();
-  const { getDashboardData } = useDashboard();
+  const { deleteSubscription } = useSubscription();
+  const { getDashboardBootstrap } = useDashboard();
   const { getAllNotifications, getAndUpdateNotificationById } =
     useNotifications();
+
+  function applyBootstrapData(bootstrapData) {
+    if (!bootstrapData) {
+      return;
+    }
+
+    setSubscriptions(bootstrapData.subscriptions ?? []);
+    setUsedCategories(bootstrapData.usedCategories ?? []);
+    setDashboardData(bootstrapData.dashboardData ?? {});
+    setNotifications(bootstrapData.notifications ?? []);
+    setAllCategories(bootstrapData.allCategories ?? []);
+  }
 
   // ---- Event Callbacks ----
   // show subscription form
@@ -114,6 +121,7 @@ function Dashboard() {
   }
 
   // ---- THE ALMIGHTY USE EFFECT ----
+  /* eslint-disable react-hooks/exhaustive-deps */
   useEffect(() => {
     const abortController = new AbortController();
     const notificationAbortController = new AbortController();
@@ -122,22 +130,8 @@ function Dashboard() {
     // all data, as otherwise our application doesn't show the current state of data *buuuuuuh!*
     async function sneakyDataRefetch() {
       try {
-        const [
-          updatedSubscriptions,
-          updatedUsedCategories,
-          updatedDashboardData,
-          updatedNotifications,
-        ] = await Promise.all([
-          getAllSubscriptions(abortController),
-          getUsedCategories(abortController),
-          getDashboardData(abortController),
-          getAllNotifications(abortController),
-        ]);
-
-        setSubscriptions(updatedSubscriptions);
-        setUsedCategories(updatedUsedCategories);
-        setDashboardData(updatedDashboardData);
-        setNotifications(updatedNotifications || []);
+        const bootstrapData = await getDashboardBootstrap(abortController);
+        applyBootstrapData(bootstrapData);
       } catch (error) {
         console.error(`Error refetching subscriptions: ${errorMessage}`);
       }
@@ -172,11 +166,7 @@ function Dashboard() {
     // this we would probably need to remove the 'mark as read' option...
     async function updateNotification(notificationId) {
       try {
-        // TODO: Check what this actually returns ...
-        const updateNotification = await getAndUpdateNotificationById(
-          notificationId,
-          abortController,
-        );
+        await getAndUpdateNotificationById(notificationId, abortController);
 
         refetchNotifications();
       } catch (error) {
@@ -317,6 +307,7 @@ function Dashboard() {
       eventEmitter.off("switchTab", switchTabCallback);
     };
   }, []);
+  /* eslint-enable react-hooks/exhaustive-deps */
 
   // ---- MORE FUNCTIONS ----
   async function handleResetData() {
@@ -324,8 +315,7 @@ function Dashboard() {
     setIsResettingData(true);
 
     try {
-      const current = await getAllSubscriptions(new AbortController());
-      const deletions = (current || [])
+      const deletions = (subscriptionsRef.current || [])
         .filter((sub) => sub?._id)
         .map((sub) =>
           deleteSubscription(sub._id, new AbortController()),
@@ -333,16 +323,8 @@ function Dashboard() {
 
       await Promise.allSettled(deletions);
 
-      const [updatedSubscriptions, updatedUsedCategories, updatedDashboardData] =
-        await Promise.all([
-          getAllSubscriptions(new AbortController()),
-          getUsedCategories(new AbortController()),
-          getDashboardData(new AbortController()),
-        ]);
-
-      setSubscriptions(updatedSubscriptions || []);
-      setUsedCategories(updatedUsedCategories || []);
-      setDashboardData(updatedDashboardData || {});
+      const bootstrapData = await getDashboardBootstrap(new AbortController());
+      applyBootstrapData(bootstrapData);
 
       haptics.success();
       toast.success("Data reset");

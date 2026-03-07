@@ -1,6 +1,7 @@
 import dotenv from "dotenv";
 import Notification from "../models/_notificatonSchema.js";
 import { startSession } from "mongoose";
+import { getPendingNotifications } from "../services/_dashboardBootstrapService.js";
 dotenv.config();
 
 const { NOTIFICATION_DAYS_AGO } = process.env;
@@ -19,21 +20,7 @@ export async function getNotifications(req, res, next) {
   const parsedDaysAgo = Number.parseInt(NOTIFICATION_DAYS_AGO, 10);
   const daysAgoEnv = Number.isFinite(parsedDaysAgo) ? parsedDaysAgo : 7;
   console.log("Current Notification Delay (days):", daysAgoEnv);
-  const daysAgo = new Date(Date.now() - daysAgoEnv * 24 * 60 * 60 * 1000);
-
-  const notificationFilter = {
-    userId,
-    active: true,
-    createdAt: {
-      $lte: daysAgo,
-    },
-  };
-
-  const notifications = await Notification.find(notificationFilter)
-    .populate("subscriptionId")
-    .sort({
-      createdAt: -1,
-    });
+  const notifications = await getPendingNotifications(userId, daysAgoEnv);
 
   // if no notifications are avaible, send back an empty array to stop further
   // processing

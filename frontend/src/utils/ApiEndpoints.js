@@ -62,6 +62,10 @@ export default class ApiEndpoints {
     return this.endpoints.dashboard;
   }
 
+  static get dashboardBootstrap() {
+    return `${this.dashboard}/bootstrap`;
+  }
+
   static get mostUsedSubscription() {
     return `${this.dashboard}/mostUsed`;
   }

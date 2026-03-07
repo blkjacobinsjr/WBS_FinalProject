@@ -5,6 +5,17 @@ export default function useDashboard() {
   const { startRequest } = useAuthRequest();
 
   /**
+   * Returns the dashboard bootstrap data for the current user
+   */
+  async function getDashboardBootstrap(abortController) {
+    return await startRequest(
+      ApiEndpoints.dashboardBootstrap,
+      "get",
+      abortController,
+    );
+  }
+
+  /**
    * Returns dashboard data for the current user
    */
   async function getDashboardData(abortController) {
@@ -45,6 +56,7 @@ export default function useDashboard() {
   }
 
   return {
+    getDashboardBootstrap,
     getDashboardData,
     getMostUsedSubscription,
     getPotentialMonthlySavings,

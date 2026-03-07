@@ -11,4 +11,4 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Ping Backend API
-        run: curl -s https://wbs-finalproject.onrender.com/api > /dev/null || true
+        run: curl -s https://wbs-finalproject.onrender.com/healthz > /dev/null || true

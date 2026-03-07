@@ -2,7 +2,7 @@ import cors from "cors";
 import dotenv from "dotenv";
 import express from "express";
 
-import db from "./data/_mongodb.js";
+import { connectToDatabase } from "./data/_mongodb.js";
 
 import apiRouter from "./routes/_apiRouter.js";
 import paddleWebhookRouter from "./routes/_paddleWebhookRouter.js";
@@ -29,6 +29,10 @@ server.use(
   }),
 );
 
+server.get("/healthz", (req, res) => {
+  res.status(200).json({ ok: true });
+});
+
 // ---- LOGGING ----
 // server.use((req, res, next) => {
 //   console.info("============================================");
@@ -52,34 +56,29 @@ server.use(errorHandler);
 // ---- RUN SERVER ----
 const port = process.env.PORT;
 
-// use simple retry strategy
-const maxRetries = 5;
-const retryWaitTime = 5000;
-let retries = 0;
+async function startServer() {
+  const maxRetries = 5;
 
-function startServer() {
-  server.listen(port, () => {
-    console.info(`Server running on port ${port}`);
-  });
-}
-
-function tryDbConnection() {
-  if (db.readyState === 1) {
-    clearInterval(retryInterval);
-
-    startServer();
-  } else {
-    if (retries <= maxRetries) {
-      console.warn(
-        `Retrying connection to MongoDB... ${retries}/${maxRetries}`,
+  for (let attempt = 1; attempt <= maxRetries; attempt += 1) {
+    try {
+      await connectToDatabase();
+      server.listen(port, () => {
+        console.info(`Server running on port ${port}`);
+      });
+      return;
+    } catch (error) {
+      console.error(
+        `MongoDB connection failed on attempt ${attempt}/${maxRetries}`,
+        error,
       );
-      retries++;
-    } else {
-      console.error("Max retries reached. Exiting...");
-      clearInterval(retryInterval);
-      process.exit(1);
+
+      if (attempt === maxRetries) {
+        process.exit(1);
+      }
+
+      await new Promise((resolve) => setTimeout(resolve, 1000 * attempt));
     }
   }
 }
 
-const retryInterval = setInterval(tryDbConnection, retryWaitTime);
+startServer();

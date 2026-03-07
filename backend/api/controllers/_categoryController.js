@@ -1,6 +1,11 @@
 import Category from "../models/_categorySchema.js";
 import Subscription from "../models/_subscriptionSchema.js";
-import { usedCategoryFullDataAggregate } from "../data/_aggregates.js";
+import {
+  buildUsedCategories,
+  getCachedCategories,
+  getHydratedSubscriptions,
+  invalidateCachedCategories,
+} from "../services/_dashboardBootstrapService.js";
 
 // Comprehensive keyword → category mapping (fast local fallback)
 const KEYWORD_MAP = {
@@ -46,7 +51,7 @@ function localCategorize(subName) {
 export async function getAllCategories(req, res, next) {
   console.info(new Date().toISOString(), "getAllCategories");
 
-  const categories = await Category.find({});
+  const categories = await getCachedCategories();
 
   res.status(200).json(categories);
 }
@@ -61,8 +66,8 @@ export async function getUsedCategories(req, res, next) {
     userId,
   );
 
-  const aggregate = usedCategoryFullDataAggregate(userId);
-  const usedCategories = await Subscription.aggregate(aggregate);
+  const subscriptions = await getHydratedSubscriptions(userId);
+  const usedCategories = buildUsedCategories(subscriptions);
 
   res.status(200).json(usedCategories);
 }
@@ -162,6 +167,8 @@ export async function seedCategories(req, res, next) {
       categorized++;
     }
   }
+
+  invalidateCachedCategories();
 
   return res.status(200).json({
     success: true,
