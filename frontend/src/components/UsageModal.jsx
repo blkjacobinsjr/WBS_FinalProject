@@ -168,9 +168,8 @@ function getCardAtmosphere(name = "", isDark = false) {
       card: `linear-gradient(160deg, hsl(220 32% 16%) 0%, hsl(${hue} 38% 18%) 58%, hsl(${shift} 46% 22%) 100%)`,
       glowA: `hsla(${hue} 88% 58% / 0.16)`,
       glowB: "hsla(211 95% 64% / 0.16)",
+      wash: `hsla(${shift} 70% 54% / 0.08)`,
       dot: "rgba(255,255,255,0.05)",
-      logoOpacity: 0.12,
-      logoBlend: "screen",
       monogram: "rgba(255,255,255,0.1)",
     };
   }
@@ -179,9 +178,8 @@ function getCardAtmosphere(name = "", isDark = false) {
     card: `linear-gradient(165deg, hsl(218 42% 95%) 0%, hsl(215 45% 92%) 42%, hsl(${hue} 48% 89%) 100%)`,
     glowA: `hsla(${hue} 90% 60% / 0.18)`,
     glowB: "hsla(209 100% 66% / 0.18)",
+    wash: `hsla(${shift} 74% 74% / 0.08)`,
     dot: "rgba(15,23,42,0.06)",
-    logoOpacity: 0.1,
-    logoBlend: "multiply",
     monogram: "rgba(15,23,42,0.08)",
   };
 }
@@ -311,9 +309,7 @@ function SwipeCard({
     : null;
   const atmosphere = getCardAtmosphere(sub?.name, c === T.dark);
   const monogram = getBrandMonogram(sub?.name);
-  const logoTilt = ((getBrandHue(sub?.name) % 9) - 4) * 3;
-  const logoAnchorRight = 16 + (getBrandHue(sub?.name) % 14);
-  const logoAnchorTop = 18 + (getBrandHue(sub?.name) % 10);
+  const glowShift = getBrandHue(sub?.name) % 18;
 
   // Stack visual: bottom cards are scaled down and shifted up
   const scale = 1 - stackIndex * 0.04;
@@ -358,7 +354,7 @@ function SwipeCard({
           style={{
             position: "absolute",
             inset: 0,
-            background: `radial-gradient(circle at 18% 18%, ${atmosphere.glowB} 0, transparent 34%), radial-gradient(circle at 82% 24%, ${atmosphere.glowA} 0, transparent 42%)`,
+            background: `radial-gradient(circle at ${18 + glowShift / 2}% ${16 + glowShift / 3}%, ${atmosphere.glowB} 0, transparent 32%), radial-gradient(circle at ${84 - glowShift / 2}% ${22 + glowShift / 4}%, ${atmosphere.glowA} 0, transparent 38%), linear-gradient(135deg, rgba(255,255,255,0.16) 0%, ${atmosphere.wash} 44%, transparent 76%)`,
             pointerEvents: "none",
           }}
         />
@@ -373,57 +369,6 @@ function SwipeCard({
             pointerEvents: "none",
           }}
         />
-        <div
-          style={{
-            position: "absolute",
-            right: `${logoAnchorRight}px`,
-            top: `${logoAnchorTop}px`,
-            width: 210,
-            height: 210,
-            borderRadius: 52,
-            background: "rgba(255,255,255,0.14)",
-            border: c.logoBorder,
-            boxShadow: "inset 0 1px 0 rgba(255,255,255,0.5)",
-            transform: `rotate(${logoTilt}deg)`,
-            pointerEvents: "none",
-            overflow: "hidden",
-          }}
-        >
-          {logoUrl ? (
-            <img
-              src={logoUrl}
-              alt=""
-              aria-hidden="true"
-              style={{
-                width: "128%",
-                height: "128%",
-                objectFit: "contain",
-                opacity: atmosphere.logoOpacity,
-                filter: "blur(0.5px) saturate(1.05)",
-                mixBlendMode: atmosphere.logoBlend,
-                transform: `translate(8%, 8%) scale(1.35) rotate(${-logoTilt}deg)`,
-              }}
-            />
-          ) : (
-            <div
-              aria-hidden="true"
-              style={{
-                position: "absolute",
-                inset: 0,
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                fontSize: 120,
-                fontWeight: 900,
-                letterSpacing: -8,
-                color: atmosphere.monogram,
-                transform: `rotate(${-logoTilt}deg)`,
-              }}
-            >
-              {monogram}
-            </div>
-          )}
-        </div>
 
         {/* LIKE stamp */}
         <div
