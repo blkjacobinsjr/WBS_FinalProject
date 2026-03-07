@@ -42,7 +42,8 @@ const STEP_BACKGROUNDS = [
   "from-[#24405f] via-[#395d86] to-[#5a88b1]", // 8
   "from-[#294565] via-[#3d6089] to-[#587fa8]", // 9
   "from-[#2f4c6d] via-[#446892] to-[#628bb3]", // 10
-  "from-[#deeffc] via-[#edf7ff] to-[#f6fbff]", // 11
+  "from-[#35587d] via-[#4d739e] to-[#6c98c4]", // 11
+  "from-[#deeffc] via-[#edf7ff] to-[#f6fbff]", // 12
 ];
 const EVIDENCE_STEPS = [
   {
@@ -324,7 +325,7 @@ export default function Onboarding() {
 
   const userEmail = user?.primaryEmailAddress?.emailAddress || "";
   const isAdminUser = isAdminEmail(userEmail);
-  const isDarkStep = step <= 8;
+  const isDarkStep = step <= 8 || step === 11;
 
   const monthlyExposure = subscriptionCount * averagePrice;
   const yearlyExposure = monthlyExposure * 12;
@@ -1422,6 +1423,7 @@ export default function Onboarding() {
             embedded
             redirectOnComplete={false}
             deferCompleteUntilReview
+            hideDataControls={true}
             onComplete={revealPayoffStep}
           />
         </div>

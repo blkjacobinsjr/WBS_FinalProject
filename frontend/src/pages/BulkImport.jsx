@@ -697,6 +697,7 @@ export default function BulkImport({
   onComplete,
   onBack,
   deferCompleteUntilReview = false,
+  hideDataControls = false,
 }) {
   const {
     subscriptions,
@@ -1239,9 +1240,8 @@ export default function BulkImport({
 
   return (
     <div
-      className={`flex w-full flex-col gap-4 pb-24 ${
-        embedded ? "max-w-none" : ""
-      }`}
+      className={`flex w-full flex-col gap-4 pb-24 ${embedded ? "max-w-none" : ""
+        }`}
     >
       {/* Back button when embedded */}
       {embedded && onBack && (
@@ -1274,27 +1274,29 @@ export default function BulkImport({
           decide keep or cancel.
         </p>
 
-        <div className={`mt-4 flex flex-wrap items-center gap-3 text-xs ${theme.subtitle}`}>
-          <label className={`flex items-center gap-2 rounded-full border px-3 py-2 ${theme.checkbox}`}>
-            <input
-              type="checkbox"
-              className={`h-4 w-4 ${theme.checkboxAccent}`}
-              checked={replaceExisting}
-              onChange={(event) => setReplaceExisting(event.target.checked)}
-            />
-            Replace existing on import
-          </label>
-          <span className={`text-xs ${theme.cardMeta}`}>
-            Wipes current subscriptions before adding new ones.
-          </span>
-          <LoadingButton
-            onClick={() => wipeAllSubscriptions()}
-            isLoading={wipeLoading}
-            className={`rounded-full border px-3 py-2 text-xs font-semibold ${theme.wipeBtn}`}
-          >
-            Wipe all subscriptions
-          </LoadingButton>
-        </div>
+        {!hideDataControls && (
+          <div className={`mt-4 flex flex-wrap items-center gap-3 text-xs ${theme.subtitle}`}>
+            <label className={`flex items-center gap-2 rounded-full border px-3 py-2 ${theme.checkbox}`}>
+              <input
+                type="checkbox"
+                className={`h-4 w-4 ${theme.checkboxAccent}`}
+                checked={replaceExisting}
+                onChange={(event) => setReplaceExisting(event.target.checked)}
+              />
+              Replace existing on import
+            </label>
+            <span className={`text-xs ${theme.cardMeta}`}>
+              Wipes current subscriptions before adding new ones.
+            </span>
+            <LoadingButton
+              onClick={() => wipeAllSubscriptions()}
+              isLoading={wipeLoading}
+              className={`rounded-full border px-3 py-2 text-xs font-semibold ${theme.wipeBtn}`}
+            >
+              Wipe all subscriptions
+            </LoadingButton>
+          </div>
+        )}
 
         <div
           className={`mt-4 rounded-xl border-2 border-dashed px-4 py-4 text-sm transition ${theme.dropzone}`}
