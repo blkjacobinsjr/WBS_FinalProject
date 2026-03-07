@@ -732,6 +732,9 @@ export default function BulkImport({
 
   const current = detected[currentIndex];
 
+  const showUpload = mode === "all" || (mode === "upload" && detected.length === 0);
+  const showReview = detected.length > 0 && (mode === "all" || mode === "review");
+
   const progress = useMemo(() => {
     if (detected.length === 0) return 0;
     return Math.min(100, Math.round((currentIndex / detected.length) * 100));
@@ -1267,120 +1270,122 @@ export default function BulkImport({
         </button>
       )}
 
-      <div className={`rounded-lg border p-4 ${theme.container}`}>
-        <h2 className={`text-lg font-semibold ${theme.title}`}>Bulk Import and Cancel</h2>
-        <p className={`text-sm ${theme.subtitle}`}>
-          Upload PDF, CSV, or Excel files. Subscriptions are auto added. Then
-          decide keep or cancel.
-        </p>
+      {showUpload && (
+        <div className={`rounded-lg border p-4 ${theme.container}`}>
+          <h2 className={`text-lg font-semibold ${theme.title}`}>Bulk Import and Cancel</h2>
+          <p className={`text-sm ${theme.subtitle}`}>
+            Upload PDF, CSV, or Excel files. Subscriptions are auto added. Then
+            decide keep or cancel.
+          </p>
 
-        {!hideDataControls && (
-          <div className={`mt-4 flex flex-wrap items-center gap-3 text-xs ${theme.subtitle}`}>
-            <label className={`flex items-center gap-2 rounded-full border px-3 py-2 ${theme.checkbox}`}>
-              <input
-                type="checkbox"
-                className={`h-4 w-4 ${theme.checkboxAccent}`}
-                checked={replaceExisting}
-                onChange={(event) => setReplaceExisting(event.target.checked)}
-              />
-              Replace existing on import
-            </label>
-            <span className={`text-xs ${theme.cardMeta}`}>
-              Wipes current subscriptions before adding new ones.
-            </span>
+          {!hideDataControls && (
+            <div className={`mt-4 flex flex-wrap items-center gap-3 text-xs ${theme.subtitle}`}>
+              <label className={`flex items-center gap-2 rounded-full border px-3 py-2 ${theme.checkbox}`}>
+                <input
+                  type="checkbox"
+                  className={`h-4 w-4 ${theme.checkboxAccent}`}
+                  checked={replaceExisting}
+                  onChange={(event) => setReplaceExisting(event.target.checked)}
+                />
+                Replace existing on import
+              </label>
+              <span className={`text-xs ${theme.cardMeta}`}>
+                Wipes current subscriptions before adding new ones.
+              </span>
+              <LoadingButton
+                onClick={() => wipeAllSubscriptions()}
+                isLoading={wipeLoading}
+                className={`rounded-full border px-3 py-2 text-xs font-semibold ${theme.wipeBtn}`}
+              >
+                Wipe all subscriptions
+              </LoadingButton>
+            </div>
+          )}
+
+          <div
+            className={`mt-4 rounded-xl border-2 border-dashed px-4 py-4 text-sm transition ${theme.dropzone}`}
+            onDragOver={(event) => {
+              event.preventDefault();
+              setDragActive(true);
+            }}
+            onDragLeave={() => setDragActive(false)}
+            onDrop={(event) => {
+              event.preventDefault();
+              setDragActive(false);
+              addFiles(event.dataTransfer.files);
+            }}
+          >
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+              <div>
+                <div className={`text-sm font-semibold ${theme.dropzoneText}`}>
+                  Drop files here or select
+                </div>
+                <div className={`text-xs ${theme.dropzoneSubtext}`}>
+                  PDF, CSV, XLSX, XLS
+                </div>
+              </div>
+              <label className={`inline-flex cursor-pointer items-center justify-center rounded-full border px-4 py-2 text-xs font-semibold ${embedded ? "border-white/30 bg-white/10 text-white" : "border-black/20 bg-white"}`}>
+                Choose files
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept=".pdf,.csv,.xlsx,.xls"
+                  multiple
+                  onChange={(event) => {
+                    addFiles(event.target.files);
+                  }}
+                  className="hidden"
+                />
+              </label>
+            </div>
+
+            {files.length > 0 && (
+              <div className={`mt-3 flex flex-col gap-1 text-xs ${theme.dropzoneSubtext}`}>
+                <div>
+                  Selected: {files.length} file{files.length > 1 ? "s" : ""}
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  {files.map((item) => (
+                    <span
+                      key={fileKey(item)}
+                      className={`rounded-full border px-3 py-1 ${theme.fileChip}`}
+                    >
+                      {item.name}
+                    </span>
+                  ))}
+                </div>
+                <button
+                  type="button"
+                  onClick={clearFiles}
+                  className={`mt-1 text-left text-xs font-semibold ${theme.clearBtn}`}
+                >
+                  Clear selection
+                </button>
+              </div>
+            )}
+          </div>
+
+          <div className="mt-4 flex flex-col gap-3 sm:flex-row sm:items-center">
             <LoadingButton
-              onClick={() => wipeAllSubscriptions()}
-              isLoading={wipeLoading}
-              className={`rounded-full border px-3 py-2 text-xs font-semibold ${theme.wipeBtn}`}
+              onClick={handleProcessFiles}
+              isLoading={stage === "parsing" || stage === "creating"}
+              disabled={!files.length || stage === "parsing" || stage === "creating"}
+              loadingText="Processing"
+              className={`rounded-lg px-4 py-2 text-sm font-semibold disabled:opacity-50 ${theme.processBtn}`}
             >
-              Wipe all subscriptions
+              Process files
             </LoadingButton>
           </div>
-        )}
 
-        <div
-          className={`mt-4 rounded-xl border-2 border-dashed px-4 py-4 text-sm transition ${theme.dropzone}`}
-          onDragOver={(event) => {
-            event.preventDefault();
-            setDragActive(true);
-          }}
-          onDragLeave={() => setDragActive(false)}
-          onDrop={(event) => {
-            event.preventDefault();
-            setDragActive(false);
-            addFiles(event.dataTransfer.files);
-          }}
-        >
-          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-            <div>
-              <div className={`text-sm font-semibold ${theme.dropzoneText}`}>
-                Drop files here or select
-              </div>
-              <div className={`text-xs ${theme.dropzoneSubtext}`}>
-                PDF, CSV, XLSX, XLS
-              </div>
-            </div>
-            <label className={`inline-flex cursor-pointer items-center justify-center rounded-full border px-4 py-2 text-xs font-semibold ${embedded ? "border-white/30 bg-white/10 text-white" : "border-black/20 bg-white"}`}>
-              Choose files
-              <input
-                ref={fileInputRef}
-                type="file"
-                accept=".pdf,.csv,.xlsx,.xls"
-                multiple
-                onChange={(event) => {
-                  addFiles(event.target.files);
-                }}
-                className="hidden"
-              />
-            </label>
-          </div>
-
-          {files.length > 0 && (
-            <div className={`mt-3 flex flex-col gap-1 text-xs ${theme.dropzoneSubtext}`}>
-              <div>
-                Selected: {files.length} file{files.length > 1 ? "s" : ""}
-              </div>
-              <div className="flex flex-wrap gap-2">
-                {files.map((item) => (
-                  <span
-                    key={fileKey(item)}
-                    className={`rounded-full border px-3 py-1 ${theme.fileChip}`}
-                  >
-                    {item.name}
-                  </span>
-                ))}
-              </div>
-              <button
-                type="button"
-                onClick={clearFiles}
-                className={`mt-1 text-left text-xs font-semibold ${theme.clearBtn}`}
-              >
-                Clear selection
-              </button>
+          {summary.created + summary.skipped > 0 && (
+            <div className={`mt-3 text-xs ${theme.summaryText}`}>
+              Created: {summary.created} | Skipped: {summary.skipped}
             </div>
           )}
         </div>
+      )}
 
-        <div className="mt-4 flex flex-col gap-3 sm:flex-row sm:items-center">
-          <LoadingButton
-            onClick={handleProcessFiles}
-            isLoading={stage === "parsing" || stage === "creating"}
-            disabled={!files.length || stage === "parsing" || stage === "creating"}
-            loadingText="Processing"
-            className={`rounded-lg px-4 py-2 text-sm font-semibold disabled:opacity-50 ${theme.processBtn}`}
-          >
-            Process files
-          </LoadingButton>
-        </div>
-
-        {summary.created + summary.skipped > 0 && (
-          <div className={`mt-3 text-xs ${theme.summaryText}`}>
-            Created: {summary.created} | Skipped: {summary.skipped}
-          </div>
-        )}
-      </div>
-
-      {detected.length > 0 && (
+      {showReview && (
         <div className={`rounded-lg border p-4 ${theme.container}`}>
           <div className={`flex items-center justify-between text-sm ${theme.subtitle}`}>
             <span>
