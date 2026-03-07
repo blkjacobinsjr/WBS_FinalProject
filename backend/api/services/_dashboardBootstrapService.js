@@ -112,7 +112,7 @@ export function buildDashboardData(subscriptions = []) {
   }, 0);
 
   const potentialMonthlySavings = subscriptions.reduce((total, subscription) => {
-    if (!subscription.isPotentialSaving) {
+    if (!hasValidScore(subscription)) {
       return total;
     }
 
@@ -156,7 +156,7 @@ export function buildUsedCategories(subscriptions = []) {
     currentCategory.subscriptionCount += 1;
     currentCategory.totalCost += monthlyPrice;
 
-    if (subscription.isPotentialSaving) {
+    if (hasValidScore(subscription)) {
       currentCategory.potentialSavings += monthlyPrice;
     }
 
