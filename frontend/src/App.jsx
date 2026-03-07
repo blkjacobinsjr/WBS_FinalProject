@@ -88,7 +88,9 @@ function ClerkRouteProvider() {
           element={
             <>
               <SignedIn>
-                <Onboarding />
+                <DataProvider>
+                  <Onboarding />
+                </DataProvider>
               </SignedIn>
               <SignedOut>
                 <Navigate to="/signup" />
