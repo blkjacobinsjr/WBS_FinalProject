@@ -1,30 +1,34 @@
 const TONE_STYLES = {
   slate: {
-    shell: "bg-white/80 border-black/5",
-    label: "text-black/45",
-    value: "text-black/85",
-    annotation: "text-black/55",
+    shell:
+      "bg-white/80 border-black/5 dark:border-white/10 dark:bg-[linear-gradient(165deg,rgba(31,41,55,0.82)_0%,rgba(15,23,42,0.92)_100%)]",
+    label: "text-black/45 dark:text-slate-200/62",
+    value: "text-black/85 dark:text-slate-50",
+    annotation: "text-black/55 dark:text-slate-200/78",
     fill: "from-slate-600 via-slate-700 to-slate-900",
   },
   sky: {
-    shell: "bg-sky-50/90 border-sky-100",
-    label: "text-sky-700/70",
-    value: "text-sky-950",
-    annotation: "text-sky-900/65",
+    shell:
+      "bg-sky-50/90 border-sky-100 dark:border-sky-400/12 dark:bg-[linear-gradient(165deg,rgba(20,39,71,0.84)_0%,rgba(15,23,42,0.94)_100%)]",
+    label: "text-sky-700/70 dark:text-sky-200/68",
+    value: "text-sky-950 dark:text-sky-50",
+    annotation: "text-sky-900/65 dark:text-sky-100/76",
     fill: "from-sky-400 via-cyan-400 to-blue-500",
   },
   emerald: {
-    shell: "bg-emerald-50/90 border-emerald-100",
-    label: "text-emerald-700/70",
-    value: "text-emerald-950",
-    annotation: "text-emerald-900/65",
+    shell:
+      "bg-emerald-50/90 border-emerald-100 dark:border-emerald-400/12 dark:bg-[linear-gradient(165deg,rgba(23,54,53,0.84)_0%,rgba(15,23,42,0.94)_100%)]",
+    label: "text-emerald-700/70 dark:text-emerald-200/70",
+    value: "text-emerald-950 dark:text-emerald-50",
+    annotation: "text-emerald-900/65 dark:text-emerald-100/76",
     fill: "from-emerald-400 via-teal-400 to-emerald-500",
   },
   rose: {
-    shell: "bg-rose-50/90 border-rose-100",
-    label: "text-rose-700/70",
-    value: "text-rose-950",
-    annotation: "text-rose-900/65",
+    shell:
+      "bg-rose-50/90 border-rose-100 dark:border-rose-400/12 dark:bg-[linear-gradient(165deg,rgba(65,31,54,0.82)_0%,rgba(31,24,47,0.94)_100%)]",
+    label: "text-rose-700/70 dark:text-rose-200/70",
+    value: "text-rose-950 dark:text-rose-50",
+    annotation: "text-rose-900/65 dark:text-rose-100/76",
     fill: "from-rose-400 via-orange-300 to-rose-500",
   },
 };
@@ -49,7 +53,7 @@ export default function VisualKpiTile({
           {label}
         </div>
         {icon ? (
-          <div className="grid h-10 w-10 place-items-center rounded-[18px] border border-white/70 bg-white/75 text-slate-700 shadow-[inset_0_1px_0_rgba(255,255,255,0.9),0_10px_20px_rgba(125,145,189,0.12)]">
+          <div className="grid h-10 w-10 place-items-center rounded-[18px] border border-white/70 bg-white/75 text-slate-700 shadow-[inset_0_1px_0_rgba(255,255,255,0.9),0_10px_20px_rgba(125,145,189,0.12)] dark:border-white/10 dark:bg-white/10 dark:text-white/85 dark:shadow-none">
             {icon}
           </div>
         ) : null}
@@ -57,7 +61,7 @@ export default function VisualKpiTile({
       <div className={`mt-3 text-2xl font-semibold tracking-[-0.04em] ${styles.value}`}>
         {value}
       </div>
-      <div className="mt-3 h-2 overflow-hidden rounded-full bg-black/5">
+      <div className="mt-3 h-2 overflow-hidden rounded-full bg-black/5 dark:bg-white/10">
         <div
           className={`h-full rounded-full bg-gradient-to-r ${styles.fill}`}
           style={{ width: `${clampedMeter}%` }}

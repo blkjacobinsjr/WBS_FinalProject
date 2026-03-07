@@ -83,7 +83,7 @@ export default function InsightsTab() {
       {enableControlHero && (
         <div className="px-1">
           <p
-            className="max-w-[15ch] text-[1.7rem] leading-[1.06] tracking-[-0.04em] text-slate-800/90"
+            className="max-w-[15ch] text-[1.7rem] leading-[1.06] tracking-[-0.04em] text-slate-800/90 dark:text-[#d8cca4]/88"
             style={{ fontFamily: "'Playfair Display', serif" }}
           >
             Keep what earns its place. Question the rest.
@@ -92,7 +92,7 @@ export default function InsightsTab() {
       )}
 
       {/* Usage Quiz Card (Original - Frequency-based) */}
-      <div className="rounded-[28px] border border-white/70 bg-[linear-gradient(160deg,rgba(239,248,255,0.92)_0%,rgba(246,252,250,0.9)_100%)] p-5 shadow-[0_18px_40px_rgba(125,145,189,0.1)] backdrop-blur-xl dark:from-blue-900/20 dark:via-cyan-900/20 dark:to-teal-900/20">
+      <div className="rounded-[28px] border border-white/70 bg-[linear-gradient(160deg,rgba(239,248,255,0.92)_0%,rgba(246,252,250,0.9)_100%)] p-5 shadow-[0_18px_40px_rgba(125,145,189,0.1)] backdrop-blur-xl dark:border-white/10 dark:bg-[linear-gradient(160deg,rgba(23,38,72,0.82)_0%,rgba(12,29,60,0.88)_100%)] dark:shadow-[0_24px_48px_rgba(7,10,24,0.24)]">
         <div className="flex items-start justify-between">
           <div>
             <p className="text-xs font-medium uppercase tracking-wider text-blue-800/60 dark:text-blue-200/60">
@@ -105,7 +105,7 @@ export default function InsightsTab() {
           <button
             onClick={() => eventEmitter.emit("openFrequencyQuiz")}
             disabled={totalCount === 0}
-            className="shrink-0 rounded-full bg-blue-900 px-4 py-2 text-xs font-medium text-white transition-all active:scale-95 disabled:opacity-50 dark:bg-blue-100 dark:text-blue-900"
+            className="shrink-0 rounded-full bg-blue-900 px-4 py-2 text-xs font-medium text-white transition-all active:scale-95 disabled:opacity-50 dark:border dark:border-blue-300/20 dark:bg-blue-400/10 dark:text-blue-100"
           >
             {unratedCount > 0 ? `Rate ${unratedCount}` : "Review"}
           </button>
@@ -129,7 +129,7 @@ export default function InsightsTab() {
       </div>
 
       {/* Joy Check Card (Ramit's Philosophy) */}
-      <div className="rounded-[28px] border border-white/70 bg-[linear-gradient(160deg,rgba(247,240,255,0.92)_0%,rgba(255,245,249,0.9)_100%)] p-5 shadow-[0_18px_40px_rgba(125,145,189,0.1)] backdrop-blur-xl dark:from-purple-900/20 dark:via-pink-900/20 dark:to-rose-900/20">
+      <div className="rounded-[28px] border border-white/70 bg-[linear-gradient(160deg,rgba(247,240,255,0.92)_0%,rgba(255,245,249,0.9)_100%)] p-5 shadow-[0_18px_40px_rgba(125,145,189,0.1)] backdrop-blur-xl dark:border-white/10 dark:bg-[linear-gradient(160deg,rgba(56,28,74,0.82)_0%,rgba(48,24,68,0.88)_100%)] dark:shadow-[0_24px_48px_rgba(7,10,24,0.24)]">
         <div className="flex items-start justify-between">
           <div>
             <p className="text-xs font-medium uppercase tracking-wider text-purple-800/60 dark:text-purple-200/60">
@@ -142,7 +142,7 @@ export default function InsightsTab() {
           <button
             onClick={() => eventEmitter.emit("openUsageQuiz")}
             disabled={totalCount === 0}
-            className="shrink-0 rounded-full bg-purple-900 px-4 py-2 text-xs font-medium text-white transition-all active:scale-95 disabled:opacity-50 dark:bg-purple-100 dark:text-purple-900"
+            className="shrink-0 rounded-full bg-purple-900 px-4 py-2 text-xs font-medium text-white transition-all active:scale-95 disabled:opacity-50 dark:border dark:border-purple-300/20 dark:bg-purple-400/10 dark:text-purple-100"
           >
             {unratedCount > 0 ? `Check ${unratedCount}` : "Review"}
           </button>
