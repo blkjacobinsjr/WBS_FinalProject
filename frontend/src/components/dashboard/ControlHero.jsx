@@ -40,14 +40,14 @@ const MODE_STYLES = {
 };
 
 const CHIP_POSITIONS = [
-  "left-0 top-4",
-  "right-0 top-8",
-  "left-4 bottom-3",
+  "left-[-2px] top-3",
+  "right-[-6px] top-[30px]",
+  "right-[2px] bottom-[10px]",
 ];
 
-function formatMetric(prefix, value) {
-  if (!value) return `${prefix}0`;
-  return `${prefix}${Math.round(value).toLocaleString()}`;
+function formatMoney(value) {
+  if (!value) return "€0";
+  return `€${Math.round(value).toLocaleString()}`;
 }
 
 function toVisualChips(model) {
@@ -83,27 +83,27 @@ function MascotStage({ activeMode, mascotSrc, chips }) {
   const modeStyle = MODE_STYLES[activeMode] || MODE_STYLES.recover;
 
   return (
-    <div className="relative h-[190px] w-[148px] shrink-0">
+    <div className="relative h-[184px] w-[148px] shrink-0">
       <div
-        className={`absolute left-1/2 top-5 h-24 w-24 -translate-x-1/2 rounded-full blur-3xl ${modeStyle.orbA}`}
+        className={`absolute left-1/2 top-6 z-0 h-20 w-20 -translate-x-1/2 rounded-full blur-3xl ${modeStyle.orbA}`}
       />
       <div
-        className={`absolute right-1 top-12 h-20 w-20 rounded-full blur-3xl ${modeStyle.orbB}`}
+        className={`absolute right-2 top-12 z-0 h-16 w-16 rounded-full blur-3xl ${modeStyle.orbB}`}
       />
       <div
-        className="absolute left-1/2 top-[66%] h-[46px] w-[104px] rounded-[24px] border border-white/65 bg-white/55 shadow-[0_24px_36px_rgba(134,156,196,0.18)] backdrop-blur-xl"
+        className="absolute left-1/2 top-[66%] z-[1] h-[42px] w-[96px] rounded-[24px] border border-white/65 bg-white/55 shadow-[0_24px_36px_rgba(134,156,196,0.18)] backdrop-blur-xl"
         style={{
           transform: "translateX(-50%) rotate(-14deg)",
         }}
       />
       <div
-        className={`absolute left-1/2 top-[32%] flex h-[118px] w-[118px] items-center justify-center rounded-[34px] border border-white/70 shadow-[0_24px_50px_rgba(122,145,189,0.22)] backdrop-blur-xl ${modeStyle.stage}`}
+        className={`absolute left-1/2 top-[34%] z-10 flex h-[108px] w-[108px] items-center justify-center rounded-[32px] border border-white/70 shadow-[0_24px_50px_rgba(122,145,189,0.22)] backdrop-blur-xl ${modeStyle.stage}`}
         style={{
           transform: "translateX(-50%) rotate(12deg)",
         }}
       >
         <div
-          className={`flex h-[102px] w-[102px] items-center justify-center rounded-[30px] border border-white/80 shadow-[inset_0_1px_0_rgba(255,255,255,0.9),0_14px_30px_rgba(119,138,179,0.18)] ${modeStyle.card}`}
+          className={`flex h-[92px] w-[92px] items-center justify-center rounded-[28px] border border-white/80 shadow-[inset_0_1px_0_rgba(255,255,255,0.9),0_14px_30px_rgba(119,138,179,0.18)] ${modeStyle.card}`}
           style={{
             transform: "rotate(-12deg)",
           }}
@@ -111,7 +111,7 @@ function MascotStage({ activeMode, mascotSrc, chips }) {
           <img
             src={mascotSrc}
             alt="Subzro mascot"
-            className="h-[82px] w-[82px] object-contain drop-shadow-[0_10px_18px_rgba(91,112,152,0.18)]"
+            className="h-[74px] w-[74px] object-contain drop-shadow-[0_10px_18px_rgba(91,112,152,0.18)]"
           />
         </div>
       </div>
@@ -119,18 +119,18 @@ function MascotStage({ activeMode, mascotSrc, chips }) {
       {chips.map((chip, index) => (
         <div
           key={chip.key}
-          className={`absolute ${CHIP_POSITIONS[index]} rounded-full border border-white/80 bg-white/78 px-2 py-2 shadow-[0_16px_34px_rgba(112,132,173,0.18)] backdrop-blur-xl`}
+          className={`absolute z-[4] ${CHIP_POSITIONS[index]} rounded-full border border-white/82 bg-white/78 px-2 py-1.5 shadow-[0_16px_34px_rgba(112,132,173,0.14)] backdrop-blur-xl`}
         >
           <div className="flex items-center gap-2">
-            <div className="grid h-8 w-8 place-items-center rounded-full bg-slate-950/5 text-slate-700 ring-1 ring-black/5">
+            <div className="grid h-6 w-6 place-items-center rounded-full bg-slate-950/5 text-slate-700 ring-1 ring-black/5">
               <SubscriptionLogo subscriptionName={chip.name} />
             </div>
             <div className="leading-none">
               <div className="text-[9px] font-semibold uppercase tracking-[0.18em] text-slate-400">
                 {chip.label}
               </div>
-              <div className="mt-1 text-[11px] font-semibold text-slate-800">
-                EUR {chip.value}
+              <div className="mt-1 text-[10px] font-semibold text-slate-800">
+                €{chip.value}
               </div>
             </div>
           </div>
@@ -169,7 +169,7 @@ export default function ControlHero({
           <div className="text-[11px] font-semibold uppercase tracking-[0.26em] text-slate-500/70">
             Dashboard home
           </div>
-          <h1 className="mt-2 max-w-[10ch] text-[2.45rem] font-semibold leading-[0.94] tracking-[-0.06em] text-slate-950">
+          <h1 className="mt-2 max-w-[10ch] text-[1.96rem] font-semibold leading-[0.95] tracking-[-0.06em] text-slate-950">
             {greeting}, {firstName}.
           </h1>
         </div>
@@ -209,19 +209,19 @@ export default function ControlHero({
 
           <div className="relative flex items-start justify-between gap-4">
             <div className="min-w-0 flex-1">
-              <div className="text-[11px] font-semibold uppercase tracking-[0.22em] text-slate-400">
-                {current.eyebrow}
-              </div>
-              <div className="mt-3 text-[3.1rem] font-semibold leading-[0.92] tracking-[-0.07em] text-slate-950">
-                {formatMetric(current.valuePrefix, current.value)}
-              </div>
-              <div className={`mt-2 text-sm font-semibold ${modeStyle.accent}`}>
-                {current.detail}
-              </div>
-              <div className="mt-4 max-w-[17ch] text-[1.02rem] leading-7 text-slate-700/88">
-                {current.takeaway}
-              </div>
+            <div className="text-[11px] font-semibold uppercase tracking-[0.22em] text-slate-400">
+              {current.eyebrow}
             </div>
+            <div className="mt-3 text-[3.1rem] font-semibold leading-[0.92] tracking-[-0.07em] text-slate-950">
+              {formatMoney(current.value)}
+            </div>
+            <div className={`mt-2 text-sm font-semibold ${modeStyle.accent}`}>
+              {current.detail}
+            </div>
+            <div className="mt-4 max-w-[16ch] text-[1rem] leading-7 text-slate-700/88">
+              {current.takeaway}
+            </div>
+          </div>
 
             <MascotStage activeMode={activeMode} mascotSrc={mascotSrc} chips={chips} />
           </div>
@@ -236,15 +236,15 @@ export default function ControlHero({
                   {current.action.helper}
                 </div>
               </div>
-              <button
-                type="button"
-                onClick={() => onPrimaryAction(current.action)}
-                className="inline-flex shrink-0 items-center gap-2 rounded-full bg-slate-950 px-4 py-3 text-sm font-semibold text-white shadow-[0_18px_32px_rgba(15,23,42,0.2)] transition-transform duration-150 active:scale-[0.98]"
-              >
-                {current.action.label}
-                <ArrowRightIcon className="h-4 w-4" />
-              </button>
-            </div>
+          <button
+            type="button"
+            onClick={() => onPrimaryAction(current.action)}
+            className="inline-flex shrink-0 items-center gap-1.5 rounded-full bg-slate-950 px-3 py-2 text-[14px] font-semibold text-white shadow-[0_18px_32px_rgba(15,23,42,0.2)] transition-transform duration-150 active:scale-[0.98]"
+          >
+            {current.action.label}
+            <ArrowRightIcon className="h-[14px] w-[14px]" />
+          </button>
+        </div>
 
             <div className="mt-4 border-t border-black/5 pt-4 text-sm leading-6 text-slate-600">
               <span style={{ fontFamily: "'Playfair Display', serif" }} className="italic text-slate-700/85">

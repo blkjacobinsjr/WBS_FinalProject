@@ -73,7 +73,7 @@ function getActionForMode({
     return {
       type: "alerts",
       label: `Review ${notificationsCount} alerts`,
-      helper: "There are unresolved subscription signals waiting.",
+      helper: "Unresolved subscription signals need review.",
     };
   }
 
@@ -202,19 +202,19 @@ export function createDashboardHeroModel({
       id: "spend",
       eyebrow: "Monthly spend",
       value: monthlySpend,
-      valuePrefix: "EUR ",
+      valuePrefix: "€",
       detail: yearlySpend
-        ? `Yearly exposure EUR ${yearlySpend.toLocaleString()}`
+        ? `Yearly exposure €${yearlySpend.toLocaleString()}`
         : "Track every recurring cost",
       helper: "See the quiet outflow clearly.",
       takeaway: biggestLeak?.name
-        ? `${biggestLeak.name} is the heaviest recurring drag.`
+        ? `${biggestLeak.name} is the main drag.`
         : "No dominant leak yet. Add more data.",
       supportingNote: monthlySpend
         ? spendGap > 0
-          ? `You are EUR ${Math.abs(spendGap).toLocaleString()} above the current reference line.`
+          ? `You are €${Math.abs(spendGap).toLocaleString()} above the current reference line.`
           : spendGap < 0
-          ? `You are EUR ${Math.abs(spendGap).toLocaleString()} below the current reference line.`
+          ? `You are €${Math.abs(spendGap).toLocaleString()} below the current reference line.`
           : "You are sitting exactly on the current reference line."
         : "The reference line becomes useful once spend data lands.",
       action: getActionForMode({
@@ -229,13 +229,13 @@ export function createDashboardHeroModel({
       id: "recover",
       eyebrow: "Potential to reclaim",
       value: recoverableMonthly,
-      valuePrefix: "EUR ",
+      valuePrefix: "€",
       detail: recoverableYearly
-        ? `EUR ${recoverableYearly.toLocaleString()} per year`
-        : "Find the cleanest immediate win",
+        ? `€${recoverableYearly.toLocaleString()} per year`
+        : "Find the cleanest leak",
       helper: "Start where the money comes back fastest.",
       takeaway: biggestLeak?.name
-        ? `${biggestLeak.name} is the clearest leak to question next.`
+        ? `${biggestLeak.name} is the leak.`
         : "Joy and usage checks reveal the strongest recoverable win.",
       supportingNote: recoverableMonthly
         ? `${recoverableRatio}% of current monthly spend looks recoverable right now.`
@@ -252,9 +252,9 @@ export function createDashboardHeroModel({
       id: "future",
       eyebrow: "Future value in 10 years",
       value: futureValue10y,
-      valuePrefix: "EUR ",
+      valuePrefix: "€",
       detail: recoverableMonthly
-        ? `From EUR ${Math.round(recoverableMonthly).toLocaleString()} redirected each month`
+        ? `From €${Math.round(recoverableMonthly).toLocaleString()} redirected each month`
         : "No savings stream yet",
       helper: "Keep the long horizon attached to the small cut.",
       takeaway: recoverableMonthly
