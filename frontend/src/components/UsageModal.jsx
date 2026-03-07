@@ -73,6 +73,119 @@ const T = {
   },
 };
 
+const BRAND_DOMAINS = {
+  openai: "openai.com",
+  anthropic: "anthropic.com",
+  google: "google.com",
+  youtube: "youtube.com",
+  apple: "apple.com",
+  amazon: "amazon.com",
+  netflix: "netflix.com",
+  spotify: "spotify.com",
+  disney: "disneyplus.com",
+  microsoft: "microsoft.com",
+  github: "github.com",
+  notion: "notion.so",
+  slack: "slack.com",
+  zoom: "zoom.us",
+  duolingo: "duolingo.com",
+  adobe: "adobe.com",
+  canva: "canva.com",
+  figma: "figma.com",
+  chatgpt: "openai.com",
+  claude: "anthropic.com",
+};
+
+const BRAND_HUES = {
+  netflix: 356,
+  spotify: 142,
+  disney: 200,
+  duolingo: 141,
+  amazon: 34,
+  prime: 217,
+  apple: 220,
+  youtube: 1,
+  github: 246,
+  notion: 230,
+  slack: 280,
+  zoom: 214,
+  adobe: 8,
+  figma: 18,
+  canva: 195,
+  openai: 157,
+  anthropic: 28,
+};
+
+function normalizeBrandName(name = "") {
+  return name.toLowerCase().replace(/[^\p{L}\p{N}\s]+/gu, " ").trim();
+}
+
+function getBrandDomain(name = "") {
+  const normalized = normalizeBrandName(name);
+  const tokens = normalized.split(/\s+/).filter(Boolean);
+  const knownToken = tokens.find((token) => BRAND_DOMAINS[token]);
+  if (knownToken) return BRAND_DOMAINS[knownToken];
+
+  if (normalized.includes(".")) {
+    return normalized.replace(/https?:\/\//, "").split("/")[0];
+  }
+
+  const joined = tokens.join("");
+  return joined ? `${joined}.com` : null;
+}
+
+function getBrandHue(name = "") {
+  const normalized = normalizeBrandName(name);
+  const tokens = normalized.split(/\s+/).filter(Boolean);
+  const knownToken = tokens.find((token) => BRAND_HUES[token]);
+  if (knownToken) return BRAND_HUES[knownToken];
+
+  let hash = 0;
+  for (let index = 0; index < normalized.length; index += 1) {
+    hash = normalized.charCodeAt(index) + ((hash << 5) - hash);
+  }
+
+  return 188 + (Math.abs(hash) % 92);
+}
+
+function getBrandMonogram(name = "") {
+  const tokens = normalizeBrandName(name).split(/\s+/).filter(Boolean);
+  if (!tokens.length) return "S";
+  if (tokens.length === 1) return tokens[0].slice(0, 1).toUpperCase();
+  return tokens
+    .slice(0, 2)
+    .map((token) => token[0])
+    .join("")
+    .toUpperCase();
+}
+
+function getCardAtmosphere(name = "", isDark = false) {
+  const hue = getBrandHue(name);
+  const shift = (hue + 28) % 360;
+
+  if (isDark) {
+    return {
+      card: `linear-gradient(160deg, hsl(220 32% 16%) 0%, hsl(${hue} 38% 18%) 58%, hsl(${shift} 46% 22%) 100%)`,
+      glowA: `hsla(${hue} 88% 58% / 0.16)`,
+      glowB: "hsla(211 95% 64% / 0.16)",
+      dot: "rgba(255,255,255,0.05)",
+      logoOpacity: 0.12,
+      logoBlend: "screen",
+      monogram: "rgba(255,255,255,0.1)",
+    };
+  }
+
+  return {
+    card: `linear-gradient(165deg, hsl(218 42% 95%) 0%, hsl(215 45% 92%) 42%, hsl(${hue} 48% 89%) 100%)`,
+    glowA: `hsla(${hue} 90% 60% / 0.18)`,
+    glowB: "hsla(209 100% 66% / 0.18)",
+    dot: "rgba(15,23,42,0.06)",
+    logoOpacity: 0.1,
+    logoBlend: "multiply",
+    monogram: "rgba(15,23,42,0.08)",
+  };
+}
+
 // ─── Tinder Card Component ────────────────────────────────────────────────────
 // Emil Kowalski's key insights applied:
 //  1. Only animate transform + opacity (GPU-composited layer, zero reflow)
@@ -192,9 +305,15 @@ function SwipeCard({
 
   const sub = notification?.subscriptionId;
   const LOGO_DEV_TOKEN = "pk_fg7nZQ2oQQK-tZnjxKWfPQ";
-  const logoUrl = sub?.name
-    ? `https://img.logo.dev/${encodeURIComponent(sub.name.toLowerCase().replace(/\s+/g, ""))}.com?token=${LOGO_DEV_TOKEN}&format=png&size=256&retina=true`
+  const logoDomain = getBrandDomain(sub?.name);
+  const logoUrl = logoDomain
+    ? `https://img.logo.dev/${logoDomain}?token=${LOGO_DEV_TOKEN}&format=png&size=256&retina=true`
     : null;
+  const atmosphere = getCardAtmosphere(sub?.name, c === T.dark);
+  const monogram = getBrandMonogram(sub?.name);
+  const logoTilt = ((getBrandHue(sub?.name) % 9) - 4) * 3;
+  const logoAnchorRight = 16 + (getBrandHue(sub?.name) % 14);
+  const logoAnchorTop = 18 + (getBrandHue(sub?.name) % 10);
 
   // Stack visual: bottom cards are scaled down and shifted up
   const scale = 1 - stackIndex * 0.04;
@@ -224,7 +343,7 @@ function SwipeCard({
           height: "100%",
           borderRadius: 20,
           overflow: "hidden",
-          background: c.card,
+          background: atmosphere.card,
           boxShadow: isTop ? c.cardShadowTop : c.cardShadow,
           position: "relative",
           display: "flex",
@@ -235,6 +354,77 @@ function SwipeCard({
           padding: "40px 32px",
         }}
       >
+        <div
+          style={{
+            position: "absolute",
+            inset: 0,
+            background: `radial-gradient(circle at 18% 18%, ${atmosphere.glowB} 0, transparent 34%), radial-gradient(circle at 82% 24%, ${atmosphere.glowA} 0, transparent 42%)`,
+            pointerEvents: "none",
+          }}
+        />
+        <div
+          style={{
+            position: "absolute",
+            inset: 0,
+            backgroundImage: `radial-gradient(${atmosphere.dot} 0.8px, transparent 0.8px)`,
+            backgroundSize: "12px 12px",
+            opacity: 0.28,
+            maskImage: "linear-gradient(180deg, rgba(0,0,0,0.38), transparent 72%)",
+            pointerEvents: "none",
+          }}
+        />
+        <div
+          style={{
+            position: "absolute",
+            right: `${logoAnchorRight}px`,
+            top: `${logoAnchorTop}px`,
+            width: 210,
+            height: 210,
+            borderRadius: 52,
+            background: "rgba(255,255,255,0.14)",
+            border: c.logoBorder,
+            boxShadow: "inset 0 1px 0 rgba(255,255,255,0.5)",
+            transform: `rotate(${logoTilt}deg)`,
+            pointerEvents: "none",
+            overflow: "hidden",
+          }}
+        >
+          {logoUrl ? (
+            <img
+              src={logoUrl}
+              alt=""
+              aria-hidden="true"
+              style={{
+                width: "128%",
+                height: "128%",
+                objectFit: "contain",
+                opacity: atmosphere.logoOpacity,
+                filter: "blur(0.5px) saturate(1.05)",
+                mixBlendMode: atmosphere.logoBlend,
+                transform: `translate(8%, 8%) scale(1.35) rotate(${-logoTilt}deg)`,
+              }}
+            />
+          ) : (
+            <div
+              aria-hidden="true"
+              style={{
+                position: "absolute",
+                inset: 0,
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                fontSize: 120,
+                fontWeight: 900,
+                letterSpacing: -8,
+                color: atmosphere.monogram,
+                transform: `rotate(${-logoTilt}deg)`,
+              }}
+            >
+              {monogram}
+            </div>
+          )}
+        </div>
+
         {/* LIKE stamp */}
         <div
           data-stamp="like"
@@ -300,16 +490,21 @@ function SwipeCard({
               src={logoUrl}
               alt={sub?.name}
               style={{ width: 64, height: 64, objectFit: "contain", borderRadius: 12 }}
-              onError={(e) => { e.target.style.display = "none"; e.target.nextSibling.style.display = "flex"; }}
+              onError={(event) => {
+                event.target.style.display = "none";
+                event.target.nextSibling.style.display = "flex";
+              }}
             />
           ) : null}
           <div style={{
             display: logoUrl ? "none" : "flex",
             alignItems: "center",
             justifyContent: "center",
-            fontSize: 40,
+            fontSize: 28,
+            fontWeight: 800,
+            color: c.textSub,
           }}>
-            ✨
+            {monogram}
           </div>
         </div>
 

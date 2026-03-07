@@ -1,6 +1,7 @@
-import { useMemo, useCallback, useEffect, useRef } from "react";
+import { useMemo, useCallback, useEffect, useRef, useState } from "react";
 import { useUser } from "@clerk/clerk-react";
 import { useDataContext } from "../contexts/dataContext";
+import ControlHero from "../components/dashboard/ControlHero";
 import FinancialResetCard from "../components/FinancialResetCard";
 import Notifications from "../components/Notifications";
 import SubscriptionListCard from "../components/SubscriptionListCard";
@@ -8,6 +9,10 @@ import HighestSpendOrbit from "../components/charts/HighestSpendOrbit";
 import Piechartwithneedle from "../components/charts/Piechartwithneedle";
 import eventEmitter from "../utils/EventEmitter";
 import useAppHaptics from "../hooks/useAppHaptics";
+import {
+  createDashboardHeroModel,
+  getInitialControlHeroMode,
+} from "../utils/dashboardHeroModel";
 
 // Daily rotating insights - FOMO Punch + Variable Rewards
 const dailyInsights = [
@@ -35,12 +40,16 @@ function getGreeting() {
 export default function HomeTab() {
   const haptics = useAppHaptics();
   const { user } = useUser();
-  const { subscriptions, dashboardData, notifications, usedCategories } = useDataContext();
+  const { subscriptions, dashboardData, notifications } = useDataContext();
+  const enableControlHero = import.meta.env.VITE_ENABLE_CONTROL_HERO !== "0";
   const animationCueRef = useRef({
     hero: false,
     orbit: false,
     meter: false,
   });
+  const [activeHeroMode, setActiveHeroMode] = useState(() =>
+    getInitialControlHeroMode(window.location.search),
+  );
 
   const greeting = useMemo(() => getGreeting(), []);
   const firstName = user?.firstName || "there";
@@ -52,6 +61,16 @@ export default function HomeTab() {
   const yearlySpend = useMemo(
     () => (dashboardData?.totalCostPerMonth || 0) * 12,
     [dashboardData?.totalCostPerMonth]
+  );
+  const heroModel = useMemo(
+    () =>
+      createDashboardHeroModel({
+        subscriptions: subscriptions || [],
+        dashboardData: dashboardData || {},
+        notifications: notifications || [],
+        activeMode: activeHeroMode,
+      }),
+    [activeHeroMode, dashboardData, notifications, subscriptions],
   );
 
   const handleSubscriptionClick = useCallback((subscription) => {
@@ -71,17 +90,50 @@ export default function HomeTab() {
     eventEmitter.emit("switchTab", "subscriptions");
   }, [haptics]);
 
-  const pieData = useMemo(() =>
-    usedCategories?.length > 0 && subscriptions?.length > 0
-      ? usedCategories.map((category) => ({
-        name: category.name,
-        value: category.totalCost,
-        subscriptions: subscriptions.filter(
-          (s) => s.category?._id === category._id
-        ),
-      }))
-      : [],
-    [usedCategories, subscriptions]
+  const handleInsightsClick = useCallback(() => {
+    haptics.switchTab();
+    eventEmitter.emit("switchTab", "insights");
+  }, [haptics]);
+
+  const handleAddSubscriptionClick = useCallback(() => {
+    haptics.confirm();
+    eventEmitter.emit("openSubscriptionForm", {}, "add");
+  }, [haptics]);
+
+  const handleHeroAction = useCallback(
+    (action) => {
+      switch (action?.type) {
+        case "add":
+          handleAddSubscriptionClick();
+          return;
+        case "frequency":
+          haptics.confirm();
+          eventEmitter.emit("openFrequencyQuiz");
+          return;
+        case "joy":
+          haptics.confirm();
+          eventEmitter.emit("openUsageQuiz");
+          return;
+        case "alerts":
+          handleAlertsClick();
+          return;
+        case "insights":
+          handleInsightsClick();
+          return;
+        case "subscriptions":
+          handleSeeAllClick();
+          return;
+        default:
+          handleSeeAllClick();
+      }
+    },
+    [
+      handleAddSubscriptionClick,
+      handleAlertsClick,
+      handleInsightsClick,
+      handleSeeAllClick,
+      haptics,
+    ],
   );
 
   useEffect(() => {
@@ -128,28 +180,50 @@ export default function HomeTab() {
 
   return (
     <div className="flex flex-col gap-4 pb-24">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <h1 className="text-xl font-semibold text-black/80 dark:text-white/80">
-          {greeting}, {firstName}
-        </h1>
-        <Notifications />
-      </div>
+      {enableControlHero ? (
+        <>
+          <ControlHero
+            greeting={greeting}
+            firstName={firstName}
+            model={heroModel}
+            activeMode={activeHeroMode}
+            onModeChange={setActiveHeroMode}
+            onPrimaryAction={handleHeroAction}
+            headerAccessory={<Notifications />}
+          />
+          {yearlySpend > 0 && (
+            <div className="rounded-[26px] border border-white/70 bg-white/52 px-4 py-3 text-sm text-slate-600 shadow-[0_18px_38px_rgba(125,145,189,0.1)] backdrop-blur-xl dark:border-white/10 dark:bg-white/10 dark:text-white/55">
+              <span style={{ fontFamily: "'Playfair Display', serif" }} className="mr-2 italic text-slate-700/85">
+                Today:
+              </span>
+              {getDailyInsight(yearlySpend)}
+            </div>
+          )}
+        </>
+      ) : (
+        <>
+          <div className="flex items-center justify-between">
+            <h1 className="text-xl font-semibold text-black/80 dark:text-white/80">
+              {greeting}, {firstName}
+            </h1>
+            <Notifications />
+          </div>
 
-      {/* Hero Stat Card */}
-      <div className="rounded-2xl bg-white/40 p-5 backdrop-blur-sm transition-all duration-150 ease-out hover:bg-white/60 dark:bg-white/10 dark:hover:bg-white/15">
-        <p className="text-xs font-medium uppercase tracking-wider text-black/50 dark:text-white/50">
-          Total Monthly Spend
-        </p>
-        <p className="mt-1 bg-gradient-to-b from-black/60 to-black bg-clip-text text-3xl font-bold text-transparent dark:from-white dark:to-white/60">
-          €{dashboardData?.totalCostPerMonth?.toFixed(2) || "0.00"}
-        </p>
-        {yearlySpend > 0 && (
-          <p className="mt-2 text-xs text-black/60 dark:text-white/60">
-            {getDailyInsight(yearlySpend)}
-          </p>
-        )}
-      </div>
+          <div className="rounded-2xl bg-white/40 p-5 backdrop-blur-sm transition-all duration-150 ease-out hover:bg-white/60 dark:bg-white/10 dark:hover:bg-white/15">
+            <p className="text-xs font-medium uppercase tracking-wider text-black/50 dark:text-white/50">
+              Total Monthly Spend
+            </p>
+            <p className="mt-1 bg-gradient-to-b from-black/60 to-black bg-clip-text text-3xl font-bold text-transparent dark:from-white dark:to-white/60">
+              €{dashboardData?.totalCostPerMonth?.toFixed(2) || "0.00"}
+            </p>
+            {yearlySpend > 0 && (
+              <p className="mt-2 text-xs text-black/60 dark:text-white/60">
+                {getDailyInsight(yearlySpend)}
+              </p>
+            )}
+          </div>
+        </>
+      )}
 
       {/* Quick Stats Row */}
       <div className="grid grid-cols-3 gap-2" role="group" aria-label="Quick statistics">
@@ -202,7 +276,7 @@ export default function HomeTab() {
               Spend-O-Meter
             </p>
             <p className="text-center text-[9px] sm:text-xs text-black/40 dark:text-white/40 mt-0.5">
-              vs Average (€219)
+              Reference line (€219)
             </p>
             <div className="mt-2 w-full h-[150px] sm:h-[180px] flex-grow flex items-center justify-center">
               <Piechartwithneedle

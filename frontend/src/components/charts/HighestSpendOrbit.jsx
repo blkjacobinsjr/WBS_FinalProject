@@ -1,4 +1,5 @@
 import React from 'react';
+import SubscriptionLogo from "../SubscriptionLogos";
 
 function getCategoryColor(index) {
     const colors = [
@@ -9,37 +10,6 @@ function getCategoryColor(index) {
         "from-emerald-400 to-teal-500"
     ];
     return colors[index % colors.length];
-}
-
-function getDomainFromName(name) {
-    if (!name) return 'example.com';
-    const domainMap = {
-        "netflix": "netflix.com",
-        "spotify": "spotify.com",
-        "amazon": "amazon.com",
-        "hulu": "hulu.com",
-        "disney": "disneyplus.com",
-        "apple": "apple.com",
-        "youtube": "youtube.com",
-        "chatgpt": "openai.com",
-        "claude": "anthropic.com",
-        "gym": "planetfitness.com",
-        "hbo": "max.com",
-        "strava": "strava.com",
-        "duolingo": "duolingo.com",
-        "notion": "notion.so",
-        "github": "github.com",
-        "xbox": "xbox.com",
-        "playstation": "playstation.com",
-        "discord": "discord.com",
-        "steam": "steampowered.com"
-    };
-
-    const lowercaseName = name.toLowerCase();
-    for (const [key, domain] of Object.entries(domainMap)) {
-        if (lowercaseName.includes(key)) return domain;
-    }
-    return lowercaseName.replace(/[^a-z0-9]/g, '') + '.com';
 }
 
 export default function HighestSpendOrbit({ data }) {
@@ -63,8 +33,8 @@ export default function HighestSpendOrbit({ data }) {
 
                     // Condense orbits slightly. Hide outer ones on mobile to prevent clipping
                     const isOuter = i >= 5;
-                    const distanceStep = 15;
-                    const distance = 45 + (i * distanceStep); // Orbit distance mapping
+                    const distanceStep = 13;
+                    const distance = 40 + (i * distanceStep);
 
                     // Exaggerate biggest cost to be significantly bigger
                     const sizeClass = i === 0
@@ -75,8 +45,6 @@ export default function HighestSpendOrbit({ data }) {
                     const duration = 40 + (i * 20);
                     const delay = -(i * 15);
 
-                    const domain = getDomainFromName(category.name);
-                    const logoUrl = `https://unavatar.io/${domain}?fallback=false`;
                     const gradient = getCategoryColor(i);
 
                     return (
@@ -98,17 +66,9 @@ export default function HighestSpendOrbit({ data }) {
                                 }}
                                 title={`${category.name}: €${category.value.toFixed(2)}`}
                             >
-                                <span className="text-white font-bold absolute inset-0 flex items-center justify-center text-xs sm:text-sm z-0 drop-shadow">
-                                    {category.name.charAt(0).toUpperCase()}
-                                </span>
-                                <img
-                                    src={logoUrl}
-                                    alt={category.name}
-                                    onError={(e) => {
-                                        e.target.style.display = 'none';
-                                    }}
-                                    className="w-full h-full object-cover rounded-full p-0.5 z-10 bg-white"
-                                />
+                                <div className="flex h-full w-full items-center justify-center rounded-full bg-white p-1.5 text-black">
+                                    <SubscriptionLogo subscriptionName={category.name} />
+                                </div>
                             </div>
                         </div>
                     );

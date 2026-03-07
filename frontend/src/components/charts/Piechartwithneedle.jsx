@@ -61,9 +61,9 @@ const needle = (value, data, cx, cy, iR, oR, color) => {
 const CustomTooltip = ({ active, payload, baseValue, userSpend }) => {
   function getLabel() {
     const name = payload[0].name;
-    if (name === "Average") {
+    if (name === "Reference") {
       return baseValue;
-    } else if (name === "Above Average") {
+    } else if (name === "Elevated") {
       return baseValue + payload[0].value;
     } else {
       return baseValue + 2 * payload[0].value;
@@ -76,7 +76,7 @@ const CustomTooltip = ({ active, payload, baseValue, userSpend }) => {
         <div className="grid grid-cols-[max-content_1fr] gap-2">
           <div className="text-gray-500">Your Current Spending:</div>
           <div>EUR {userSpend.toFixed(2)}</div>
-          <div className="text-gray-500">Global {payload[0].name} Cost:</div>
+          <div className="text-gray-500">Subzro {payload[0].name} Line:</div>
           <div>EUR {getLabel()}</div>
         </div>
       </div>
@@ -126,13 +126,13 @@ export default function PieChartWithNeedle({ maxFirstSegment, needleValue }) {
   // IMPORTANT: If the name's here are changed, they also need to be changed in
   // the CustomTooltip above!
   const data = [
-    { name: "Average", value: maxFirstSegment },
+    { name: "Reference", value: maxFirstSegment },
     {
-      name: "Above Average",
+      name: "Elevated",
       value: Math.floor(maxFirstSegment / 2),
     },
     {
-      name: "High",
+      name: "Heavy",
       value: Math.floor(maxFirstSegment / 2),
     },
   ];

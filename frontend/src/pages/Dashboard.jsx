@@ -404,6 +404,35 @@ function Dashboard() {
   }
 
   // Main return block for the Dashboard component
+  const lightGradientByTab = {
+    home: {
+      start: "rgb(239, 247, 255)",
+      end: "rgb(240, 236, 248)",
+      c1: "158, 198, 255",
+      c2: "246, 186, 219",
+      c3: "165, 222, 255",
+      c4: "211, 190, 255",
+      c5: "255, 223, 196",
+    },
+    insights: {
+      start: "rgb(242, 247, 255)",
+      end: "rgb(245, 236, 247)",
+      c1: "160, 202, 255",
+      c2: "243, 190, 232",
+      c3: "174, 221, 255",
+      c4: "214, 196, 255",
+      c5: "255, 230, 203",
+    },
+    default: {
+      start: "rgb(234, 241, 252)",
+      end: "rgb(238, 235, 246)",
+      c1: "165, 192, 255",
+      c2: "236, 190, 220",
+      c3: "170, 218, 255",
+      c4: "206, 188, 250",
+      c5: "250, 226, 204",
+    },
+  };
   const gradientColors = isDark
     ? {
         start: "rgb(15, 23, 42)",
@@ -414,15 +443,7 @@ function Dashboard() {
         c4: "109, 40, 217",
         c5: "99, 102, 241",
       }
-    : {
-        start: "rgb(233, 213, 255)",
-        end: "rgb(191, 219, 254)",
-        c1: "168, 85, 247",
-        c2: "236, 72, 153",
-        c3: "96, 165, 250",
-        c4: "192, 132, 252",
-        c5: "244, 114, 182",
-      };
+    : lightGradientByTab[activeTab] || lightGradientByTab.default;
 
   return (
     <BackgroundGradientAnimation
@@ -445,7 +466,7 @@ function Dashboard() {
         {!loading && !error && checkDataLoadingSuccessful() && (
           <div className="mx-auto flex min-h-screen max-w-lg flex-col">
             {/* Header */}
-            <header className="sticky top-0 z-40 border-b border-black/10 bg-white/60 px-4 py-3 backdrop-blur-xl dark:border-white/10 dark:bg-black/60">
+            <header className="sticky top-0 z-40 border-b border-white/40 bg-white/36 px-4 py-3 shadow-[0_10px_30px_rgba(125,145,189,0.08)] backdrop-blur-2xl dark:border-white/10 dark:bg-black/60">
               <div className="flex items-center justify-between">
                 <Link to="/dashboard" className="flex items-center gap-2">
                   <img
@@ -461,7 +482,7 @@ function Dashboard() {
             </header>
 
             {/* Main Content */}
-            <main className="flex-1 overflow-y-auto px-4 py-4">
+            <main className="flex-1 overflow-y-auto px-4 pt-2 pb-5">
               {renderTabContent()}
             </main>
 

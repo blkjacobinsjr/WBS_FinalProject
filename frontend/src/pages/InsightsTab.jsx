@@ -1,5 +1,9 @@
 import { useMemo } from "react";
+import { BanknotesIcon } from "@heroicons/react/24/solid";
 import { useDataContext } from "../contexts/dataContext";
+import InsightDecisionMatrix from "../components/dashboard/InsightDecisionMatrix";
+import SubscriptionLogo from "../components/SubscriptionLogos";
+import VisualKpiTile from "../components/dashboard/VisualKpiTile";
 import UsageRadarChart from "../components/charts/UsageRadarChart";
 import HighestSpendOrbit from "../components/charts/HighestSpendOrbit";
 import CategoryPieChart from "../components/charts/CategoryPieChart";
@@ -9,6 +13,7 @@ import eventEmitter from "../utils/EventEmitter";
 
 export default function InsightsTab() {
   const { subscriptions, usedCategories, dashboardData } = useDataContext();
+  const enableControlHero = import.meta.env.VITE_ENABLE_CONTROL_HERO !== "0";
 
   // Count subscriptions that haven't been rated yet
   const unratedCount =
@@ -43,19 +48,26 @@ export default function InsightsTab() {
   if (leastExpensiveCategory?.totalCost === Infinity)
     leastExpensiveCategory.totalCost = 0;
 
-  // Memoize pie chart data
-  const pieData = useMemo(() =>
-    usedCategories?.length > 0 && subscriptions?.length > 0
-      ? usedCategories.map((category) => ({
-        name: category.name,
-        value: category.totalCost,
-        subscriptions: subscriptions.filter(
-          (s) => s.category?._id === category._id
-        ),
-      }))
-      : [],
-    [usedCategories, subscriptions]
-  );
+  const totalMonthlySpend = dashboardData?.totalCostPerMonth || 0;
+  const savingsValue = dashboardData?.potentialMonthlySavings || 0;
+  const biggestLeak = dashboardData?.barelyUsedMostExpensive || null;
+  const savingsMeter =
+    totalMonthlySpend > 0
+      ? Math.min(100, Math.round((savingsValue / totalMonthlySpend) * 100))
+      : 0;
+  const biggestLeakMeter =
+    totalMonthlySpend > 0 && biggestLeak?.monthlyPrice
+      ? Math.min(
+          100,
+          Math.round((biggestLeak.monthlyPrice / totalMonthlySpend) * 100),
+        )
+      : 0;
+  const mostUsedMeter = mostUsed?.score
+    ? Math.min(100, Math.round((mostUsed.score / 5) * 100))
+    : 0;
+  const leastUsedMeter = leastUsed?.score
+    ? Math.min(100, Math.round((leastUsed.score / 5) * 100))
+    : 0;
 
   // Memoize least used subscriptions for recommendations
   const leastUsedSubs = useMemo(() =>
@@ -68,15 +80,26 @@ export default function InsightsTab() {
 
   return (
     <div className="flex flex-col gap-4 pb-24">
+      {enableControlHero && (
+        <div className="px-1">
+          <p
+            className="max-w-[15ch] text-[1.7rem] leading-[1.06] tracking-[-0.04em] text-slate-800/90"
+            style={{ fontFamily: "'Playfair Display', serif" }}
+          >
+            Keep what earns its place. Question the rest.
+          </p>
+        </div>
+      )}
+
       {/* Usage Quiz Card (Original - Frequency-based) */}
-      <div className="rounded-2xl bg-gradient-to-br from-blue-50 via-cyan-50 to-teal-50 p-5 dark:from-blue-900/20 dark:via-cyan-900/20 dark:to-teal-900/20">
+      <div className="rounded-[28px] border border-white/70 bg-[linear-gradient(160deg,rgba(239,248,255,0.92)_0%,rgba(246,252,250,0.9)_100%)] p-5 shadow-[0_18px_40px_rgba(125,145,189,0.1)] backdrop-blur-xl dark:from-blue-900/20 dark:via-cyan-900/20 dark:to-teal-900/20">
         <div className="flex items-start justify-between">
           <div>
             <p className="text-xs font-medium uppercase tracking-wider text-blue-800/60 dark:text-blue-200/60">
               Usage Quiz
             </p>
             <p className="mt-1 text-sm text-blue-900/80 dark:text-blue-100/80">
-              Rate how often you use each subscription
+              How often it earns its place in your stack
             </p>
           </div>
           <button
@@ -106,14 +129,14 @@ export default function InsightsTab() {
       </div>
 
       {/* Joy Check Card (Ramit's Philosophy) */}
-      <div className="rounded-2xl bg-gradient-to-br from-purple-50 via-pink-50 to-rose-50 p-5 dark:from-purple-900/20 dark:via-pink-900/20 dark:to-rose-900/20">
+      <div className="rounded-[28px] border border-white/70 bg-[linear-gradient(160deg,rgba(247,240,255,0.92)_0%,rgba(255,245,249,0.9)_100%)] p-5 shadow-[0_18px_40px_rgba(125,145,189,0.1)] backdrop-blur-xl dark:from-purple-900/20 dark:via-pink-900/20 dark:to-rose-900/20">
         <div className="flex items-start justify-between">
           <div>
             <p className="text-xs font-medium uppercase tracking-wider text-purple-800/60 dark:text-purple-200/60">
               Joy Check
             </p>
             <p className="mt-1 text-sm text-purple-900/80 dark:text-purple-100/80">
-              Does this bring you joy? Cut ruthlessly what doesn't.
+              How much you value it when you do use it
             </p>
           </div>
           <button
@@ -141,6 +164,74 @@ export default function InsightsTab() {
           </div>
         )}
       </div>
+
+      {enableControlHero && (
+        <>
+          <div className="grid grid-cols-2 gap-3">
+            <VisualKpiTile
+              label="Savings"
+              value={`€${savingsValue.toFixed(0)}`}
+              annotation={
+                savingsValue > 0
+                  ? `${savingsMeter}% of current monthly spend looks recoverable.`
+                  : "Finish reviews to reveal recoverable savings."
+              }
+              tone="emerald"
+              meter={savingsMeter}
+              icon={<BanknotesIcon className="h-5 w-5" />}
+            />
+            <VisualKpiTile
+              label="Biggest leak"
+              value={biggestLeak?.name || "No leak yet"}
+              annotation={
+                biggestLeak?.monthlyPrice
+                  ? `€${biggestLeak.monthlyPrice.toFixed(2)} / month is the cleanest challenge target.`
+                  : "The leak signal strengthens after more scoring."
+              }
+              tone="rose"
+              meter={biggestLeakMeter}
+              icon={<SubscriptionLogo subscriptionName={biggestLeak?.name || "Subscription"} />}
+            />
+            <VisualKpiTile
+              label="Most used"
+              value={dashboardData?.mostUsed?.name || "No leader yet"}
+              annotation={
+                mostUsed?.score
+                  ? `Score ${mostUsed.score.toFixed(1)}. This is currently earning its place.`
+                  : "The strongest keep signal appears after scoring."
+              }
+              tone="sky"
+              meter={mostUsedMeter}
+              icon={
+                <SubscriptionLogo
+                  subscriptionName={dashboardData?.mostUsed?.name || "Subscription"}
+                />
+              }
+            />
+            <VisualKpiTile
+              label="Least used"
+              value={dashboardData?.leastUsed?.name || "No laggard yet"}
+              annotation={
+                leastUsed?.score
+                  ? `Score ${leastUsed.score.toFixed(1)}. Watch this before renewal.`
+                  : "A low-score laggard shows up once reviews begin."
+              }
+              tone="slate"
+              meter={leastUsedMeter}
+              icon={
+                <SubscriptionLogo
+                  subscriptionName={dashboardData?.leastUsed?.name || "Subscription"}
+                />
+              }
+            />
+          </div>
+
+          <InsightDecisionMatrix
+            subscriptions={subscriptions}
+            highlightId={dashboardData?.barelyUsedMostExpensive?._id}
+          />
+        </>
+      )}
 
       {/* Wealth Builder Card */}
       <WealthBuilderCard />
@@ -310,7 +401,7 @@ export default function InsightsTab() {
             Spend-O-Meter
           </p>
           <p className="text-center text-xs text-black/40 dark:text-white/40">
-            vs. Average Monthly Spend (€219)
+            Reference line (€219)
           </p>
           <div className="mt-4 h-[250px] w-full">
             <Piechartwithneedle
