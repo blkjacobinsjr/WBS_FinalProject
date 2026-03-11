@@ -37,10 +37,10 @@ export default function HeroModeSwitcher({ activeMode, onModeChange }) {
             key={mode}
             type="button"
             onClick={() => onModeChange(mode)}
-            className={`inline-flex items-center gap-1.5 rounded-full px-3.5 py-2 text-xs font-semibold transition-all duration-200 ${
+            className={`btn-press tap-target-44 inline-flex items-center gap-1.5 rounded-full px-3.5 py-2 text-xs font-semibold ${
               isActive
                 ? meta.active
-                : "bg-transparent text-slate-500 hover:bg-white/70 hover:text-slate-800 dark:text-white/46 dark:hover:bg-white/10 dark:hover:text-white/82"
+                : "interactive-hover-bg interactive-hover-color bg-transparent text-slate-500 [--hover-bg:rgba(255,255,255,0.7)] [--hover-color:rgba(30,41,59,1)] dark:text-white/46 dark:[--hover-bg:rgba(255,255,255,0.1)] dark:[--hover-color:rgba(255,255,255,0.82)]"
             }`}
           >
             <Icon className="h-3.5 w-3.5" />

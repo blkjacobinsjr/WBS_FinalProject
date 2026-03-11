@@ -3,6 +3,95 @@
 @tailwind components;
 @tailwind utilities;
 
+@layer base {
+  * {
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  button,
+  [role="button"] {
+    touch-action: manipulation;
+    transform-origin: center;
+  }
+
+  button {
+    transition:
+      transform 150ms ease,
+      box-shadow 150ms ease,
+      background-color 150ms ease,
+      color 150ms ease,
+      opacity 150ms ease,
+      filter 150ms ease;
+    will-change: transform;
+  }
+
+  button:active {
+    transform: scale(0.97);
+  }
+}
+
+@layer components {
+  .btn-press {
+    @apply transition-transform duration-150 ease-out active:scale-[0.97];
+    transform-origin: center;
+    will-change: transform;
+  }
+
+  .tap-target-44 {
+    min-width: 44px;
+    min-height: 44px;
+  }
+
+  .interactive-hover-raise,
+  .interactive-hover-bg,
+  .interactive-hover-shadow,
+  .interactive-hover-color,
+  .interactive-hover-filter {
+    transition:
+      transform 150ms ease,
+      box-shadow 150ms ease,
+      background-color 150ms ease,
+      color 150ms ease,
+      opacity 150ms ease,
+      filter 150ms ease;
+    transform-origin: center;
+    will-change: transform;
+  }
+
+  .skeleton {
+    background: linear-gradient(
+      90deg,
+      rgba(255, 255, 255, 0.08) 0%,
+      rgba(255, 255, 255, 0.2) 50%,
+      rgba(255, 255, 255, 0.08) 100%
+    );
+    background-size: 200% 100%;
+    animation: skeleton-shimmer 1.6s ease-in-out infinite;
+  }
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .interactive-hover-raise:hover {
+    transform: translateY(var(--hover-translate-y, -2px));
+  }
+
+  .interactive-hover-bg:hover {
+    background-color: var(--hover-bg);
+  }
+
+  .interactive-hover-shadow:hover {
+    box-shadow: var(--hover-shadow);
+  }
+
+  .interactive-hover-color:hover {
+    color: var(--hover-color);
+  }
+
+  .interactive-hover-filter:hover {
+    filter: var(--hover-filter);
+  }
+}
+
 /* Aceternity Background Gradient Animation */
 @keyframes moveHorizontal {
   0% { transform: translateX(-50%) translateY(-10%); }
@@ -94,6 +183,28 @@
   animation: mascot-blink 2.7s steps(1, end) infinite;
 }
 
+@keyframes skeleton-shimmer {
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
+}
+
+.stagger-in {
+  opacity: 0;
+  transform: translateY(8px);
+  animation: staggerFade 420ms ease forwards;
+}
+
+@keyframes staggerFade {
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .mascot-bob,
   .mascot-slide,
@@ -101,4 +212,3 @@
     animation: none;
   }
 }
-

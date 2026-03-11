@@ -855,7 +855,7 @@ export default function Onboarding() {
           <button
             type="button"
             onClick={nextStep}
-            className="rounded-full bg-white px-8 py-3 text-sm font-bold text-[#10223e] shadow-xl transition hover:scale-105 active:scale-95"
+            className="btn-press tap-target-44 interactive-hover-filter interactive-hover-shadow rounded-full bg-white px-8 py-3 text-sm font-bold text-[#10223e] shadow-xl [--hover-filter:brightness(1.03)] [--hover-shadow:0_24px_40px_-20px_rgba(16,34,62,0.45)]"
           >
             Let's begin
           </button>

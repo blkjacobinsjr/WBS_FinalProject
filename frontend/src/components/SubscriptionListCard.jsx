@@ -119,7 +119,7 @@ export default function SubscriptionListCard({
 
   return (
     <div
-      className={`group relative grid w-full min-w-0 cursor-pointer grid-cols-[2.5rem_minmax(0,1fr)_auto] items-center gap-3 rounded-xl border border-white/30 bg-white/40 p-3 backdrop-blur-sm transition-colors duration-150 hover:bg-white/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-500/50 dark:border-white/10 dark:bg-white/10 dark:hover:bg-white/15 ${className}`}
+      className={`group interactive-hover-bg relative grid w-full min-w-0 cursor-pointer grid-cols-[2.5rem_minmax(0,1fr)_auto] items-center gap-3 rounded-xl border border-white/30 bg-white/40 p-3 backdrop-blur-sm transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-500/50 [--hover-bg:rgba(255,255,255,0.6)] dark:border-white/10 dark:bg-white/10 dark:[--hover-bg:rgba(255,255,255,0.15)] ${className}`}
       key={subscription?._id}
       onClick={handleCardClick}
       onKeyDown={handleKeyDown}
@@ -136,7 +136,7 @@ export default function SubscriptionListCard({
         <button
           onClick={handleDelete}
           aria-label={`Delete ${displayName}`}
-          className="absolute -right-1 -top-1 z-10 flex h-5 w-5 items-center justify-center rounded-full bg-black/10 text-black/50 opacity-0 backdrop-blur-sm transition-all duration-150 hover:bg-red-500/20 hover:text-red-600 focus-visible:opacity-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500/50 group-hover:opacity-100 dark:bg-white/10 dark:text-white/50 dark:hover:bg-red-500/20 dark:hover:text-red-400"
+          className="btn-press tap-target-44 interactive-hover-bg interactive-hover-color absolute -right-3 -top-3 z-10 flex items-center justify-center rounded-full bg-black/10 text-black/50 opacity-0 backdrop-blur-sm focus-visible:opacity-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500/50 group-hover:opacity-100 [--hover-bg:rgba(239,68,68,0.15)] [--hover-color:rgba(220,38,38,1)] dark:bg-white/10 dark:text-white/50 dark:[--hover-bg:rgba(239,68,68,0.2)] dark:[--hover-color:rgba(248,113,113,1)]"
         >
           <svg
             xmlns="http://www.w3.org/2000/svg"

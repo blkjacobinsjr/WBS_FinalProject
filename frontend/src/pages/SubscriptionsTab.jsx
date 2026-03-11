@@ -79,10 +79,10 @@ export default function SubscriptionsTab({ onOpenBulkImport }) {
           onClick={() => handleCategoryChange("all")}
           role="tab"
           aria-selected={selectedCategory === "all"}
-          className={`shrink-0 rounded-full px-4 py-1.5 text-xs font-medium transition-all duration-150 ease-out active:scale-95 ${
+          className={`btn-press tap-target-44 shrink-0 rounded-full px-4 py-1.5 text-xs font-medium ${
             selectedCategory === "all"
               ? "bg-black text-white shadow-sm dark:bg-purple-500 dark:text-white dark:shadow-purple-500/25"
-              : "bg-black/5 text-black/70 hover:-translate-y-0.5 hover:bg-black/10 dark:bg-white/10 dark:text-white/70 dark:hover:bg-white/20"
+              : "interactive-hover-bg bg-black/5 text-black/70 [--hover-bg:rgba(0,0,0,0.1)] dark:bg-white/10 dark:text-white/70 dark:[--hover-bg:rgba(255,255,255,0.2)]"
           }`}
         >
           All
@@ -93,10 +93,10 @@ export default function SubscriptionsTab({ onOpenBulkImport }) {
             onClick={() => handleCategoryChange(cat._id)}
             role="tab"
             aria-selected={selectedCategory === cat._id}
-            className={`shrink-0 rounded-full px-4 py-1.5 text-xs font-medium transition-all duration-150 ease-out active:scale-95 ${
+            className={`btn-press tap-target-44 shrink-0 rounded-full px-4 py-1.5 text-xs font-medium ${
               selectedCategory === cat._id
                 ? "bg-black text-white shadow-sm dark:bg-purple-500 dark:text-white dark:shadow-purple-500/25"
-                : "bg-black/5 text-black/70 hover:-translate-y-0.5 hover:bg-black/10 dark:bg-white/10 dark:text-white/70 dark:hover:bg-white/20"
+                : "interactive-hover-bg bg-black/5 text-black/70 [--hover-bg:rgba(0,0,0,0.1)] dark:bg-white/10 dark:text-white/70 dark:[--hover-bg:rgba(255,255,255,0.2)]"
             }`}
           >
             {cat.name}
@@ -108,7 +108,7 @@ export default function SubscriptionsTab({ onOpenBulkImport }) {
       <button
         onClick={handleAddSubscription}
         aria-label="Add new subscription"
-        className="flex items-center justify-center gap-2 rounded-xl bg-black py-3 font-medium text-white transition-all duration-150 ease-out hover:-translate-y-0.5 hover:shadow-lg active:scale-[0.98] dark:bg-gradient-to-r dark:from-purple-600 dark:to-pink-600 dark:text-white dark:hover:shadow-purple-500/25"
+        className="btn-press tap-target-44 interactive-hover-filter interactive-hover-shadow flex items-center justify-center gap-2 rounded-xl bg-black py-3 font-medium text-white [--hover-filter:brightness(1.03)] [--hover-shadow:0_18px_38px_-18px_rgba(15,23,42,0.45)] dark:bg-gradient-to-r dark:from-purple-600 dark:to-pink-600 dark:text-white dark:[--hover-shadow:0_18px_38px_-18px_rgba(168,85,247,0.45)]"
       >
         <svg
           xmlns="http://www.w3.org/2000/svg"
@@ -158,9 +158,9 @@ export default function SubscriptionsTab({ onOpenBulkImport }) {
       <button
         onClick={handleBulkImportClick}
         aria-label="Import subscriptions from bank statement PDF"
-        className="flex items-center gap-3 rounded-xl bg-white/40 p-4 text-left backdrop-blur-sm transition-all duration-150 ease-out hover:-translate-y-0.5 hover:bg-white/60 active:scale-[0.98] dark:bg-white/10 dark:hover:bg-white/15"
+        className="btn-press tap-target-44 interactive-hover-bg interactive-hover-shadow flex items-center gap-3 rounded-xl bg-white/40 p-4 text-left backdrop-blur-sm [--hover-bg:rgba(255,255,255,0.6)] [--hover-shadow:0_18px_38px_-20px_rgba(15,23,42,0.16)] dark:bg-white/10 dark:[--hover-bg:rgba(255,255,255,0.15)]"
       >
-        <div className="rounded-full bg-black/5 p-2 transition-colors duration-150 group-hover:bg-black/10 dark:bg-white/10">
+        <div className="rounded-full bg-black/5 p-2 dark:bg-white/10">
           <svg
             xmlns="http://www.w3.org/2000/svg"
             fill="none"

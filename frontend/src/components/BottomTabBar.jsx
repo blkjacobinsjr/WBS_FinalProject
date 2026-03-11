@@ -134,10 +134,10 @@ export default function BottomTabBar({ activeTab, onTabChange }) {
               }}
               onClick={() => activateTab(tab.id)}
               style={{ touchAction: "manipulation" }}
-              className={`flex min-h-[52px] flex-1 flex-col items-center justify-center gap-0.5 rounded-xl px-3 py-2.5 transition-all active:scale-95 ${
+              className={`btn-press tap-target-44 flex min-h-[52px] flex-1 flex-col items-center justify-center gap-0.5 rounded-xl px-3 py-2.5 ${
                 isActive
                   ? "text-black dark:text-white"
-                  : "text-black/40 hover:text-black/60 dark:text-white/40 dark:hover:text-white/60"
+                  : "interactive-hover-bg interactive-hover-color text-black/40 [--hover-bg:rgba(15,23,42,0.04)] [--hover-color:rgba(0,0,0,0.6)] dark:text-white/40 dark:[--hover-bg:rgba(255,255,255,0.08)] dark:[--hover-color:rgba(255,255,255,0.6)]"
               }`}
             >
               <div className="relative">

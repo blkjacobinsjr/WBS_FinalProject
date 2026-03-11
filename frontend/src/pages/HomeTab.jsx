@@ -14,6 +14,12 @@ import {
   getInitialControlHeroMode,
 } from "../utils/dashboardHeroModel";
 
+const SUMMARY_SURFACE_CLASS =
+  "rounded-xl bg-white/40 p-3 text-center backdrop-blur-sm interactive-hover-raise interactive-hover-bg [--hover-bg:rgba(255,255,255,0.6)] dark:bg-white/10 dark:[--hover-bg:rgba(255,255,255,0.15)]";
+
+const HERO_SURFACE_CLASS =
+  "rounded-2xl bg-white/40 p-5 backdrop-blur-sm interactive-hover-bg [--hover-bg:rgba(255,255,255,0.6)] dark:bg-white/10 dark:[--hover-bg:rgba(255,255,255,0.15)]";
+
 // Daily rotating insights - FOMO Punch + Variable Rewards
 const dailyInsights = [
   (spent) => `You've spent €${spent} this year on subscriptions. Worth it?`,
@@ -213,7 +219,7 @@ export default function HomeTab() {
             <Notifications />
           </div>
 
-          <div className="rounded-2xl bg-white/40 p-5 backdrop-blur-sm transition-all duration-150 ease-out hover:bg-white/60 dark:bg-white/10 dark:hover:bg-white/15">
+          <div className={HERO_SURFACE_CLASS}>
             <p className="text-xs font-medium uppercase tracking-wider text-black/50 dark:text-white/50">
               Total Monthly Spend
             </p>
@@ -231,7 +237,7 @@ export default function HomeTab() {
 
       {/* Quick Stats Row */}
       <div className="grid grid-cols-3 gap-2" role="group" aria-label="Quick statistics">
-        <div className="rounded-xl bg-white/40 p-3 text-center backdrop-blur-sm transition-all duration-150 ease-out hover:-translate-y-0.5 hover:bg-white/60 dark:bg-white/10 dark:hover:bg-white/15">
+        <div className={SUMMARY_SURFACE_CLASS}>
           <p className="bg-gradient-to-b from-black/60 to-black bg-clip-text text-2xl font-bold text-transparent dark:from-white dark:to-white/60">
             {subscriptions?.length || 0}
           </p>
@@ -239,7 +245,7 @@ export default function HomeTab() {
             Subscriptions
           </p>
         </div>
-        <div className="rounded-xl bg-white/40 p-3 text-center backdrop-blur-sm transition-all duration-150 ease-out hover:-translate-y-0.5 hover:bg-white/60 dark:bg-white/10 dark:hover:bg-white/15">
+        <div className={SUMMARY_SURFACE_CLASS}>
           <p className="bg-gradient-to-b from-green-400 to-green-600 bg-clip-text text-2xl font-bold text-transparent dark:from-green-300 dark:to-green-500">
             €{dashboardData?.potentialMonthlySavings?.toFixed(0) || "0"}
           </p>
@@ -251,7 +257,7 @@ export default function HomeTab() {
           type="button"
           onClick={handleAlertsClick}
           disabled={!notifications?.length}
-          className="rounded-xl bg-white/40 p-3 text-center backdrop-blur-sm transition-all duration-150 ease-out hover:-translate-y-0.5 hover:bg-white/60 disabled:cursor-not-allowed disabled:opacity-70 dark:bg-white/10 dark:hover:bg-white/15"
+          className="btn-press interactive-hover-bg interactive-hover-shadow rounded-xl bg-white/40 p-3 text-center backdrop-blur-sm disabled:cursor-not-allowed disabled:opacity-70 [--hover-bg:rgba(255,255,255,0.6)] [--hover-shadow:0_18px_40px_-24px_rgba(15,23,42,0.16)] dark:bg-white/10 dark:[--hover-bg:rgba(255,255,255,0.15)]"
         >
           <p className="bg-gradient-to-b from-black/60 to-black bg-clip-text text-2xl font-bold text-transparent dark:from-white dark:to-white/60">
             {notifications?.length || 0}

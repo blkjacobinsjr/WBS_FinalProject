@@ -335,7 +335,7 @@ export default function SettingsTab({ onResetData, isResettingData }) {
         <button
           onClick={handleResetDataClick}
           disabled={isResettingData}
-          className="flex w-full items-center justify-between rounded-xl bg-red-50 px-4 py-3 transition-all active:scale-[0.98] disabled:opacity-50 dark:bg-red-900/20"
+          className="btn-press tap-target-44 flex w-full items-center justify-between rounded-xl bg-red-50 px-4 py-3 disabled:opacity-50 dark:bg-red-900/20"
         >
           <div className="flex items-center gap-3">
             <div className="rounded-full bg-red-100 p-2 dark:bg-red-800/30">

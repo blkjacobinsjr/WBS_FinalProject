@@ -239,7 +239,7 @@ export default function ControlHero({
           <button
             type="button"
             onClick={() => onPrimaryAction(current.action)}
-            className="inline-flex shrink-0 items-center gap-1.5 rounded-full bg-slate-950 px-3 py-2 text-[14px] font-semibold text-white shadow-[0_18px_32px_rgba(15,23,42,0.2)] transition-transform duration-150 active:scale-[0.98] dark:bg-white dark:text-slate-950 dark:shadow-none"
+            className="btn-press tap-target-44 inline-flex shrink-0 items-center gap-1.5 rounded-full bg-slate-950 px-3 py-2 text-[14px] font-semibold text-white shadow-[0_18px_32px_rgba(15,23,42,0.2)] dark:bg-white dark:text-slate-950 dark:shadow-none"
           >
             {current.action.label}
             <ArrowRightIcon className="h-[14px] w-[14px]" />

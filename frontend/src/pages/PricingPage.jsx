@@ -394,7 +394,7 @@ export default function PricingPage() {
           type="button"
           onClick={openCheckout}
           disabled={isLoading}
-          className="relative w-full max-w-[360px] rounded-full bg-gradient-to-r from-[#42d587] via-[#6ce0b8] to-[#ffbd67] py-[17px] text-center shadow-[0_8px_24px_-6px_rgba(66,213,135,0.4)] transition-all hover:brightness-105 active:scale-[0.98] disabled:opacity-60 disabled:scale-100 overflow-hidden"
+          className="btn-press tap-target-44 interactive-hover-filter interactive-hover-shadow relative w-full max-w-[360px] overflow-hidden rounded-full bg-gradient-to-r from-[#42d587] via-[#6ce0b8] to-[#ffbd67] py-[17px] text-center shadow-[0_8px_24px_-6px_rgba(66,213,135,0.4)] disabled:scale-100 disabled:opacity-60 [--hover-filter:brightness(1.05)] [--hover-shadow:0_18px_42px_-18px_rgba(66,213,135,0.45)]"
         >
           <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent -translate-x-[100%] animate-[shimmer_2.5s_infinite]"></div>
           <p className="text-[17px] font-bold tracking-wide text-black/90">

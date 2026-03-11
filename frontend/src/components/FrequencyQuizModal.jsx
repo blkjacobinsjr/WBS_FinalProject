@@ -194,7 +194,7 @@ export default function FrequencyQuizModal({
             <div className="flex items-center justify-between border-b border-black/5 bg-white/60 px-4 py-4 backdrop-blur-xl dark:border-white/10 dark:bg-black/60">
               <button
                 onClick={handleClose}
-                className="flex h-10 w-10 items-center justify-center rounded-full bg-black/5 dark:bg-white/10"
+                className="btn-press tap-target-44 flex h-10 w-10 items-center justify-center rounded-full bg-black/5 dark:bg-white/10"
               >
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
@@ -216,7 +216,7 @@ export default function FrequencyQuizModal({
               </Dialog.Title>
               <button
                 onClick={handleDoneClick}
-                className="rounded-full bg-black px-4 py-2 text-sm font-medium text-white dark:bg-white dark:text-black"
+                className="btn-press tap-target-44 rounded-full bg-black px-4 py-2 text-sm font-medium text-white dark:bg-white dark:text-black"
               >
                 Done
               </button>
@@ -276,7 +276,7 @@ export default function FrequencyQuizModal({
                         key={option.value}
                         value={option.value}
                         className={({ checked }) =>
-                          `cursor-pointer rounded-xl px-4 py-3 transition-all active:scale-[0.98] ${
+                          `btn-press cursor-pointer rounded-xl px-4 py-3 ${
                             checked
                               ? "bg-gradient-to-r from-blue-500 to-cyan-500 text-white shadow-lg"
                               : "bg-blue-50 text-blue-900 dark:bg-blue-900/30 dark:text-blue-300"
@@ -304,7 +304,7 @@ export default function FrequencyQuizModal({
                   {unratedNotifications?.length > 1 && (
                     <button
                       onClick={() => handleChangeSubscriptionClick(1)}
-                      className="mt-4 w-full rounded-2xl bg-black/5 py-3 text-sm font-medium text-black/60 transition-all active:scale-[0.98] dark:bg-white/10 dark:text-white/60"
+                      className="btn-press tap-target-44 mt-4 w-full rounded-2xl bg-black/5 py-3 text-sm font-medium text-black/60 dark:bg-white/10 dark:text-white/60"
                     >
                       Skip for now
                     </button>
@@ -321,7 +321,7 @@ export default function FrequencyQuizModal({
                   </p>
                   <button
                     onClick={handleClose}
-                    className="mt-4 rounded-full bg-black px-6 py-2 text-sm font-medium text-white dark:bg-white dark:text-black"
+                    className="btn-press tap-target-44 mt-4 rounded-full bg-black px-6 py-2 text-sm font-medium text-white dark:bg-white dark:text-black"
                   >
                     See Results
                   </button>

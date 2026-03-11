@@ -71,6 +71,19 @@ Use this as a strict implementation contract, not inspiration only.
 - Place high value actions near likely pointer or thumb positions.
 - Use corners and edges for fast acquisition when platform supports it.
 
+## Practical Tips
+| Scenario | Solution |
+| --- | --- |
+| Make buttons feel responsive | Add `transform: scale(0.97)` on `:active` |
+| Element appears from nowhere | Start from `scale(0.95)`, not `scale(0)` |
+| Shaky/jittery animations | Add `will-change: transform` |
+| Hover causes flicker | Animate child element, not parent |
+| Popover scales from wrong point | Set `transform-origin` to trigger location |
+| Sequential tooltips feel slow | Skip delay/animation after first tooltip |
+| Small buttons hard to tap | Use 44px minimum hit area (pseudo-element) |
+| Something still feels off | Add subtle blur (under 20px) to mask it |
+| Hover triggers on mobile | Use `@media (hover: hover) and (pointer: fine)` |
+
 ## Scrolling
 - Do not hijack scroll ownership unpredictably.
 - Keep inertial behavior and cancellation rules coherent.
@@ -92,4 +105,3 @@ Use this as a strict implementation contract, not inspiration only.
 - Paul Fitts, The information capacity of the human motor system.
 - Kevin Hale, Visualizing Fitts's Law.
 - Brandur, Learning From Terminals to Design the Future of User Interfaces.
-

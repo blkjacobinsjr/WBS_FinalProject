@@ -437,7 +437,7 @@ export default function SubscriptionForm({
                   target="_blank"
                   rel="noopener noreferrer"
                   onClick={haptics.warning}
-                  className="mb-4 flex items-center justify-between rounded-2xl bg-gradient-to-r from-red-500 to-rose-500 px-4 py-4 shadow-lg transition-all active:scale-[0.98]"
+                  className="btn-press tap-target-44 interactive-hover-shadow mb-4 flex items-center justify-between rounded-2xl bg-gradient-to-r from-red-500 to-rose-500 px-4 py-4 shadow-lg [--hover-shadow:0_24px_48px_-24px_rgba(244,63,94,0.65)]"
                 >
                   <div className="flex items-center gap-3">
                     <div className="rounded-full bg-white/20 p-2">
@@ -487,7 +487,7 @@ export default function SubscriptionForm({
                 <LoadingButton
                   isLoading={pendingAction === "delete"}
                   onClick={handleDeleteSubscription}
-                  className="w-full rounded-2xl bg-red-500 py-4 text-sm font-medium text-white transition-all active:scale-[0.98]"
+                  className="w-full rounded-2xl bg-red-500 py-4 text-sm font-medium text-white"
                 >
                   Delete Subscription
                 </LoadingButton>
