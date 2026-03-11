@@ -693,8 +693,10 @@ function readFileBuffer(file) {
 
 export default function BulkImport({
   embedded = false,
+  mode = "all",
   redirectOnComplete = true,
   onComplete,
+  onProcessingComplete,
   onBack,
   deferCompleteUntilReview = false,
   hideDataControls = false,
@@ -1136,6 +1138,8 @@ export default function BulkImport({
       skipped: skippedCount,
       detected: enriched,
     };
+
+    onProcessingComplete?.(completeData);
 
     if (onComplete && !deferCompleteUntilReview) {
       onComplete(completeData);
