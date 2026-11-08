@@ -1847,7 +1847,7 @@ export default function Onboarding() {
 
             <AnimatePresence mode="wait" initial={false}>
               <motion.div
-                key={step}
+                key={step === 11 || step === 12 ? "bulk-import" : step}
                 className="flex flex-1 flex-col"
                 initial={{ opacity: 0, y: 12, scale: 0.995, filter: "blur(6px)" }}
                 animate={{ opacity: 1, y: 0, scale: 1, filter: "blur(0px)" }}

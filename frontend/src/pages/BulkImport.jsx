@@ -734,7 +734,7 @@ export default function BulkImport({
 
   const current = detected[currentIndex];
 
-  const showUpload = mode === "all" || (mode === "upload" && detected.length === 0);
+  const showUpload = mode === "all" || mode === "upload";
   const showReview = detected.length > 0 && (mode === "all" || mode === "review");
 
   const progress = useMemo(() => {
@@ -834,38 +834,28 @@ export default function BulkImport({
 
   async function wipeAllSubscriptions({ silent = false } = {}) {
     setWipeLoading(true);
-    let latest = [];
-
     try {
-      const fetched = await getAllSubscriptions(new AbortController());
-      latest = Array.isArray(fetched) ? fetched : [];
-    } catch (error) {
-      // ignore fetch errors
-    }
+      const latest = await getAllSubscriptions(new AbortController(), true);
+      if (!Array.isArray(latest)) throw new Error("Could not load subscriptions");
+      const results = await Promise.allSettled(latest.map((subscription) =>
+        deleteSubscription(subscription._id, new AbortController()),
+      ));
+      const refreshed = await getAllSubscriptions(new AbortController());
+      const refreshedDashboard = await getDashboardData(new AbortController());
+      const refreshedCategories = await getUsedCategories(new AbortController());
 
-    for (const subscription of latest) {
-      if (!subscription?._id) continue;
-      try {
-        await deleteSubscription(subscription._id, new AbortController());
-      } catch (error) {
-        // ignore delete errors
+      setSubscriptions(refreshed || []);
+      if (refreshedDashboard) setDashboardData(refreshedDashboard);
+      if (refreshedCategories) setUsedCategories(refreshedCategories);
+      eventEmitter.emit("refetchData");
+
+      if (results.some((result) => result.status === "rejected" || !result.value?.successful)) {
+        throw new Error("Some subscriptions could not be deleted");
       }
+      if (!silent) toast.success("All subscriptions wiped");
+    } finally {
+      setWipeLoading(false);
     }
-
-    const refreshed = await getAllSubscriptions(new AbortController());
-    const refreshedDashboard = await getDashboardData(new AbortController());
-    const refreshedCategories = await getUsedCategories(new AbortController());
-
-    setSubscriptions(refreshed || []);
-    if (refreshedDashboard) setDashboardData(refreshedDashboard);
-    if (refreshedCategories) setUsedCategories(refreshedCategories);
-    eventEmitter.emit("refetchData");
-
-    if (!silent) {
-      toast.success("All subscriptions wiped");
-    }
-
-    setWipeLoading(false);
   }
 
   async function handleProcessFiles() {
@@ -1043,7 +1033,13 @@ export default function BulkImport({
     }
 
     if (replaceExisting) {
-      await wipeAllSubscriptions({ silent: true });
+      try {
+        await wipeAllSubscriptions({ silent: true });
+      } catch (error) {
+        toast.error("Could not remove all existing subscriptions. Import stopped.");
+        setStage("idle");
+        return;
+      }
       clearFingerprints();
       baseSubscriptions = [];
     }
@@ -1073,7 +1069,8 @@ export default function BulkImport({
 
       try {
         const abortController = new AbortController();
-        await createSubscription(body, abortController);
+        const result = await createSubscription(body, abortController);
+        if (!result?.successful) throw new Error("Subscription was not created");
         createdCount += 1;
       } catch (error) {
         skippedCount += 1;
@@ -1153,7 +1150,7 @@ export default function BulkImport({
   }
 
   async function handleDecision(action) {
-    if (!current) return;
+    if (!current || decisionLoading || cancelAllLoading) return;
 
     setDecisionLoading(action);
 
@@ -1162,16 +1159,19 @@ export default function BulkImport({
         window.open(current.cancel.url, "_blank", "noopener,noreferrer");
       }
 
-      if (current.subscriptionId) {
-        try {
-          await updateSubscription(
-            { _id: current.subscriptionId, active: false },
-            new AbortController(),
-          );
-        } catch (error) {
-          // swallow errors for fast flow
-        }
+      try {
+        if (!current.subscriptionId) throw new Error("Subscription not found");
+        const updated = await updateSubscription(
+          { _id: current.subscriptionId, active: false },
+          new AbortController(),
+        );
+        if (!updated) throw new Error("Subscription was not updated");
+      } catch (error) {
+        toast.error("Could not update this subscription. Try again.");
+        setDecisionLoading(null);
+        return;
       }
+      eventEmitter.emit("refetchData");
     }
 
     await new Promise((resolve) => setTimeout(resolve, 150));
@@ -1180,22 +1180,30 @@ export default function BulkImport({
   }
 
   async function handleCancelAll() {
+    if (decisionLoading || cancelAllLoading || !current) return;
     setCancelAllLoading(true);
-    for (const item of detected) {
-      if (!item.subscriptionId) continue;
+    for (let index = currentIndex; index < detected.length; index += 1) {
+      const item = detected[index];
       try {
-        await updateSubscription(
+        if (!item.subscriptionId) throw new Error("Subscription not found");
+        const updated = await updateSubscription(
           { _id: item.subscriptionId, active: false },
           new AbortController(),
         );
+        if (!updated) throw new Error("Subscription was not updated");
       } catch (error) {
-        // ignore
+        setCurrentIndex(index);
+        setCancelAllLoading(false);
+        eventEmitter.emit("refetchData");
+        toast.error("Could not update all subscriptions. Try again.");
+        return;
       }
     }
 
     setCancelAllLoading(false);
     setCurrentIndex(detected.length);
-    toast.success("Canceled all detected subscriptions");
+    eventEmitter.emit("refetchData");
+    toast.success("Remaining subscriptions marked inactive");
   }
 
   // Theme-aware class names for embedded (dark) vs normal (light) mode
@@ -1297,7 +1305,7 @@ export default function BulkImport({
                 Wipes current subscriptions before adding new ones.
               </span>
               <LoadingButton
-                onClick={() => wipeAllSubscriptions()}
+                onClick={() => wipeAllSubscriptions().catch(() => toast.error("Could not remove all subscriptions. Try again."))}
                 isLoading={wipeLoading}
                 className={`rounded-full border px-3 py-2 text-xs font-semibold ${theme.wipeBtn}`}
               >
@@ -1421,6 +1429,7 @@ export default function BulkImport({
                 <LoadingButton
                   onClick={() => handleDecision("keep")}
                   isLoading={decisionLoading === "keep"}
+                  disabled={Boolean(decisionLoading) || cancelAllLoading}
                   className={`rounded-lg border px-3 py-2 text-sm font-semibold ${theme.keepBtn}`}
                 >
                   Keep
@@ -1428,6 +1437,7 @@ export default function BulkImport({
                 <LoadingButton
                   onClick={() => handleDecision("cancel")}
                   isLoading={decisionLoading === "cancel"}
+                  disabled={Boolean(decisionLoading) || cancelAllLoading}
                   className={`rounded-lg px-3 py-2 text-sm font-semibold ${theme.cancelBtn}`}
                 >
                   Cancel
@@ -1444,9 +1454,10 @@ export default function BulkImport({
             <LoadingButton
               onClick={handleCancelAll}
               isLoading={cancelAllLoading}
+              disabled={Boolean(decisionLoading) || !current}
               className={`rounded-lg border px-3 py-2 text-xs font-semibold ${theme.wipeBtn}`}
             >
-              Cancel All
+              Mark remaining inactive
             </LoadingButton>
           </div>
         </div>

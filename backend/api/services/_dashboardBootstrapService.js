@@ -57,8 +57,8 @@ function sortByScoreThenPrice(left, right, direction) {
   return getMonthlyPrice(right) - getMonthlyPrice(left);
 }
 
-export async function getHydratedSubscriptions(userId) {
-  return Subscription.aggregate(fullSubscriptionData(userId));
+export async function getHydratedSubscriptions(userId, options) {
+  return Subscription.aggregate(fullSubscriptionData(userId, options));
 }
 
 export async function getCachedCategories() {
@@ -193,7 +193,7 @@ export function buildUsedCategories(subscriptions = []) {
 export async function getPendingNotifications(userId, daysAgoEnv) {
   const daysAgo = new Date(Date.now() - daysAgoEnv * 24 * 60 * 60 * 1000);
 
-  return Notification.find({
+  const notifications = await Notification.find({
     userId,
     active: true,
     createdAt: {
@@ -203,11 +203,13 @@ export async function getPendingNotifications(userId, daysAgoEnv) {
     .populate({
       path: "subscriptionId",
       select: "name price interval category billing_date active",
+      match: { active: { $ne: false } },
     })
     .sort({
       createdAt: -1,
     })
     .lean();
+  return notifications.filter((notification) => notification.subscriptionId);
 }
 
 export async function getDashboardBootstrap(userId, daysAgoEnv) {

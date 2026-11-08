@@ -72,9 +72,9 @@ function Dashboard() {
   }, [subscriptions]);
 
   // ---- CUSTOM HOOKS ----
-  const { loading, error, errorMessage, refetchData } = useDataFetching();
+  const { loading, error, errorMessage } = useDataFetching();
   const { createUsage } = useUsage();
-  const { deleteSubscription } = useSubscription();
+  const { deleteSubscription, getAllSubscriptions } = useSubscription();
   const { getDashboardBootstrap } = useDashboard();
   const { getAllNotifications, getAndUpdateNotificationById } =
     useNotifications();
@@ -128,12 +128,17 @@ function Dashboard() {
 
     // Unfortunately, every time we add usage data we need to sneakily refetch almost
     // all data, as otherwise our application doesn't show the current state of data *buuuuuuh!*
+    let latestRefetch = 0;
     async function sneakyDataRefetch() {
+      const requestId = ++latestRefetch;
       try {
         const bootstrapData = await getDashboardBootstrap(abortController);
-        applyBootstrapData(bootstrapData);
+        if (requestId === latestRefetch) applyBootstrapData(bootstrapData);
       } catch (error) {
-        console.error(`Error refetching subscriptions: ${errorMessage}`);
+        if (requestId === latestRefetch) {
+          console.error("Error refetching subscriptions:", error);
+          toast.error("Could not refresh your data. Try again.");
+        }
       }
     }
 
@@ -152,13 +157,9 @@ function Dashboard() {
 
     // creating new usage data
     async function createUsageData(subscriptionId, score) {
-      try {
-        const usageBody = createUsageBody(subscriptionId, score);
-
-        await createUsage(usageBody, abortController);
-      } catch (error) {
-        console.error(`Error creating usage data: ${errorMessage}`);
-      }
+      const usageBody = createUsageBody(subscriptionId, score);
+      const result = await createUsage(usageBody, abortController);
+      if (!result?.successful) throw new Error("Usage was not saved");
     }
 
     // dismissing a single notification as read
@@ -180,7 +181,7 @@ function Dashboard() {
 
     // Need this one in here for the abort controller
     function refetchCallback() {
-      refetchData(abortController);
+      sneakyDataRefetch();
     }
 
     // mark a single notification as read
@@ -291,6 +292,7 @@ function Dashboard() {
 
     return () => {
       observer.disconnect();
+      if (refetchTimeout) clearTimeout(refetchTimeout);
       abortController.abort();
       notificationAbortController.abort();
       // Clear any pending deletes on unmount
@@ -315,22 +317,28 @@ function Dashboard() {
     setIsResettingData(true);
 
     try {
-      const deletions = (subscriptionsRef.current || [])
+      const allSubscriptions = await getAllSubscriptions(new AbortController(), true);
+      if (!Array.isArray(allSubscriptions)) throw new Error("Could not load subscriptions");
+      const deletions = allSubscriptions
         .filter((sub) => sub?._id)
         .map((sub) =>
           deleteSubscription(sub._id, new AbortController()),
         );
 
-      await Promise.allSettled(deletions);
+      const results = await Promise.allSettled(deletions);
 
       const bootstrapData = await getDashboardBootstrap(new AbortController());
       applyBootstrapData(bootstrapData);
+
+      if (results.some((result) => result.status === "rejected" || !result.value?.successful)) {
+        throw new Error("Some subscriptions could not be deleted");
+      }
 
       haptics.success();
       toast.success("Data reset");
     } catch (error) {
       haptics.error();
-      toast.error("Reset failed");
+      toast.error("Some subscriptions could not be deleted. Try again.");
     } finally {
       setIsResettingData(false);
     }

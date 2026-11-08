@@ -16,7 +16,9 @@ export async function getAllSubscriptions(req, res, next) {
     userId,
   );
 
-  const subscriptions = await getHydratedSubscriptions(userId);
+  const subscriptions = await getHydratedSubscriptions(userId, {
+    includeInactive: req.query.includeInactive === "true",
+  });
 
   // const subscriptions = await Subscription.find({ userId }).populate(
   //   "category",

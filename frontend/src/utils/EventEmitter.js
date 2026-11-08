@@ -51,6 +51,12 @@ class EventEmitter {
       callback(...args);
     });
   }
+
+  async emitAsync(eventName, ...args) {
+    const callbacks = this.events[eventName];
+    if (!callbacks?.length) throw new Error(`No handler for ${eventName}`);
+    await Promise.all(callbacks.map((callback) => callback(...args)));
+  }
 }
 
 // create a singleton instance of the event emitter and export it

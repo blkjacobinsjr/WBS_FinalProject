@@ -71,19 +71,19 @@ export default function FinancialResetFlow({ open, onClose }) {
     }
 
     try {
-      await updateSubscription(
+      const updated = await updateSubscription(
         { _id: candidate._id, active: false },
         new AbortController(),
       );
-      toast.success("Canceled");
+      if (!updated) throw new Error("Subscription was not updated");
+      toast.success("Subscription marked inactive");
+      eventEmitter.emit("refetchData");
+      setStep(4);
     } catch (error) {
       toast.error("Cancel failed");
     } finally {
       setIsWorking(false);
     }
-
-    eventEmitter.emit("refetchData");
-    setStep(4);
   }
 
   function handleQuizClose() {
