@@ -9,9 +9,9 @@ export default function useSubscription() {
    * Returns all subscriptions for the current user
    * @return {Array} subscriptions
    */
-  async function getAllSubscriptions(abortController) {
+  async function getAllSubscriptions(abortController, includeInactive = false) {
     return await startRequest(
-      ApiEndpoints.subscriptions,
+      includeInactive ? `${ApiEndpoints.subscriptions}?includeInactive=true` : ApiEndpoints.subscriptions,
       "get",
       abortController,
     );

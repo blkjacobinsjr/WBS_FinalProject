@@ -88,11 +88,12 @@ export function subscriptionUsageAggregate(userId, id = null) {
  * Returns a pipeline that create full subscription data, including score, category,
  * array with all usages, whether the score is valid for calculations etc.
  */
-export function fullSubscriptionData(userId) {
+export function fullSubscriptionData(userId, { includeInactive = false } = {}) {
   const pipeline = [
     {
       $match: {
         userId,
+        ...(includeInactive ? {} : { active: { $ne: false } }),
       },
     },
     {

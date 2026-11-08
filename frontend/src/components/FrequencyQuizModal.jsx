@@ -1,5 +1,6 @@
 import { Dialog, RadioGroup, Transition } from "@headlessui/react";
 import { Fragment, useEffect, useRef, useState } from "react";
+import { toast } from "sonner";
 import { useDataContext } from "../contexts/dataContext";
 import eventEmitter from "../utils/EventEmitter";
 import useAppHaptics from "../hooks/useAppHaptics";
@@ -19,6 +20,8 @@ export default function FrequencyQuizModal({
   const [initialTotal, setInitialTotal] = useState(0);
   const [completedCount, setCompletedCount] = useState(0);
   const [isInitialized, setIsInitialized] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
+  const savingRef = useRef(false);
 
   const currentIndex = unratedNotifications?.findIndex(
     (n) => n?._id === currentNotification?._id
@@ -29,12 +32,14 @@ export default function FrequencyQuizModal({
   useEffect(() => {
     if (!opened) {
       setIsInitialized(false);
+      setSelectedScore(null);
       return;
     }
     haptics.openSheet();
   }, [haptics, opened]);
 
   function handleClose() {
+    if (savingRef.current) return;
     haptics.closeSheet();
     onClose();
   }
@@ -95,19 +100,29 @@ export default function FrequencyQuizModal({
     };
   }, [selectedScore]);
 
-  function handleChangeSubscriptionClick(direction) {
-    if (direction !== 1 && direction !== -1) return;
+  async function saveSelectedScore() {
+    if (savingRef.current || !selectedScore || !currentNotification?.subscriptionId?._id) return false;
+    savingRef.current = true;
+    setIsSaving(true);
+    try {
+      await eventEmitter.emitAsync("useScoreSelected", currentNotification.subscriptionId._id, selectedScore);
+      return true;
+    } catch (error) {
+      toast.error("Could not save your rating. Try again.");
+      setSelectedScore(null);
+      return false;
+    } finally {
+      savingRef.current = false;
+      setIsSaving(false);
+    }
+  }
+
+  async function handleChangeSubscriptionClick(direction) {
+    if (savingRef.current || (direction !== 1 && direction !== -1)) return;
 
     if (selectedScore) {
       haptics.dragCommit();
-      const selectedSubscriptionId =
-        unratedNotifications[currentIndex].subscriptionId._id;
-
-      eventEmitter.emit(
-        "useScoreSelected",
-        selectedSubscriptionId,
-        selectedScore
-      );
+      if (!(await saveSelectedScore())) return;
 
       const filtered = unratedNotifications.filter(
         (n) => n._id !== currentNotification._id
@@ -143,14 +158,12 @@ export default function FrequencyQuizModal({
     }
   }
 
-  function handleDoneClick() {
+  async function handleDoneClick() {
+    if (savingRef.current) return;
+    if (autoAdvanceRef.current) clearTimeout(autoAdvanceRef.current);
     if (selectedScore) {
       haptics.confirm();
-      eventEmitter.emit(
-        "useScoreSelected",
-        currentNotification.subscriptionId._id,
-        selectedScore
-      );
+      if (!(await saveSelectedScore())) return;
     }
     handleClose();
   }
@@ -216,6 +229,7 @@ export default function FrequencyQuizModal({
               </Dialog.Title>
               <button
                 onClick={handleDoneClick}
+                disabled={isSaving}
                 className="btn-press tap-target-44 rounded-full bg-black px-4 py-2 text-sm font-medium text-white dark:bg-white dark:text-black"
               >
                 Done
@@ -265,6 +279,7 @@ export default function FrequencyQuizModal({
                   {/* Rating options - Frequency-based */}
                   <RadioGroup
                     value={selectedScore}
+                    disabled={isSaving}
                     onChange={(val) => {
                       haptics.selection();
                       setSelectedScore(Number(val));
@@ -304,6 +319,7 @@ export default function FrequencyQuizModal({
                   {unratedNotifications?.length > 1 && (
                     <button
                       onClick={() => handleChangeSubscriptionClick(1)}
+                      disabled={isSaving}
                       className="btn-press tap-target-44 mt-4 w-full rounded-2xl bg-black/5 py-3 text-sm font-medium text-black/60 dark:bg-white/10 dark:text-white/60"
                     >
                       Skip for now

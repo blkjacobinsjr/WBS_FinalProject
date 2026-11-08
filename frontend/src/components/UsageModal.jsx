@@ -1,5 +1,6 @@
 import { Dialog, Transition } from "@headlessui/react";
 import { Fragment, useCallback, useEffect, useRef, useState, useSyncExternalStore } from "react";
+import { toast } from "sonner";
 import { useDataContext } from "../contexts/dataContext";
 import eventEmitter from "../utils/EventEmitter";
 import useAppHaptics from "../hooks/useAppHaptics";
@@ -225,7 +226,7 @@ function SwipeCard({
     if (nopeStamp) nopeStamp.style.opacity = Math.min(1, -x / SWIPE_THRESHOLD);
   }, []);
 
-  const commitSwipe = useCallback((direction) => {
+  const commitSwipe = useCallback(async (direction) => {
     const card = cardRef.current;
     if (!card) return;
     const tx = direction === "right" ? 500 : -500;
@@ -233,8 +234,12 @@ function SwipeCard({
     card.style.transition = "transform 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94), opacity 0.3s ease";
     card.style.transform = `translateX(${tx}px) rotate(${rotate}deg)`;
     card.style.opacity = "0";
-    setTimeout(() => onSwipe(direction === "right" ? 5 : 1), 280);
-  }, [onSwipe]);
+    const saved = await onSwipe(direction === "right" ? 5 : 1);
+    if (!saved && cardRef.current === card) {
+      card.style.opacity = "1";
+      applyTransform(0);
+    }
+  }, [applyTransform, onSwipe]);
 
   const onPointerDown = useCallback((e) => {
     if (!isTop) return;
@@ -515,10 +520,11 @@ function SwipeCard({
 }
 
 // ─── Action Buttons ───────────────────────────────────────────────────────────
-function ActionButton({ onClick, color, icon, size = 56 }) {
+function ActionButton({ onClick, color, icon, size = 56, disabled = false }) {
   return (
     <button
       onClick={onClick}
+      disabled={disabled}
       style={{
         width: size,
         height: size,
@@ -561,6 +567,8 @@ export default function UsageModal({
   const [completedCount, setCompletedCount] = useState(0);
   const [isInitialized, setIsInitialized] = useState(false);
   const [isDone, setIsDone] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
+  const savingRef = useRef(false);
 
   const currentIndex = unratedNotifications?.findIndex(
     (n) => n?._id === currentNotification?._id
@@ -616,22 +624,32 @@ export default function UsageModal({
   const handleSwipe = useCallback((score) => {
     haptics.dragCommit();
     const snap = handleSwipeRef.current;
-    if (snap) snap(score);
+    return snap ? snap(score) : false;
   }, [haptics]);
 
   const handleClose = useCallback(() => {
+    if (savingRef.current) return;
     haptics.closeSheet();
     onClose();
   }, [haptics, onClose]);
 
   // Keep ref up to date with current state
   useEffect(() => {
-    handleSwipeRef.current = (score) => {
-      if (!currentNotification) return;
+    handleSwipeRef.current = async (score) => {
+      if (!currentNotification || savingRef.current) return false;
       const idx = unratedNotifications.findIndex((n) => n?._id === currentNotification?._id);
       const selectedSubscriptionId = unratedNotifications[idx]?.subscriptionId?._id;
-      if (selectedSubscriptionId) {
-        eventEmitter.emit("useScoreSelected", selectedSubscriptionId, score);
+      if (!selectedSubscriptionId) return false;
+      savingRef.current = true;
+      setIsSaving(true);
+      try {
+        await eventEmitter.emitAsync("useScoreSelected", selectedSubscriptionId, score);
+      } catch (error) {
+        toast.error("Could not save your rating. Try again.");
+        return false;
+      } finally {
+        savingRef.current = false;
+        setIsSaving(false);
       }
       const filtered = unratedNotifications.filter((n) => n._id !== currentNotification._id);
       setUnratedNotifications(filtered);
@@ -639,10 +657,11 @@ export default function UsageModal({
       if (filtered.length === 0) {
         haptics.success();
         setTimeout(() => setIsDone(true), 320);
-        return;
+        return true;
       }
       const nextIndex = Math.min(idx, filtered.length - 1);
       setCurrentNotification(filtered[nextIndex]);
+      return true;
     };
   }, [currentNotification, haptics, unratedNotifications]);
 
@@ -828,7 +847,7 @@ export default function UsageModal({
                           onSwipe={handleSwipe}
                           onThresholdCross={haptics.dragThreshold}
                           onSnapBack={haptics.dragSnapBack}
-                          isTop={stackIndex === 0}
+                          isTop={stackIndex === 0 && !isSaving}
                           stackIndex={stackIndex}
                           c={c}
                         />
@@ -845,6 +864,7 @@ export default function UsageModal({
                   }}>
                     <ActionButton
                       onClick={() => handleSwipe(1)}
+                      disabled={isSaving}
                       color="#ef4444"
                       icon="🗑️"
                       size={64}
@@ -856,6 +876,7 @@ export default function UsageModal({
                           const nextIdx = currentIndex + 1 >= unratedNotifications.length ? 0 : currentIndex + 1;
                           setCurrentNotification(unratedNotifications[nextIdx]);
                         }}
+                        disabled={isSaving}
                         color="#6b7280"
                         icon="⟳"
                         size={44}
@@ -863,6 +884,7 @@ export default function UsageModal({
                     )}
                     <ActionButton
                       onClick={() => handleSwipe(5)}
+                      disabled={isSaving}
                       color="#22c55e"
                       icon="✨"
                       size={64}
