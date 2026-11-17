@@ -86,7 +86,7 @@ export default function InsightsTab() {
       {enableControlHero && (
         <div className="px-1">
           <p
-            className="max-w-[15ch] text-[1.7rem] leading-[1.06] tracking-[-0.04em] text-slate-800/90 dark:text-[#d8cca4]/88"
+            className="max-w-[15ch] text-[1.7rem] leading-[1.06] tracking-[-0.04em] text-slate-800/90 dark:text-[#efe3bc]"
             style={{ fontFamily: "'Playfair Display', serif" }}
           >
             Keep what earns its place. Question the rest.
@@ -300,7 +300,7 @@ export default function InsightsTab() {
           <p className="text-xs font-medium text-black/50 dark:text-white/50">
             Total Subscriptions
           </p>
-          <p className="mt-1 bg-gradient-to-b from-black/50 to-black/90 bg-clip-text text-2xl font-bold text-transparent dark:from-white dark:to-white/60">
+          <p className="mt-1 text-2xl font-bold text-black dark:text-white">
             {totalCount}
           </p>
         </div>
@@ -308,7 +308,7 @@ export default function InsightsTab() {
           <p className="text-xs font-medium text-black/50 dark:text-white/50">
             Monthly Spend
           </p>
-          <p className="mt-1 bg-gradient-to-b from-black/50 to-black/90 bg-clip-text text-2xl font-bold text-transparent dark:from-white dark:to-white/60">
+          <p className="mt-1 text-2xl font-bold text-black dark:text-white">
             €{dashboardData?.totalCostPerMonth?.toFixed(2) || "0.00"}
           </p>
         </div>
@@ -316,7 +316,7 @@ export default function InsightsTab() {
           <p className="text-xs font-medium text-black/50 dark:text-white/50">
             You've Identified
           </p>
-          <p className="mt-1 bg-gradient-to-b from-green-400 to-green-600 bg-clip-text text-2xl font-bold text-transparent dark:from-green-300 dark:to-green-500">
+          <p className="mt-1 text-2xl font-bold text-green-600 dark:text-green-400">
             €{dashboardData?.potentialMonthlySavings?.toFixed(2) || "0.00"}
           </p>
           {dashboardData?.potentialMonthlySavings > 0 && (

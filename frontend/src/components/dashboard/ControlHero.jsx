@@ -119,17 +119,17 @@ function MascotStage({ activeMode, mascotSrc, chips }) {
       {chips.map((chip, index) => (
         <div
           key={chip.key}
-          className={`absolute z-[4] ${CHIP_POSITIONS[index]} rounded-full border border-white/82 bg-white/78 px-2 py-1.5 shadow-[0_16px_34px_rgba(112,132,173,0.14)] backdrop-blur-xl dark:border-white/12 dark:bg-white/10 dark:shadow-none`}
+          className={`absolute z-20 ${CHIP_POSITIONS[index]} rounded-full border border-white/80 bg-white/80 px-2 py-1.5 shadow-[0_16px_34px_rgba(112,132,173,0.14)] backdrop-blur-xl dark:border-white/10 dark:bg-white/10 dark:shadow-none`}
         >
           <div className="flex items-center gap-2">
-            <div className="grid h-6 w-6 place-items-center rounded-full bg-slate-950/5 text-slate-700 ring-1 ring-black/5 dark:bg-white/10 dark:text-white/85 dark:ring-white/10">
+            <div className="grid h-6 w-6 place-items-center rounded-full bg-slate-950/5 text-slate-700 ring-1 ring-black/5 dark:bg-white/10 dark:text-white/90 dark:ring-white/10">
               <SubscriptionLogo subscriptionName={chip.name} />
             </div>
             <div className="leading-none">
-              <div className="text-[9px] font-semibold uppercase tracking-[0.18em] text-slate-400 dark:text-white/45">
+              <div className="text-[9px] font-semibold uppercase tracking-[0.18em] text-slate-400 dark:text-white/60">
                 {chip.label}
               </div>
-              <div className="mt-1 text-[10px] font-semibold text-slate-800 dark:text-white/88">
+              <div className="mt-1 text-[10px] font-semibold text-slate-800 dark:text-white/90">
                 €{chip.value}
               </div>
             </div>
@@ -166,7 +166,7 @@ export default function ControlHero({
     <section className="flex flex-col gap-3">
       <div className="flex items-start justify-between gap-4">
         <div className="min-w-0">
-          <div className="text-[11px] font-semibold uppercase tracking-[0.26em] text-slate-500/70 dark:text-white/40">
+          <div className="text-[11px] font-semibold uppercase tracking-[0.26em] text-slate-500/70 dark:text-white/60">
             Dashboard home
           </div>
           <h1 className="mt-2 max-w-[10ch] text-[1.96rem] font-semibold leading-[0.95] tracking-[-0.06em] text-slate-950 dark:text-white">
@@ -187,7 +187,7 @@ export default function ControlHero({
           transition={{ duration: 0.28, ease: [0.22, 1, 0.36, 1] }}
           className={`relative overflow-hidden rounded-[36px] border border-white/70 p-5 shadow-[0_28px_60px_rgba(126,146,189,0.2)] backdrop-blur-[24px] dark:border-white/10 dark:shadow-[0_28px_56px_rgba(7,10,24,0.22)] ${modeStyle.shell}`}
         >
-          <div className="absolute inset-0 opacity-65">
+          <div className="absolute inset-0 opacity-65 dark:opacity-20">
             <div
               className="absolute inset-0"
               style={{
@@ -209,7 +209,7 @@ export default function ControlHero({
 
           <div className="relative flex items-start justify-between gap-4">
             <div className="min-w-0 flex-1">
-            <div className="text-[11px] font-semibold uppercase tracking-[0.22em] text-slate-400 dark:text-white/42">
+            <div className="text-[11px] font-semibold uppercase tracking-[0.22em] text-slate-400 dark:text-white/50">
               {current.eyebrow}
             </div>
             <div className="mt-3 text-[3.1rem] font-semibold leading-[0.92] tracking-[-0.07em] text-slate-950 dark:text-white">
@@ -218,7 +218,7 @@ export default function ControlHero({
             <div className={`mt-2 text-sm font-semibold ${modeStyle.accent}`}>
               {current.detail}
             </div>
-            <div className="mt-4 max-w-[16ch] text-[1rem] leading-7 text-slate-700/88 dark:text-white/78">
+            <div className="mt-4 max-w-[16ch] text-[1rem] leading-7 text-slate-700/90 dark:text-white/90">
               {current.takeaway}
             </div>
           </div>
@@ -229,10 +229,10 @@ export default function ControlHero({
           <div className="relative mt-6 rounded-[28px] border border-white/70 bg-white/58 p-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.85),0_18px_36px_rgba(135,153,193,0.12)] backdrop-blur-xl dark:border-white/10 dark:bg-black/20 dark:shadow-[inset_0_1px_0_rgba(255,255,255,0.03),0_18px_36px_rgba(7,10,24,0.16)]">
             <div className="flex items-center justify-between gap-4">
               <div className="min-w-0">
-                <div className="text-[11px] font-semibold uppercase tracking-[0.2em] text-slate-400 dark:text-white/42">
+                <div className="text-[11px] font-semibold uppercase tracking-[0.2em] text-slate-400 dark:text-white/50">
                   Do next
                 </div>
-                <div className="mt-2 max-w-[20ch] text-sm leading-6 text-slate-700 dark:text-white/74">
+                <div className="mt-2 max-w-[20ch] text-sm leading-6 text-slate-700 dark:text-white/80">
                   {current.action.helper}
                 </div>
               </div>
@@ -247,7 +247,7 @@ export default function ControlHero({
         </div>
 
             <div className="mt-4 border-t border-black/5 pt-4 text-sm leading-6 text-slate-600 dark:border-white/10 dark:text-white/60">
-              <span style={{ fontFamily: "'Playfair Display', serif" }} className="italic text-slate-700/85 dark:text-[#efe3bc]/84">
+              <span style={{ fontFamily: "'Playfair Display', serif" }} className="italic text-slate-700/90 dark:text-[#efe3bc]">
                 {current.supportingNote}
               </span>
             </div>

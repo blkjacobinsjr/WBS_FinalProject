@@ -202,8 +202,8 @@ export default function HomeTab() {
             headerAccessory={<Notifications />}
           />
           {yearlySpend > 0 && (
-            <div className="rounded-[26px] border border-white/70 bg-white/52 px-4 py-3 text-sm text-slate-600 shadow-[0_18px_38px_rgba(125,145,189,0.1)] backdrop-blur-xl dark:border-white/10 dark:bg-white/10 dark:text-white/55">
-              <span style={{ fontFamily: "'Playfair Display', serif" }} className="mr-2 italic text-slate-700/85">
+            <div className="rounded-[26px] border border-white/70 bg-white/52 px-4 py-3 text-sm text-slate-600 shadow-[0_18px_38px_rgba(125,145,189,0.1)] backdrop-blur-xl dark:border-white/10 dark:bg-white/10 dark:text-white/80">
+              <span style={{ fontFamily: "'Playfair Display', serif" }} className="mr-2 italic text-slate-700/90 dark:text-white/90">
                 Today:
               </span>
               {getDailyInsight(yearlySpend)}
@@ -223,7 +223,7 @@ export default function HomeTab() {
             <p className="text-xs font-medium uppercase tracking-wider text-black/50 dark:text-white/50">
               Total Monthly Spend
             </p>
-            <p className="mt-1 bg-gradient-to-b from-black/60 to-black bg-clip-text text-3xl font-bold text-transparent dark:from-white dark:to-white/60">
+            <p className="mt-1 text-3xl font-bold text-black dark:text-white">
               €{dashboardData?.totalCostPerMonth?.toFixed(2) || "0.00"}
             </p>
             {yearlySpend > 0 && (
@@ -238,7 +238,7 @@ export default function HomeTab() {
       {/* Quick Stats Row */}
       <div className="grid grid-cols-3 gap-2" role="group" aria-label="Quick statistics">
         <div className={SUMMARY_SURFACE_CLASS}>
-          <p className="bg-gradient-to-b from-black/60 to-black bg-clip-text text-2xl font-bold text-transparent dark:from-white dark:to-white/60">
+          <p className="text-2xl font-bold text-black dark:text-white">
             {subscriptions?.length || 0}
           </p>
           <p className="text-[10px] font-medium text-black/50 dark:text-white/50">
@@ -246,7 +246,7 @@ export default function HomeTab() {
           </p>
         </div>
         <div className={SUMMARY_SURFACE_CLASS}>
-          <p className="bg-gradient-to-b from-green-400 to-green-600 bg-clip-text text-2xl font-bold text-transparent dark:from-green-300 dark:to-green-500">
+          <p className="text-2xl font-bold text-green-600 dark:text-green-400">
             €{dashboardData?.potentialMonthlySavings?.toFixed(0) || "0"}
           </p>
           <p className="text-[10px] font-medium text-black/50 dark:text-white/50">
@@ -259,7 +259,7 @@ export default function HomeTab() {
           disabled={!notifications?.length}
           className="btn-press interactive-hover-bg interactive-hover-shadow rounded-xl bg-white/40 p-3 text-center backdrop-blur-sm disabled:cursor-not-allowed disabled:opacity-70 [--hover-bg:rgba(255,255,255,0.6)] [--hover-shadow:0_18px_40px_-24px_rgba(15,23,42,0.16)] dark:bg-white/10 dark:[--hover-bg:rgba(255,255,255,0.15)]"
         >
-          <p className="bg-gradient-to-b from-black/60 to-black bg-clip-text text-2xl font-bold text-transparent dark:from-white dark:to-white/60">
+          <p className="text-2xl font-bold text-black dark:text-white">
             {notifications?.length || 0}
           </p>
           <p className="text-[10px] font-medium text-black/50 dark:text-white/50">

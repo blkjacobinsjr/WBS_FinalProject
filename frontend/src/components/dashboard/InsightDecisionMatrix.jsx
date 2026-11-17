@@ -65,11 +65,11 @@ export default function InsightDecisionMatrix({
   if (!filtered.length) {
     return (
       <div className="rounded-[32px] border border-white/70 bg-white/55 p-5 shadow-[0_22px_50px_rgba(125,145,189,0.12)] backdrop-blur-xl dark:border-white/10 dark:bg-[linear-gradient(160deg,rgba(42,24,61,0.7)_0%,rgba(16,22,49,0.88)_100%)] dark:shadow-[0_24px_50px_rgba(7,10,24,0.24)]">
-        <div className="text-[11px] font-semibold uppercase tracking-[0.24em] text-slate-400 dark:text-white/45">
+        <div className="text-[11px] font-semibold uppercase tracking-[0.24em] text-slate-400 dark:text-white/50">
           Action field
         </div>
         <div
-          className="mt-3 max-w-[15ch] text-[1.55rem] leading-[1.08] tracking-[-0.04em] text-slate-800/90 dark:text-[#efe3bc]/88"
+          className="mt-3 max-w-[15ch] text-[1.55rem] leading-[1.08] tracking-[-0.04em] text-slate-800/90 dark:text-[#efe3bc]"
           style={{ fontFamily: "'Playfair Display', serif" }}
         >
           Complete a few reviews and the field comes alive.
@@ -104,7 +104,7 @@ export default function InsightDecisionMatrix({
     <div className="rounded-[32px] border border-white/70 bg-[linear-gradient(160deg,rgba(255,255,255,0.6)_0%,rgba(245,242,255,0.72)_100%)] p-5 shadow-[0_24px_58px_rgba(125,145,189,0.14)] backdrop-blur-xl dark:border-white/10 dark:bg-[linear-gradient(160deg,rgba(59,32,80,0.72)_0%,rgba(20,24,54,0.9)_100%)] dark:shadow-[0_24px_56px_rgba(7,10,24,0.24)]">
       <div className="flex items-start justify-between gap-4">
         <div>
-          <div className="text-[11px] font-semibold uppercase tracking-[0.24em] text-slate-400 dark:text-white/45">
+          <div className="text-[11px] font-semibold uppercase tracking-[0.24em] text-slate-400 dark:text-white/50">
             Action field
           </div>
           <div
@@ -115,13 +115,13 @@ export default function InsightDecisionMatrix({
           </div>
         </div>
         <div className="flex flex-col gap-2 text-[11px] font-semibold text-slate-600 dark:text-white/70">
-          <div className="rounded-full border border-emerald-200/70 bg-emerald-50/80 px-3 py-1 dark:border-emerald-400/20 dark:bg-emerald-400/10 dark:text-emerald-100/85">
+          <div className="rounded-full border border-emerald-200/70 bg-emerald-50/80 px-3 py-1 dark:border-emerald-400/20 dark:bg-emerald-400/10 dark:text-emerald-100/90">
             Keep
           </div>
-          <div className="rounded-full border border-amber-200/70 bg-amber-50/80 px-3 py-1 dark:border-amber-400/20 dark:bg-amber-400/10 dark:text-amber-100/85">
+          <div className="rounded-full border border-amber-200/70 bg-amber-50/80 px-3 py-1 dark:border-amber-400/20 dark:bg-amber-400/10 dark:text-amber-100/90">
             Review
           </div>
-          <div className="rounded-full border border-rose-200/70 bg-rose-50/80 px-3 py-1 dark:border-rose-400/20 dark:bg-rose-400/10 dark:text-rose-100/85">
+          <div className="rounded-full border border-rose-200/70 bg-rose-50/80 px-3 py-1 dark:border-rose-400/20 dark:bg-rose-400/10 dark:text-rose-100/90">
             Cut
           </div>
         </div>
@@ -146,7 +146,7 @@ export default function InsightDecisionMatrix({
         <div className="absolute right-4 bottom-4 text-[10px] font-semibold uppercase tracking-[0.18em] text-rose-700/80 dark:text-rose-200/80">
           Cut first
         </div>
-        <div className="absolute left-4 bottom-4 text-[10px] font-semibold uppercase tracking-[0.18em] text-slate-500 dark:text-white/45">
+        <div className="absolute left-4 bottom-4 text-[10px] font-semibold uppercase tracking-[0.18em] text-slate-500 dark:text-white/50">
           Low signal
         </div>
 
@@ -192,16 +192,16 @@ export default function InsightDecisionMatrix({
           );
         })}
 
-        <div className="absolute bottom-3 left-1/2 -translate-x-1/2 text-[11px] font-medium text-slate-500 dark:text-white/45">
+        <div className="absolute bottom-3 left-1/2 -translate-x-1/2 text-[11px] font-medium text-slate-500 dark:text-white/50">
           Higher monthly cost
         </div>
-        <div className="absolute left-2 top-1/2 -translate-y-1/2 -rotate-90 text-[11px] font-medium text-slate-500 dark:text-white/45">
+        <div className="absolute left-2 top-1/2 -translate-y-1/2 -rotate-90 text-[11px] font-medium text-slate-500 dark:text-white/50">
           Stronger score signal
         </div>
       </div>
 
-      <div className="mt-4 text-sm leading-6 text-slate-600 dark:text-white/68">
-        <span style={{ fontFamily: "'Playfair Display', serif" }} className="italic text-slate-800/90 dark:text-[#f1e6c3]/92">
+      <div className="mt-4 text-sm leading-6 text-slate-600 dark:text-white/70">
+        <span style={{ fontFamily: "'Playfair Display', serif" }} className="italic text-slate-800/90 dark:text-[#f1e6c3]">
           {decisionTarget.name}
         </span>{" "}
         sits closest to the clearest decision edge right now.
